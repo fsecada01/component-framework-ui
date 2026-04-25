@@ -1,0 +1,20 @@
+{#def id="modal", class="" #}
+<div id="{{ id }}"
+     class="modal {{ class }}"
+     x-data="cfModal"
+     x-init="initModal()"
+     :class="{ 'is-active': open }">
+  <div class="modal-background" @click="close()"></div>
+  <div class="modal-card">
+    <header class="modal-card-head">
+      <p class="modal-card-title">{{ header | default('') }}</p>
+      <button class="delete" aria-label="close" @click="close()"></button>
+    </header>
+    <section class="modal-card-body">
+      {{ content | default('') }}
+    </section>
+    <footer class="modal-card-foot">
+      {{ footer | default('') }}
+    </footer>
+  </div>
+</div>

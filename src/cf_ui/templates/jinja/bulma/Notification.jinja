@@ -1,0 +1,9 @@
+{#def message, type="info", dismissible=true, class="" #}
+<div class="notification is-{{ type }} {{ class }}"
+     x-data="{ visible: true }"
+     x-show="visible">
+  {% if dismissible %}
+  <button class="delete" @click="visible = false"></button>
+  {% endif %}
+  {{ message }}
+</div>
