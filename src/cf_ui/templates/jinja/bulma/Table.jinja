@@ -1,0 +1,23 @@
+{#def columns=[], rows=[], hx_target="", hx_url="", class="" #}
+{% set columns = columns if columns is defined else [] %}
+{% set rows = rows if rows is defined else [] %}
+<div class="{{ class }}">
+  <table class="table is-striped is-hoverable is-fullwidth">
+    <thead>
+      <tr>
+        {% for col in columns %}
+        <th>{{ col.label }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>
+        {% for col in columns %}
+        <td>{{ row[col.key] }}</td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

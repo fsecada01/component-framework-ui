@@ -1,0 +1,17 @@
+<c-props page="1" total_pages="1" hx_target="" hx_url="" class="" />
+<nav class="pagination is-centered {{ class }}" role="navigation" aria-label="pagination">
+  {% if page|add:"0" > 1 %}
+  <a class="pagination-previous"
+     hx-get="{{ hx_url }}?page={{ page|add:"-1" }}"
+     hx-target="{{ hx_target }}">Previous</a>
+  {% else %}
+  <a class="pagination-previous" disabled>Previous</a>
+  {% endif %}
+  {% if page|add:"0" < total_pages|add:"0" %}
+  <a class="pagination-next"
+     hx-get="{{ hx_url }}?page={{ page|add:'1' }}"
+     hx-target="{{ hx_target }}">Next</a>
+  {% else %}
+  <a class="pagination-next" disabled>Next</a>
+  {% endif %}
+</nav>

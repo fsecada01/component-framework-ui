@@ -1,0 +1,34 @@
+{#def page=1, total_pages=1, hx_target="", hx_url="", class="" #}
+{% set page = page if page is defined else 1 %}
+{% set total_pages = total_pages if total_pages is defined else 1 %}
+<nav class="pagination is-centered {{ class }}" role="navigation" aria-label="pagination">
+  {% if page > 1 %}
+  <a class="pagination-previous"
+     hx-get="{{ hx_url }}?page={{ page - 1 }}"
+     hx-target="{{ hx_target }}">Previous</a>
+  {% else %}
+  <a class="pagination-previous" disabled>Previous</a>
+  {% endif %}
+
+  {% if page < total_pages %}
+  <a class="pagination-next"
+     hx-get="{{ hx_url }}?page={{ page + 1 }}"
+     hx-target="{{ hx_target }}">Next</a>
+  {% else %}
+  <a class="pagination-next" disabled>Next</a>
+  {% endif %}
+
+  <ul class="pagination-list">
+    {% for p in range(1, total_pages + 1) %}
+    <li>
+      <a class="pagination-link{% if p == page %} is-current{% endif %}"
+         {% if p != page %}
+         hx-get="{{ hx_url }}?page={{ p }}"
+         hx-target="{{ hx_target }}"
+         {% endif %}
+         aria-label="Page {{ p }}"
+         {% if p == page %}aria-current="page"{% endif %}>{{ p }}</a>
+    </li>
+    {% endfor %}
+  </ul>
+</nav>

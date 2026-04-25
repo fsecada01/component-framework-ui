@@ -28,6 +28,11 @@ def _versions() -> dict:
     return {**_DEFAULTS, **overrides}
 
 
+@register.filter
+def get_item(dictionary, key):
+    return dictionary.get(key, "")
+
+
 @register.simple_tag
 def cf_ui_head() -> str:
     theme = getattr(settings, "CF_UI_THEME", "bulma")

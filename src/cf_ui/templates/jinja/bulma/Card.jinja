@@ -1,0 +1,19 @@
+{#def content="", header="", footer="", class="" #}
+{% set header = header if header is defined else "" %}
+{% set content = content if content is defined else "" %}
+{% set footer = footer if footer is defined else "" %}
+<div class="card {{ class }}">
+  {% if header %}
+  <header class="card-header">
+    <p class="card-header-title">{{ header }}</p>
+  </header>
+  {% endif %}
+  <div class="card-content">
+    <div class="content">{{ content }}</div>
+  </div>
+  {% if footer %}
+  <footer class="card-footer">
+    <div class="card-footer-item">{{ footer }}</div>
+  </footer>
+  {% endif %}
+</div>
