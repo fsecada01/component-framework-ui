@@ -17,6 +17,7 @@ The ROOT_URLCONF setting differs: unit tests don't set it, integration tests
 need it. The session-scoped fixture below ensures ROOT_URLCONF is set for all
 integration tests regardless of which conftest configured Django first.
 """
+
 import os
 
 import django

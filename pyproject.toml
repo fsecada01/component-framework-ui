@@ -58,6 +58,13 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["src/cf_ui"]
 
+[tool.hatch.build]
+include = [
+    "src/cf_ui/**/*.py",
+    "src/cf_ui/templates/**",
+    "src/cf_ui/static/**",
+]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]

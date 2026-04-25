@@ -5,8 +5,7 @@ import pytest
 from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
 
 BULMA_DIR = (
-    Path(__file__).parent.parent.parent.parent
-    / "src" / "cf_ui" / "templates" / "jinja" / "bulma"
+    Path(__file__).parent.parent.parent.parent / "src" / "cf_ui" / "templates" / "jinja" / "bulma"
 )
 
 
@@ -23,6 +22,8 @@ def env() -> Environment:
 @pytest.fixture
 def render(env: Environment) -> Callable[..., str]:
     """Return a helper: render(template_name, **ctx) -> str."""
+
     def _render(template_name: str, **ctx: object) -> str:
         return env.get_template(template_name).render(**ctx)
+
     return _render

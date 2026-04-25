@@ -1,8 +1,7 @@
 from pathlib import Path
 
 ALPINE_JS = (
-    Path(__file__).parent.parent.parent
-    / "src" / "cf_ui" / "static" / "cf_ui" / "cf_ui_alpine.js"
+    Path(__file__).parent.parent.parent / "src" / "cf_ui" / "static" / "cf_ui" / "cf_ui_alpine.js"
 )
 
 

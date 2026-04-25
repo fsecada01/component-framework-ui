@@ -1,4 +1,5 @@
 from django.urls import path
+
 from tests.integration.cotton_app import views
 
 urlpatterns = [

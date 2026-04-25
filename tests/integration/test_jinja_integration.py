@@ -1,4 +1,3 @@
-import pytest
 from fastapi.testclient import TestClient
 
 from tests.integration.jinja_app.main import app

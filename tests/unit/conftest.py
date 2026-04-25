@@ -12,14 +12,16 @@ def pytest_configure():
             ],
             DATABASES={"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": ":memory:"}},
             CF_UI_THEME="bulma",
-            TEMPLATES=[{
-                "BACKEND": "django.template.backends.django.DjangoTemplates",
-                "DIRS": [],
-                "APP_DIRS": True,
-                "OPTIONS": {
-                    "context_processors": [],
-                    "libraries": {"cf_ui": "cf_ui.templatetags.cf_ui"},
-                },
-            }],
+            TEMPLATES=[
+                {
+                    "BACKEND": "django.template.backends.django.DjangoTemplates",
+                    "DIRS": [],
+                    "APP_DIRS": True,
+                    "OPTIONS": {
+                        "context_processors": [],
+                        "libraries": {"cf_ui": "cf_ui.templatetags.cf_ui"},
+                    },
+                }
+            ],
         )
         django.setup()

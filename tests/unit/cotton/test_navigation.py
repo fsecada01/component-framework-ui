@@ -1,5 +1,3 @@
-
-
 def test_navbar_cotton_renders(cotton_render):
     html = cotton_render("cf/navbar.html", **{"class": ""})
     assert "navbar" in html
@@ -21,7 +19,6 @@ def test_breadcrumb_cotton_renders_items(cotton_render):
 
 def test_tabs_cotton_renders(cotton_render):
     tabs = [{"id": "one", "url": "/tab/one/"}]
-    html = cotton_render("cf/tabs.html",
-                         tabs=tabs, hx_target="tab-content", **{"class": ""})
+    html = cotton_render("cf/tabs.html", tabs=tabs, hx_target="tab-content", **{"class": ""})
     assert "cfTabs" in html
     assert "hx-get" in html

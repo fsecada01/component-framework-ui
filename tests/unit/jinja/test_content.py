@@ -1,6 +1,3 @@
-import pytest
-
-
 def test_card_renders_default_slot(render):
     html = render("Card.jinja", content="Body text", header="", footer="", extra_class="")
     assert "Body text" in html
@@ -35,60 +32,89 @@ def test_table_renders_headers(render):
 def test_table_renders_rows(render):
     columns = [{"key": "name", "label": "Name"}]
     rows = [{"name": "Alice"}, {"name": "Bob"}]
-    html = render("Table.jinja", columns=columns, rows=rows, hx_target="", hx_url="", extra_class="")
+    html = render(
+        "Table.jinja", columns=columns, rows=rows, hx_target="", hx_url="", extra_class=""
+    )
     assert "Alice" in html
     assert "Bob" in html
 
 
 def test_pagination_renders_page_links(render):
-    html = render("Pagination.jinja", page=2, total_pages=5,
-                  hx_target="#results", hx_url="/items/", extra_class="")
+    html = render(
+        "Pagination.jinja",
+        page=2,
+        total_pages=5,
+        hx_target="#results",
+        hx_url="/items/",
+        extra_class="",
+    )
     assert "pagination" in html
     assert "Previous" in html
     assert "Next" in html
 
 
 def test_pagination_disables_previous_on_first_page(render):
-    html = render("Pagination.jinja", page=1, total_pages=5,
-                  hx_target="#results", hx_url="/items/", extra_class="")
+    html = render(
+        "Pagination.jinja",
+        page=1,
+        total_pages=5,
+        hx_target="#results",
+        hx_url="/items/",
+        extra_class="",
+    )
     assert "disabled" in html
 
 
 def test_pagination_disables_next_on_last_page(render):
-    html = render("Pagination.jinja", page=5, total_pages=5,
-                  hx_target="#results", hx_url="/items/", extra_class="")
-    lines = [l for l in html.split("\n") if "Next" in l]
-    assert any("disabled" in l for l in lines)
+    html = render(
+        "Pagination.jinja",
+        page=5,
+        total_pages=5,
+        hx_target="#results",
+        hx_url="/items/",
+        extra_class="",
+    )
+    lines = [line for line in html.split("\n") if "Next" in line]
+    assert any("disabled" in line for line in lines)
 
 
 def test_pagination_marks_current_page(render):
-    html = render("Pagination.jinja", page=3, total_pages=5,
-                  hx_target="#results", hx_url="/items/", extra_class="")
+    html = render(
+        "Pagination.jinja",
+        page=3,
+        total_pages=5,
+        hx_target="#results",
+        hx_url="/items/",
+        extra_class="",
+    )
     assert "is-current" in html
 
 
 def test_pagination_includes_hx_get(render):
-    html = render("Pagination.jinja", page=2, total_pages=5,
-                  hx_target="#results", hx_url="/items/", extra_class="")
+    html = render(
+        "Pagination.jinja",
+        page=2,
+        total_pages=5,
+        hx_target="#results",
+        hx_url="/items/",
+        extra_class="",
+    )
     assert "hx-get" in html
     assert "/items/" in html
 
 
 def test_panel_renders_title(render):
-    html = render("Panel.jinja", title="Settings", content="Panel body",
-                  open=False, extra_class="")
+    html = render("Panel.jinja", title="Settings", content="Panel body", open=False, extra_class="")
     assert "Settings" in html
 
 
 def test_panel_has_alpine_x_data(render):
-    html = render("Panel.jinja", title="Settings", content="Body",
-                  open=False, extra_class="")
+    html = render("Panel.jinja", title="Settings", content="Body", open=False, extra_class="")
     assert "x-data" in html
     assert "cfPanel" in html
 
 
 def test_panel_content_has_x_show(render):
-    html = render("Panel.jinja", title="Settings", content="Body",
-                  open=False, extra_class="")
+    html = render("Panel.jinja", title="Settings", content="Body", open=False, extra_class="")
     assert "x-show" in html
     assert "x-cloak" in html

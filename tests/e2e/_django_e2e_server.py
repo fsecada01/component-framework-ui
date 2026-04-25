@@ -4,6 +4,7 @@ Standalone Django WSGI server for E2E tests.
 Run as a subprocess so it gets its own Python process and Django configuration,
 isolated from the pytest process's Django settings.
 """
+
 import os
 import sys
 from pathlib import Path
@@ -22,12 +23,13 @@ for _p in [str(_project_root), str(_src)]:
 # Configure Django with cotton-enabled settings
 os.environ["DJANGO_SETTINGS_MODULE"] = "tests.e2e._e2e_django_settings"
 
-import django
+import django  # noqa: E402
 
 django.setup()
 
-from django.core.handlers.wsgi import WSGIHandler
-from wsgiref.simple_server import make_server
+from wsgiref.simple_server import make_server  # noqa: E402
+
+from django.core.handlers.wsgi import WSGIHandler  # noqa: E402
 
 httpd = make_server(HOST, PORT, WSGIHandler())
 httpd.serve_forever()

@@ -8,6 +8,7 @@ COTTON_SNAKE_CASED_NAMES so that cf-ui cotton components render fully.
 It MUST NOT be imported by the main pytest process to avoid polluting
 the shared Django settings used by unit and integration tests.
 """
+
 from pathlib import Path
 
 from cf_ui import JINJA_TEMPLATES_DIR
