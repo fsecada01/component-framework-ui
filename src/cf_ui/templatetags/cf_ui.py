@@ -33,6 +33,14 @@ def get_item(dictionary, key):
     return dictionary.get(key, "")
 
 
+@register.filter
+def make_list_1_to_n(n):
+    try:
+        return list(range(1, int(n) + 1))
+    except (ValueError, TypeError):
+        return []
+
+
 @register.simple_tag
 def cf_ui_head() -> str:
     theme = getattr(settings, "CF_UI_THEME", "bulma")
