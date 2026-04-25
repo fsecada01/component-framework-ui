@@ -2,14 +2,19 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from jinjax import Catalog
 
+from cf_ui import JINJA_TEMPLATES_DIR
 from cf_ui.fastapi import install_cf_ui
+
+_CF_UI_STATIC_DIR = JINJA_TEMPLATES_DIR.parent.parent / "static" / "cf_ui"
 
 catalog = Catalog()
 install_cf_ui(catalog, theme="bulma")
 
 app = FastAPI()
+app.mount("/static/cf_ui", StaticFiles(directory=str(_CF_UI_STATIC_DIR)), name="cf_ui_static")
 
 
 @app.get("/form-field", response_class=HTMLResponse)
