@@ -1,7 +1,8 @@
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
-from jinja2 import Environment, FileSystemLoader, Undefined, select_autoescape
+from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
 
 BULMA_DIR = (
     Path(__file__).parent.parent.parent.parent
@@ -13,14 +14,14 @@ BULMA_DIR = (
 def env() -> Environment:
     """Jinja2 Environment pointed at the Bulma template directory."""
     return Environment(
-        loader=FileSystemLoader(str(BULMA_DIR)),
+        loader=FileSystemLoader(BULMA_DIR),
         autoescape=select_autoescape(["html"]),
-        undefined=Undefined,
+        undefined=StrictUndefined,
     )
 
 
 @pytest.fixture
-def render(env: Environment):
+def render(env: Environment) -> Callable[..., str]:
     """Return a helper: render(template_name, **ctx) -> str."""
     def _render(name: str, **ctx: object) -> str:
         return env.get_template(name).render(**ctx)
