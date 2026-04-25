@@ -1,8 +1,8 @@
-{#def brand="", start="", end="", class="" #}
+{#def brand="", start="", end="", extra_class="" #}
 {% set brand = brand if brand is defined else "" %}
 {% set start = start if start is defined else "" %}
 {% set end = end if end is defined else "" %}
-<nav class="navbar {{ class }}" role="navigation" aria-label="main navigation"
+<nav class="navbar {{ extra_class }}" role="navigation" aria-label="main navigation"
      x-data="cfNavbar">
   <div class="navbar-brand">
     {{ brand }}

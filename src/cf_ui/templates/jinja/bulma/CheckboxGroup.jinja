@@ -1,5 +1,5 @@
-{#def name, label, choices=[], selected=[], error=none, class="" #}
-<div class="field {{ class }}">
+{#def name, label, choices=[], selected=[], error="", extra_class="" #}
+<div class="field {{ extra_class }}">
   <label class="label">{{ label }}</label>
   <div class="control">
     {% for choice in choices %}

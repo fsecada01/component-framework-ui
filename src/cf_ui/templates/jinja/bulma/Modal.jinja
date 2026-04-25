@@ -1,9 +1,9 @@
-{#def id="modal", header="", content="", footer="", class="" #}
+{#def id="modal", header="", content="", footer="", extra_class="" #}
 {% set header = header if header is defined else "" %}
 {% set content = content if content is defined else "" %}
 {% set footer = footer if footer is defined else "" %}
 <div id="{{ id }}"
-     class="modal {{ class }}"
+     class="modal {{ extra_class }}"
      x-data="cfModal"
      x-init="initModal()"
      :class="{ 'is-active': open }">

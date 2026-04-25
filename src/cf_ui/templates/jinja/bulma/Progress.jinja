@@ -1,5 +1,5 @@
-{#def value=0, max=100, type="primary", label="", class="" #}
-<div class="{{ class }}">
+{#def value=0, max=100, type="primary", label="", extra_class="" #}
+<div class="{{ extra_class }}">
   {% if label %}<p class="has-text-centered mb-1">{{ label }}</p>{% endif %}
   <progress class="progress is-{{ type }}"
             value="{{ value }}"

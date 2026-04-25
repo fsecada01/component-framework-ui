@@ -11,4 +11,4 @@ def install_cf_ui(catalog: Any, theme: str = "bulma") -> None:
         theme: CSS framework theme name. Defaults to "bulma".
     """
     template_dir = JINJA_TEMPLATES_DIR / theme
-    catalog.add_path(template_dir, prefix="Cf")
+    catalog.add_folder(template_dir, prefix="Cf")

@@ -47,7 +47,7 @@ def test_fastapi_install_cf_ui_adds_template_dir():
     catalog = MagicMock()
     install_cf_ui(catalog, theme="bulma")
 
-    catalog.add_path.assert_called_once_with(
+    catalog.add_folder.assert_called_once_with(
         JINJA_TEMPLATES_DIR / "bulma", prefix="Cf"
     )
 

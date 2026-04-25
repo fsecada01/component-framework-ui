@@ -1,5 +1,5 @@
-{#def name, label, value="", error=none, rows=4, class="" #}
-<div class="field {{ class }}">
+{#def name, label, value="", error="", rows=4, extra_class="" #}
+<div class="field {{ extra_class }}">
   <label class="label" for="{{ name }}">{{ label }}</label>
   <div class="control">
     <textarea class="textarea{% if error %} is-danger{% endif %}"

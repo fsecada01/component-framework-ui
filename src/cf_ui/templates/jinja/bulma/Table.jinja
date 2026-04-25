@@ -1,7 +1,7 @@
-{#def columns=[], rows=[], hx_target="", hx_url="", class="" #}
+{#def columns=[], rows=[], hx_target="", hx_url="", extra_class="" #}
 {% set columns = columns if columns is defined else [] %}
 {% set rows = rows if rows is defined else [] %}
-<div class="{{ class }}">
+<div class="{{ extra_class }}">
   <table class="table is-striped is-hoverable is-fullwidth">
     <thead>
       <tr>

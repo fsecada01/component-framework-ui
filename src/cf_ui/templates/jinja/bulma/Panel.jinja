@@ -1,6 +1,6 @@
-{#def title, content="", open=false, class="" #}
+{#def title, content="", open=false, extra_class="" #}
 {% set content = content if content is defined else "" %}
-<div class="card {{ class }}" x-data="cfPanel">
+<div class="card {{ extra_class }}" x-data="cfPanel">
   <header class="card-header" style="cursor:pointer" @click="open = !open">
     <p class="card-header-title">{{ title }}</p>
     <button class="card-header-icon" aria-label="toggle panel">

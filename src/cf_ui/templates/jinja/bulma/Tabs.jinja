@@ -1,8 +1,8 @@
-{#def tabs=[], hx_target="tab-content", content="", class="" #}
+{#def tabs=[], hx_target="tab-content", content="", extra_class="" #}
 {% set tabs = tabs if tabs is defined else [] %}
 {% set content = content if content is defined else "" %}
 {% set hx_target = hx_target if hx_target is defined else "tab-content" %}
-<div class="{{ class }}" x-data="cfTabs">
+<div class="{{ extra_class }}" x-data="cfTabs">
   <div class="tabs">
     <ul>
       {% for tab in tabs %}

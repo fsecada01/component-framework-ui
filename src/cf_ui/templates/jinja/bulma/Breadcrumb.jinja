@@ -1,6 +1,6 @@
-{#def items=[], class="" #}
+{#def items=[], extra_class="" #}
 {% set items = items if items is defined else [] %}
-<nav class="breadcrumb {{ class }}" aria-label="breadcrumbs">
+<nav class="breadcrumb {{ extra_class }}" aria-label="breadcrumbs">
   <ul>
     {% for item in items %}
     <li{% if loop.last %} class="is-active"{% endif %}>

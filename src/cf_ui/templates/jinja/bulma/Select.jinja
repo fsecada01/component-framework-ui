@@ -1,5 +1,5 @@
-{#def name, label, value="", error=none, options=[], class="" #}
-<div class="field {{ class }}">
+{#def name, label, value="", error="", options=[], extra_class="" #}
+<div class="field {{ extra_class }}">
   <label class="label" for="{{ name }}">{{ label }}</label>
   <div class="control">
     <div class="select{% if error %} is-danger{% endif %} is-fullwidth">
