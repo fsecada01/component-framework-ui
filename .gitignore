@@ -8,3 +8,17 @@ dist/
 .ruff_cache/
 node_modules/
 .superpowers/
+build/
+.eggs/
+*.egg
+.mypy_cache/
+.ty_cache/
+htmlcov/
+.coverage
+coverage.xml
+playwright-report/
+test-results/
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

@@ -18,7 +18,9 @@ bootstrap = []
 foundation = []
 fomantic = []
 daisy = []
-all = []
+all = [
+    "cf-ui[bulma,bootstrap,foundation,fomantic,daisy,django,fastapi,litestar]",
+]
 django = [
     "django>=4.2",
     "django-cotton>=0.9",
