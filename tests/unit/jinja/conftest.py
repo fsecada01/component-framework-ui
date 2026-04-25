@@ -23,6 +23,6 @@ def env() -> Environment:
 @pytest.fixture
 def render(env: Environment) -> Callable[..., str]:
     """Return a helper: render(template_name, **ctx) -> str."""
-    def _render(name: str, **ctx: object) -> str:
-        return env.get_template(name).render(**ctx)
+    def _render(template_name: str, **ctx: object) -> str:
+        return env.get_template(template_name).render(**ctx)
     return _render

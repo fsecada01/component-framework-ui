@@ -1,0 +1,16 @@
+<c-props name label value="" error="" class="" />
+<div class="field {{ class }}">
+  <label class="label" for="{{ name }}">{{ label }}</label>
+  <div class="control">
+    <div class="select{% if error %} is-danger{% endif %} is-fullwidth">
+      <select id="{{ name }}" name="{{ name }}">
+        {% for opt in options %}
+        <option value="{{ opt.value }}"{% if opt.value|stringformat:"s" == value|stringformat:"s" %} selected{% endif %}>
+          {{ opt.label }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+  {% if error %}<p class="help is-danger">{{ error }}</p>{% endif %}
+</div>
