@@ -1,0 +1,24 @@
+{#def brand="", start="", end="", class="" #}
+{% set brand = brand if brand is defined else "" %}
+{% set start = start if start is defined else "" %}
+{% set end = end if end is defined else "" %}
+<nav class="navbar {{ class }}" role="navigation" aria-label="main navigation"
+     x-data="cfNavbar">
+  <div class="navbar-brand">
+    {{ brand }}
+    <a role="button"
+       class="navbar-burger"
+       aria-label="menu"
+       :aria-expanded="menuOpen"
+       @click="menuOpen = !menuOpen"
+       :class="{ 'is-active': menuOpen }">
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+    </a>
+  </div>
+  <div class="navbar-menu" :class="{ 'is-active': menuOpen }">
+    <div class="navbar-start">{{ start }}</div>
+    <div class="navbar-end">{{ end }}</div>
+  </div>
+</nav>

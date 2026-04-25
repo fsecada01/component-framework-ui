@@ -1,0 +1,15 @@
+{#def items=[], class="" #}
+{% set items = items if items is defined else [] %}
+<nav class="breadcrumb {{ class }}" aria-label="breadcrumbs">
+  <ul>
+    {% for item in items %}
+    <li{% if loop.last %} class="is-active"{% endif %}>
+      {% if loop.last %}
+      <a href="{{ item.url }}" aria-current="page">{{ item.label }}</a>
+      {% else %}
+      <a href="{{ item.url }}">{{ item.label }}</a>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</nav>

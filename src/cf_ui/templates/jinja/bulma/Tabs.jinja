@@ -1,0 +1,17 @@
+{#def tabs=[], hx_target="tab-content", content="", class="" #}
+{% set tabs = tabs if tabs is defined else [] %}
+{% set content = content if content is defined else "" %}
+<div class="{{ class }}" x-data="cfTabs">
+  <div class="tabs">
+    <ul>
+      {% for tab in tabs %}
+      <li :class="{ 'is-active': active === '{{ tab.id }}' }">
+        <a @click.prevent="setActive('{{ tab.id }}')"
+           hx-get="{{ tab.url }}"
+           hx-target="#{{ hx_target }}">{{ tab.id }}</a>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  <div id="{{ hx_target }}">{{ content }}</div>
+</div>

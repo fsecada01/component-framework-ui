@@ -1,0 +1,15 @@
+<c-props hx_target="tab-content" tabs="[]" class="" />
+<div class="{{ class }}" x-data="cfTabs">
+  <div class="tabs">
+    <ul>
+      {% for tab in tabs %}
+      <li :class="{ 'is-active': active === '{{ tab.id }}' }">
+        <a @click.prevent="setActive('{{ tab.id }}')"
+           hx-get="{{ tab.url }}"
+           hx-target="#{{ hx_target }}">{{ tab.id }}</a>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  <div id="{{ hx_target }}">{{ slot }}</div>
+</div>

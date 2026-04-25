@@ -1,0 +1,14 @@
+<c-props items="[]" class="" />
+<nav class="breadcrumb {{ class }}" aria-label="breadcrumbs">
+  <ul>
+    {% for item in items %}
+    <li{% if forloop.last %} class="is-active"{% endif %}>
+      {% if forloop.last %}
+      <a href="{{ item.url }}" aria-current="page">{{ item.label }}</a>
+      {% else %}
+      <a href="{{ item.url }}">{{ item.label }}</a>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</nav>
