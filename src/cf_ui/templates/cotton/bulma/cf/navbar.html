@@ -7,7 +7,7 @@
        class="navbar-burger"
        aria-label="menu"
        :aria-expanded="menuOpen"
-       @click="menuOpen = !menuOpen"
+       @click="toggle()"
        :class="{ 'is-active': menuOpen }">
       <span aria-hidden="true"></span>
       <span aria-hidden="true"></span>
