@@ -1,7 +1,7 @@
-<c-vars name label error="" choices="[]" selected="[]" class="" />
+<c-vars name label error="" choices="[]" selected="[]" control_class="" class="" />
 <div class="field {{ class }}">
   <label class="label">{{ label }}</label>
-  <div class="control">
+  <div class="control{% if control_class %} {{ control_class }}{% endif %}">
     {% for choice in choices %}
     <label class="checkbox mr-3">
       <input type="checkbox"

@@ -72,3 +72,73 @@ def test_checkbox_group_cotton_renders_choices(cotton_render):
     )
     assert "Apple" in html
     assert "checked" in html
+
+
+# ── Granular class prop tests ────────────────────────────────────────────────
+
+
+def test_form_field_cotton_input_class_applied(cotton_render):
+    html = cotton_render(
+        "cf/form-field.html",
+        name="email",
+        label="Email",
+        value="",
+        error="",
+        type="text",
+        required="false",
+        input_class="is-rounded",
+    )
+    assert "is-rounded" in html
+
+
+def test_form_field_cotton_input_class_default_omitted(cotton_render):
+    html = cotton_render(
+        "cf/form-field.html",
+        name="email",
+        label="Email",
+        value="",
+        error="",
+        type="text",
+        required="false",
+        input_class="",
+    )
+    assert "is-rounded" not in html
+
+
+def test_select_cotton_input_class_applied(cotton_render):
+    html = cotton_render(
+        "cf/select.html",
+        name="choice",
+        label="Choose",
+        value="",
+        error="",
+        options=[],
+        input_class="my-select",
+    )
+    assert "my-select" in html
+
+
+def test_textarea_cotton_input_class_applied(cotton_render):
+    html = cotton_render(
+        "cf/textarea.html",
+        name="bio",
+        label="Bio",
+        value="",
+        error="",
+        rows="4",
+        input_class="has-fixed-size",
+    )
+    assert "has-fixed-size" in html
+
+
+def test_checkbox_group_cotton_control_class_applied(cotton_render):
+    html = cotton_render(
+        "cf/checkbox-group.html",
+        name="fruits",
+        label="Fruits",
+        choices=[{"value": "a", "label": "Apple"}],
+        selected=[],
+        error="",
+        control_class="is-flex",
+    )
+    assert "is-flex" in html
