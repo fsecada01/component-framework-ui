@@ -45,7 +45,7 @@ def cf_ui_head() -> str:
 @register.simple_tag
 def cf_ui_body(alpine: bool = True) -> str:
     if not alpine:
-        return ""
+        return mark_safe("")
 
     v = _versions()
     cf_alpine_url = static("cf_ui/cf_ui_alpine.js")

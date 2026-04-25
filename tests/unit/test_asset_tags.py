@@ -1,6 +1,3 @@
-import pytest
-
-
 def test_cf_ui_head_returns_bulma_cdn_link(settings):
     settings.CF_UI_THEME = "bulma"
     settings.CF_UI_CDN_VERSIONS = {}
@@ -22,10 +19,8 @@ def test_cf_ui_head_includes_xcloak_style(settings):
 def test_cf_ui_head_respects_version_override(settings):
     settings.CF_UI_THEME = "bulma"
     settings.CF_UI_CDN_VERSIONS = {"bulma": "0.9.4"}
-    from importlib import reload
-    import cf_ui.templatetags.cf_ui as tags
-    reload(tags)
-    result = tags.cf_ui_head()
+    from cf_ui.templatetags.cf_ui import cf_ui_head
+    result = cf_ui_head()
     assert "0.9.4" in result
 
 
