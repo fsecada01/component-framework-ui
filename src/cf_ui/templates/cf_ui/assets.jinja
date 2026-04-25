@@ -1,0 +1,39 @@
+{#
+  Jinja2 macros for cf-ui CDN asset injection.
+  Usage:
+    {% from "cf_ui/assets.jinja" import cf_ui_head, cf_ui_body %}
+    {{ cf_ui_head(theme="bulma") }}
+    {{ cf_ui_body(theme="bulma", cf_alpine_url="/static/cf_ui/cf_ui_alpine.js") }}
+#}
+
+{% macro cf_ui_head(theme="bulma", versions={}) %}
+{%- set v = {
+    "bulma": "1.0.2",
+    "bootstrap": "5.3.3",
+    "foundation": "6.7.5",
+    "fomantic": "2.9.3",
+    "daisy": "4.7.2"
+} -%}
+{%- for k, val in versions.items() -%}{%- set _ = v.update({k: val}) -%}{%- endfor -%}
+{%- if theme == "bulma" -%}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@{{ v.bulma }}/css/bulma.min.css">
+{%- elif theme == "bootstrap" -%}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@{{ v.bootstrap }}/dist/css/bootstrap.min.css">
+{%- elif theme == "foundation" -%}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/foundation-sites@{{ v.foundation }}/dist/css/foundation.min.css">
+{%- elif theme == "fomantic" -%}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fomantic-ui@{{ v.fomantic }}/dist/semantic.min.css">
+{%- elif theme == "daisy" -%}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@{{ v.daisy }}/dist/full.min.css">
+{%- endif %}
+<style>[x-cloak] { display: none !important; }</style>
+{% endmacro %}
+
+{% macro cf_ui_body(theme="bulma", alpine=true, cf_alpine_url="/static/cf_ui/cf_ui_alpine.js", versions={}) %}
+{%- set v = {"alpinejs": "3.14.1"} -%}
+{%- for k, val in versions.items() -%}{%- set _ = v.update({k: val}) -%}{%- endfor -%}
+{%- if alpine -%}
+<script src="{{ cf_alpine_url }}" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/alpinejs@{{ v.alpinejs }}/dist/cdn.min.js" defer></script>
+{%- endif %}
+{% endmacro %}
