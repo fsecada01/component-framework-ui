@@ -27,7 +27,9 @@ django = [
 ]
 fastapi = [
     "fastapi>=0.109.0",
+    "uvicorn[standard]>=0.27.0",
     "jinjax>=0.41",
+    "python-multipart>=0.0.5",
 ]
 litestar = [
     "litestar>=2.0",
@@ -69,6 +71,9 @@ include = [
 testpaths = ["tests"]
 pythonpath = ["src"]
 asyncio_mode = "auto"
+
+[tool.uv.sources]
+component-framework = { git = "https://github.com/fsecada01/component-framework.git" }
 
 [tool.ruff]
 line-length = 100

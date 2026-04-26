@@ -1,8 +1,8 @@
-{#def name, label, value="", error="", type="text", required=false, extra_class="" #}
+{#def name, label, value="", error="", type="text", required=false, extra_class="", input_class="" #}
 <div class="field {{ extra_class }}">
   <label class="label" for="{{ name }}">{{ label }}</label>
   <div class="control">
-    <input class="input{% if error %} is-danger{% endif %}"
+    <input class="input{% if error %} is-danger{% endif %}{% if input_class %} {{ input_class }}{% endif %}"
            id="{{ name }}"
            type="{{ type }}"
            name="{{ name }}"

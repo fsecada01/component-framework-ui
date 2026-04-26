@@ -1,8 +1,8 @@
-<c-vars name label value="" error="" rows="4" class="" />
+<c-vars name label value="" error="" rows="4" input_class="" class="" />
 <div class="field {{ class }}">
   <label class="label" for="{{ name }}">{{ label }}</label>
   <div class="control">
-    <textarea class="textarea{% if error %} is-danger{% endif %}"
+    <textarea class="textarea{% if error %} is-danger{% endif %}{% if input_class %} {{ input_class }}{% endif %}"
               id="{{ name }}"
               name="{{ name }}"
               rows="{{ rows }}">{{ value }}</textarea>

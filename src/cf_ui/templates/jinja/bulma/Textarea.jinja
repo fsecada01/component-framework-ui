@@ -1,8 +1,8 @@
-{#def name, label, value="", error="", rows=4, extra_class="" #}
+{#def name, label, value="", error="", rows=4, extra_class="", input_class="" #}
 <div class="field {{ extra_class }}">
   <label class="label" for="{{ name }}">{{ label }}</label>
   <div class="control">
-    <textarea class="textarea{% if error %} is-danger{% endif %}"
+    <textarea class="textarea{% if error %} is-danger{% endif %}{% if input_class %} {{ input_class }}{% endif %}"
               id="{{ name }}"
               name="{{ name }}"
               rows="{{ rows }}">{{ value }}</textarea>

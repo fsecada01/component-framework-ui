@@ -1,9 +1,9 @@
-<c-vars name label value="" error="" options="[]" class="" />
+<c-vars name label value="" error="" options="[]" input_class="" class="" />
 <div class="field {{ class }}">
   <label class="label" for="{{ name }}">{{ label }}</label>
   <div class="control">
     <div class="select{% if error %} is-danger{% endif %} is-fullwidth">
-      <select id="{{ name }}" name="{{ name }}">
+      <select id="{{ name }}" name="{{ name }}"{% if input_class %} class="{{ input_class }}"{% endif %}>
         {% for opt in options %}
         <option value="{{ opt.value }}"{% if opt.value|stringformat:"s" == value|stringformat:"s" %} selected{% endif %}>
           {{ opt.label }}

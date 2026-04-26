@@ -1,7 +1,7 @@
-{#def name, label, choices=[], selected=[], error="", extra_class="" #}
+{#def name, label, choices=[], selected=[], error="", extra_class="", control_class="" #}
 <div class="field {{ extra_class }}">
   <label class="label">{{ label }}</label>
-  <div class="control">
+  <div class="control{% if control_class %} {{ control_class }}{% endif %}">
     {% for choice in choices %}
     <label class="checkbox mr-3">
       <input type="checkbox"
