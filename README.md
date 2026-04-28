@@ -201,9 +201,17 @@ If you need direct access to template directories for custom configuration:
 ```python
 from cf_ui import JINJA_TEMPLATES_DIR, COTTON_TEMPLATES_DIR
 
-# JINJA_TEMPLATES_DIR / "bulma"  →  Path to Jinja2 templates
-# COTTON_TEMPLATES_DIR / "bulma" →  Path to Cotton templates
+# JINJA_TEMPLATES_DIR / "bulma"  →  Path to Jinja2 templates (theme-prefixed)
+# COTTON_TEMPLATES_DIR / "cf"    →  Path to Cotton component templates
 ```
+
+> **Cotton templates are theme-agnostic on disk.** They live at
+> `cotton/cf/*.html` (not `cotton/<theme>/cf/*.html`) so cf-ui can sit
+> alongside any consumer project's own `templates/cotton/<app>/...` tree
+> without colliding on `COTTON_DIR`. The active CSS framework is selected
+> via `CF_UI_THEME` (used by the asset tags) — switching themes in a
+> future release will happen inside the templates, not via the directory
+> layout.
 
 ---
 
