@@ -21,8 +21,10 @@ class CfUiConfig(AppConfig):
                 f"Check CF_UI_THEME in settings."
             )
 
-        if not hasattr(settings, "COTTON_DIRS"):
-            settings.COTTON_DIRS = []
-
-        if cotton_dir not in [Path(d) for d in settings.COTTON_DIRS]:
-            settings.COTTON_DIRS.append(cotton_dir)
+        # django-cotton reads COTTON_DIR (singular). Setting it to
+        # "cotton/<theme>" makes <c-cf.foo> resolve to
+        # cotton/<theme>/cf/foo.html, which the cotton loader finds via
+        # the app-templates walk (cf_ui/templates/cotton/<theme>/cf/foo.html).
+        # Don't overwrite a value the consumer has already set.
+        if not getattr(settings, "COTTON_DIR", None):
+            settings.COTTON_DIR = f"cotton/{theme}"

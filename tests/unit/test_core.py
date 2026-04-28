@@ -32,13 +32,10 @@ def test_django_appconfig_name():
     assert app is not None
 
 
-def test_django_appconfig_ready_registers_cotton_dirs():
+def test_django_appconfig_ready_sets_cotton_dir():
     from django.conf import settings
 
-    from cf_ui import COTTON_TEMPLATES_DIR
-
-    theme_dir = COTTON_TEMPLATES_DIR / "bulma"
-    assert any(str(d) == str(theme_dir) for d in getattr(settings, "COTTON_DIRS", []))
+    assert getattr(settings, "COTTON_DIR", None) == "cotton/bulma"
 
 
 def test_fastapi_install_cf_ui_adds_template_dir():
