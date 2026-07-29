@@ -146,6 +146,21 @@ input you did not write.
 const css = buildAxisCss(mySets, undefined, { validate: false });
 ```
 
+The Python generators carry the identical contract, so neither side is the lax
+one:
+
+| Python | JavaScript |
+|---|---|
+| `render_axis_css(sets, banner=True, validate=True)` | `buildAxisCss(sets, definition, { validate })` |
+| `custom_axis_css(sets, banner=False, validate=True)` | — |
+| `style_element(sets, validate=True)` | — |
+| `merge_value_sets(custom, mode)` | `mergeValueSets(definition, custom, mode)` |
+
+```python
+# Same shape, same default, same escape hatch.
+css = render_axis_css(my_sets, validate=False)
+```
+
 ## One definition, two generators — and a test that proves it
 
 `cf_ui/axes.py` is still the single source of truth. It generates two

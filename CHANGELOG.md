@@ -24,12 +24,21 @@ breaking for anyone who was relying, knowingly or not, on the gaps.
   `p-4` and `gap-2` in the consuming app by ±20% — including for Bulma consumers
   using none of it. `--cf-spacing` is still emitted.
   **Migration:** to keep the old behavior, add `@theme { --spacing: var(--cf-spacing); }`.
-- **`buildAxisBase()` and `buildAxisCss()` validate by default.** They were
-  exported escape hatches that generated CSS with the build error switched off,
-  contradicting the guarantee #7 shipped on. Pass `{ validate: false }` to opt
-  out explicitly.
-  **Migration:** code passing invalid value sets to these now throws. That was
-  already producing malformed CSS.
+- **Every exported generator validates by default**, on both sides of the
+  language boundary. These were escape hatches that generated CSS with the gate
+  switched off, contradicting the guarantee #7 shipped on — and `style_element`
+  is the very sink the token-value gate above exists to protect, so it emitted
+  an injection payload verbatim when called directly.
+  - JavaScript: `buildAxisBase(sets, definition, { validate: false })`,
+    `buildAxisCss(...)` — same opt-out.
+  - Python: `render_axis_css(sets, banner=True, validate=True)`,
+    `custom_axis_css(sets, banner=False, validate=True)`,
+    `style_element(sets, validate=True)`.
+
+  **Migration:** code passing invalid value sets to any of these now throws.
+  That was already producing malformed CSS. The documented entry points
+  (`CF_UI_AXIS_VALUES`, the FastAPI/Litestar `value_sets=` argument) route
+  through `merge_value_sets` and are unaffected.
 
 ### Added
 - **The wide-gamut lightness invariant is enforced (#20).** `p3_lightness_failures()`
@@ -122,7 +131,9 @@ breaking for anyone who was relying, knowingly or not, on the gaps.
 - Base declarations are sRGB hex (what the contrast gate is computed against);
   wide-gamut chroma is layered behind `@media (color-gamut: p3)` — not
   `@supports (color: oklch(...))`, which is a no-op in every current browser
-- Density drives Tailwind v4's `--spacing`; accent aliases to `--color-primary*`
+- Accent aliases to `--color-primary*` for Tailwind v4 interop. Density
+  originally aliased `--cf-spacing` to `--spacing`; that was removed before
+  release (see the breaking change above) and never shipped in a tagged version
 
 ## [0.1.1] — 2026-04-28
 

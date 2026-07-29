@@ -519,6 +519,59 @@ def test_the_injection_payload_never_reaches_a_style_element():
 
 
 # --------------------------------------------------------------------------
+# Issue #20 §4: the exported generators validate too, not just merge_value_sets.
+#
+# An exported function that generates CSS with the gate switched off is the
+# generator with the build error removed. The plugin's buildAxisBase/buildAxisCss
+# were fixed for exactly this; these are their Python counterparts, and
+# style_element() is the sink the whole §1 gate exists to protect.
+# --------------------------------------------------------------------------
+
+EVIL_SET = {"form": {"evil": {"--cf-radius": "0; } body { display: none"}}}
+
+
+@pytest.mark.parametrize("generator", ["render_axis_css", "custom_axis_css", "style_element"])
+def test_the_exported_generators_validate_by_default(generator):
+    import cf_ui.axes as axes
+
+    with pytest.raises(axes.AxisConfigError, match="unsafe value"):
+        getattr(axes, generator)(EVIL_SET)
+
+
+@pytest.mark.parametrize("generator", ["render_axis_css", "custom_axis_css", "style_element"])
+def test_the_generators_take_an_explicit_opt_out(generator):
+    """The escape hatch stays — you just have to ask for it."""
+    import cf_ui.axes as axes
+
+    output = getattr(axes, generator)(EVIL_SET, validate=False)
+    assert "display: none" in output
+
+
+def test_style_element_no_longer_emits_an_injection_payload():
+    """The concrete regression: this used to render the payload into the page."""
+    from cf_ui.axes import AxisConfigError, style_element
+
+    with pytest.raises(AxisConfigError):
+        style_element(EVIL_SET)
+
+
+def test_the_opt_out_does_not_change_what_valid_input_produces():
+    """Guards against validation quietly altering the generated CSS."""
+    from cf_ui.axes import DEFAULT_VALUE_SETS, render_axis_css
+
+    assert render_axis_css(DEFAULT_VALUE_SETS) == render_axis_css(
+        DEFAULT_VALUE_SETS, validate=False
+    )
+
+
+def test_the_generators_reject_an_unknown_axis():
+    from cf_ui.axes import AxisConfigError, render_axis_css
+
+    with pytest.raises(AxisConfigError, match="flavour"):
+        render_axis_css({"flavour": {"vanilla": {"--cf-radius": "0"}}})
+
+
+# --------------------------------------------------------------------------
 # Issue #20 §3: the p3 layer holds the base declaration's lightness.
 #
 # The contrast gate is computed against the sRGB base. The docs claim the p3

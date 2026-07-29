@@ -356,6 +356,23 @@ def _validate_tokens(axis: str, name: str, tokens: Any) -> None:
             )
 
 
+def _validate_value_sets(value_sets: Mapping[str, Mapping[str, Any]]) -> None:
+    """Run a whole ``{axis: {name: tokens}}`` mapping through the gate.
+
+    Mirrors ``validateSets`` in ``cf_ui_tailwind_plugin.mjs``. Factored out so
+    the generators below can apply the same checks without going through
+    :func:`merge_value_sets` — an exported function that generates CSS with the
+    validation switched off is the asymmetry this exists to prevent.
+    """
+    for axis, values in value_sets.items():
+        if axis not in AXES:
+            raise AxisConfigError(f"unknown axis {axis!r}: valid axes are {', '.join(AXES)}")
+        if not isinstance(values, Mapping):
+            raise AxisConfigError(f"axis {axis!r} must map value names to tokens")
+        for name, tokens in values.items():
+            _validate_value_set(axis, name, tokens)
+
+
 def merge_value_sets(
     custom: Mapping[str, Mapping[str, Any]] | None,
     mode: str = "extend",
@@ -378,13 +395,8 @@ def merge_value_sets(
     if not custom:
         return merged
 
+    _validate_value_sets(custom)
     for axis, values in custom.items():
-        if axis not in AXES:
-            raise AxisConfigError(f"unknown axis {axis!r}: valid axes are {', '.join(AXES)}")
-        if not isinstance(values, Mapping):
-            raise AxisConfigError(f"axis {axis!r} must map value names to tokens")
-        for name, tokens in values.items():
-            _validate_value_set(axis, name, tokens)
         if mode == "replace":
             merged[axis] = deepcopy(dict(values))
         else:
@@ -516,8 +528,20 @@ def _selector(axis: str, value: str, mode: str | None = None) -> str:
 def render_axis_css(
     value_sets: Mapping[str, Mapping[str, Any]],
     banner: bool = True,
+    validate: bool = True,
 ) -> str:
-    """Render axis value sets as CSS custom properties keyed on data attributes."""
+    """Render axis value sets as CSS custom properties keyed on data attributes.
+
+    Args:
+        value_sets: ``{axis: {value_name: tokens}}``.
+        banner: prepend the generated-file banner.
+        validate: on by default. ``False`` skips the gate — an explicit escape
+            hatch for inspecting output or comparing generators, never
+            something to reach for with input you did not write. Mirrors
+            ``buildAxisCss(..., { validate: false })`` in the Tailwind plugin.
+    """
+    if validate:
+        _validate_value_sets(value_sets)
     parts: list[str] = [_BANNER] if banner else []
 
     for axis in AXES:
@@ -549,12 +573,20 @@ def render_axis_css(
     return "\n".join(parts)
 
 
-def custom_axis_css(value_sets: Mapping[str, Mapping[str, Any]], banner: bool = False) -> str:
+def custom_axis_css(
+    value_sets: Mapping[str, Mapping[str, Any]],
+    banner: bool = False,
+    validate: bool = True,
+) -> str:
     """Render only the values the shipped stylesheet does not already cover.
 
     A value is emitted when it is new, or when it shadows a shipped value name
     with different tokens — in which case the static asset's copy is stale.
+
+    Validates by default; see :func:`render_axis_css` for the opt-out.
     """
+    if validate:
+        _validate_value_sets(value_sets)
     diff: dict[str, dict[str, Any]] = {}
     for axis in AXES:
         for value, tokens in value_sets.get(axis, {}).items():
@@ -562,12 +594,19 @@ def custom_axis_css(value_sets: Mapping[str, Mapping[str, Any]], banner: bool = 
                 diff.setdefault(axis, {})[value] = tokens
     if not diff:
         return ""
-    return render_axis_css(diff, banner=banner)
+    # Already checked above (or deliberately skipped) — do not pay for it twice.
+    return render_axis_css(diff, banner=banner, validate=False)
 
 
-def style_element(value_sets: Mapping[str, Mapping[str, Any]]) -> str:
-    """Wrap :func:`custom_axis_css` in a style element, or return ``""``."""
-    css = custom_axis_css(value_sets)
+def style_element(value_sets: Mapping[str, Mapping[str, Any]], validate: bool = True) -> str:
+    """Wrap :func:`custom_axis_css` in a style element, or return ``""``.
+
+    This is the injection sink the token-value gate exists for: whatever it
+    returns is marked safe and rendered into the page. It validates by default
+    for that reason — the opt-out is for callers generating output they are not
+    about to inject.
+    """
+    css = custom_axis_css(value_sets, validate=validate)
     return f"<style>\n{css}</style>" if css else ""
 
 

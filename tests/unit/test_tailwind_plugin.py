@@ -107,8 +107,14 @@ def _declarations(css: str) -> dict[str, dict[str, str]]:
 
 
 def _python_rules() -> tuple[dict, dict]:
-    """Split the generated stylesheet into its base rules and its p3 layer."""
-    css = _COMMENT.sub("", render_axis_css(DEFAULT_VALUE_SETS, banner=False))
+    """Split the generated stylesheet into its base rules and its p3 layer.
+
+    ``validate=False`` for the same reason the JS side passes it: comparing only
+    validated input would narrow this from "the two generators agree" to "they
+    agree on input the validator already approved". Both sides must skip it, or
+    the comparison is no longer symmetric.
+    """
+    css = _COMMENT.sub("", render_axis_css(DEFAULT_VALUE_SETS, banner=False, validate=False))
     marker = "@media (color-gamut: p3) {"
     base_css, _, media_css = css.partition(marker)
     return _declarations(base_css), _declarations(media_css)
@@ -305,7 +311,14 @@ def test_generated_artifacts_are_pinned_to_lf():
 
 
 def test_regenerating_the_artifacts_is_a_no_op():
-    """The checked-in artifacts match what the generator produces, byte for byte."""
+    """The checked-in artifacts match what the generator produces, byte for byte.
+
+    Deliberately ``read_bytes``, not ``read_text``: the latter applies universal
+    newline translation, so a CRLF file on disk — the exact state
+    ``.gitattributes`` exists to prevent — would still compare equal, and this
+    test would assert content only while reading as though it covered the line
+    endings its name refers to.
+    """
     import json as _json
 
     from cf_ui.axes import (
@@ -316,6 +329,12 @@ def test_regenerating_the_artifacts_is_a_no_op():
         render_axis_css,
     )
 
-    assert AXIS_CSS_PATH.read_text(encoding="utf-8") == render_axis_css(DEFAULT_VALUE_SETS)
+    css = AXIS_CSS_PATH.read_bytes()
+    definition = AXIS_DEFINITION_PATH.read_bytes()
+
+    assert b"\r\n" not in css, "cf_ui_axes.css is CRLF on disk; the generator writes LF"
+    assert b"\r\n" not in definition, "cf_ui_axes.json is CRLF on disk; the generator writes LF"
+
+    assert css == render_axis_css(DEFAULT_VALUE_SETS).encode("utf-8")
     expected = _json.dumps(axis_definition(), indent=2) + "\n"
-    assert AXIS_DEFINITION_PATH.read_text(encoding="utf-8") == expected
+    assert definition == expected.encode("utf-8")
