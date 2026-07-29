@@ -103,7 +103,7 @@ function validateValueSet(definition, axis, name, tokens) {
   }
 
   if (definition.modeKeyedAxes.includes(axis)) {
-    const missing = definition.modes.filter((mode) => !(mode in tokens));
+    const missing = definition.modes.filter((mode) => !Object.hasOwn(tokens, mode));
     if (missing.length) {
       throw new AxisPluginError(
         `axis value ${axis}/${name} is missing ${missing.join(", ")} — light and dark must ` +
@@ -170,7 +170,7 @@ export function resolveComposition(definition, composition, valueSets) {
   if (composition === null || composition === undefined) {
     chosen = { ...base };
   } else if (typeof composition === "string") {
-    if (!(composition in definition.compositions)) {
+    if (!Object.hasOwn(definition.compositions, composition)) {
       const known = Object.keys(definition.compositions).sort().join(", ");
       throw new AxisPluginError(
         `unknown composition '${composition}': known compositions ${known}`,
@@ -195,7 +195,7 @@ export function resolveComposition(definition, composition, valueSets) {
   for (const axis of definition.axes) {
     const value = chosen[axis];
     const available = valueSets[axis] ?? {};
-    if (!(value in available)) {
+    if (!Object.hasOwn(available, value)) {
       const valid = Object.keys(available).sort().join(", ") || "(none)";
       throw new AxisPluginError(
         `unknown value '${value}' for axis '${axis}': valid values are ${valid}`,
@@ -222,7 +222,7 @@ function selectorFor(definition, axis, value, mode) {
 function blockFor(definition, tokens) {
   const block = { ...tokens };
   for (const [name, alias] of Object.entries(definition.aliases)) {
-    if (name in tokens) block[alias] = `var(${name})`;
+    if (Object.hasOwn(tokens, name)) block[alias] = `var(${name})`;
   }
   return block;
 }
@@ -330,7 +330,7 @@ export function contrastReport(valueSets, contrastPairs, modes = ["light", "dark
         };
         const failures = [];
         for (const { foreground, background, minimum } of contrastPairs) {
-          if (!(foreground in tokens) || !(background in tokens)) {
+          if (!Object.hasOwn(tokens, foreground) || !Object.hasOwn(tokens, background)) {
             failures.push(`${foreground} on ${background}: token not declared`);
             continue;
           }
@@ -404,8 +404,18 @@ function createPlugin(options = {}) {
  * Callable as a factory (`cfUiAxes({...})`) and usable directly as a plugin
  * (`@plugin "./cf_ui_tailwind_plugin.mjs"`), which is the shape Tailwind's own
  * `plugin.withOptions` produces.
+ *
+ * `__isOptionsFunction` is what makes the CSS-first path accept options:
+ *
+ *     @plugin "./cf_ui_tailwind_plugin.mjs" { composition: console; }
+ *
+ * Without the marker Tailwind rejects that with "does not accept options" —
+ * and a consumer who cannot pass a composition never gets theirs validated,
+ * leaving the plugin checking only the default composition, which always
+ * passes. The build error would be silently inert for the idiomatic v4 setup.
  */
 const cfUiAxes = (options = {}) => createPlugin(options);
+cfUiAxes.__isOptionsFunction = true;
 Object.assign(cfUiAxes, createPlugin({}));
 
 export default cfUiAxes;

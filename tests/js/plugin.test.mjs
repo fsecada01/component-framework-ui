@@ -74,6 +74,25 @@ describe("the build error", () => {
       assert.doesNotThrow(() => cfUiAxes({ composition: name }));
     }
   });
+
+  // Regression: membership was tested with `in`, which walks the prototype
+  // chain. `"toString" in {}` is true, so an Object.prototype key sailed past
+  // the check and generated an empty rule instead of failing the build — a
+  // hole in the one guarantee this plugin exists to provide. Verified against
+  // a real Tailwind v4 build, which now exits 1.
+  it("rejects an axis value that only exists on Object.prototype", () => {
+    assert.throws(() => cfUiAxes({ composition: { form: "toString" } }), /toString/);
+  });
+
+  it("rejects a composition name that only exists on Object.prototype", () => {
+    assert.throws(() => cfUiAxes({ composition: "hasOwnProperty" }), /hasOwnProperty/);
+  });
+
+  it("rejects a value set keyed on __proto__", () => {
+    // JSON.parse makes __proto__ a genuine own property, unlike a literal.
+    const hostile = JSON.parse('{"form":{"__proto__":{"--cf-radius":"0"}}}');
+    assert.throws(() => cfUiAxes({ valueSets: hostile }), /__proto__/);
+  });
 });
 
 describe("plugin shape", () => {
@@ -88,6 +107,15 @@ describe("plugin shape", () => {
 
   it("carries a config object, per Tailwind's plugin contract", () => {
     assert.equal(typeof cfUiAxes({}).config, "object");
+  });
+
+  // Regression: without this marker Tailwind rejects `@plugin "..." { ... }`
+  // with "does not accept options". A CSS-first consumer then cannot pass a
+  // composition at all, so the plugin only ever validates the default
+  // composition — which always passes. The build error would be silently
+  // inert for the idiomatic v4 setup. Verified against Tailwind v4.3.3.
+  it("is marked as accepting options, so the CSS-first path can pass them", () => {
+    assert.equal(cfUiAxes.__isOptionsFunction, true);
   });
 
   it("needs no tailwindcss import to construct", () => {

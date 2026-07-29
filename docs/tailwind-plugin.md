@@ -36,7 +36,18 @@ Tailwind v4, CSS-first:
 @plugin "../.venv/lib/python3.12/site-packages/cf_ui/static/cf_ui/cf_ui_tailwind_plugin.mjs";
 ```
 
-Tailwind with a JS config, when you need options:
+Options can be passed on the CSS path too, but `@plugin` options are **flat
+key/value pairs** — good for a named composition or a boolean:
+
+```css
+@plugin "../.venv/.../cf_ui_tailwind_plugin.mjs" {
+  composition: console;
+  contrastReport: true;
+}
+```
+
+A per-axis map (`{ accent: "brand" }`) or a custom `valueSets` cannot be
+expressed in that syntax. Use the JS config for those:
 
 ```js
 import cfUiAxes from "../.venv/lib/python3.12/site-packages/cf_ui/static/cf_ui/cf_ui_tailwind_plugin.mjs";
@@ -79,6 +90,8 @@ Tailwind never tree-shakes; the two concerns are separate.
 - a token that is not a CSS custom property
 - a token value containing `;`, `{`, `}`, or a comment delimiter — those close
   the declaration and write rules you did not author
+- a value or composition name that exists only on `Object.prototype`
+  (`toString`, `hasOwnProperty`, …), and a value set keyed on `__proto__`
 
 **Warns** — `contrastReport: true`:
 
