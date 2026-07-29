@@ -1,0 +1,7 @@
+/* The build error, as a consumer would actually hit it. `brutalist` is not a
+   known composition, so this build must fail — a zero exit here means the
+   headline feature of #7 is inert. */
+@import "tailwindcss" source(none);
+@plugin "../../../src/cf_ui/static/cf_ui/cf_ui_tailwind_plugin.mjs" {
+  composition: brutalist;
+}

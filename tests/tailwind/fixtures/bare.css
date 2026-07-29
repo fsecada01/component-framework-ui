@@ -1,0 +1,6 @@
+/* The idiomatic v4 CSS-first setup, with no options. */
+/* `source(none)` keeps Tailwind from crawling the repo for utilities — this
+   check is about the plugin's base layer, and auto-detection would make the
+   build both slow and sensitive to unrelated files. */
+@import "tailwindcss" source(none);
+@plugin "../../../src/cf_ui/static/cf_ui/cf_ui_tailwind_plugin.mjs";
