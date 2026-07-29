@@ -169,3 +169,9 @@ tests could not have caught what they claimed to:
 `expect(role_is_dialog)` proves nothing about focus, and
 `expect(tab).to_be_attached()` passes against markup nobody can use. Assert the
 behavior.
+
+One caveat that cost a CI cycle: a focus assertion has to **wait**, not sample.
+`document.activeElement` read once, immediately after the reveal class lands,
+races `_focusFirst()`'s retry loop — a fast machine wins it every time and a
+loaded CI runner does not. Use `_wait_for_modal_focus(page)`, and press keys
+that the dialog handles only after it returns.

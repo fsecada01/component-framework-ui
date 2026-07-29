@@ -20,6 +20,19 @@ def _wait_for_alpine(page) -> None:
     )
 
 
+def _wait_for_modal_focus(page) -> None:
+    """Wait for the dialog to actually hold focus — see the Bulma suite.
+
+    `_focusFirst` retries across animation frames, so a one-shot read of
+    `document.activeElement` right after the reveal is a race that only a slow
+    machine loses.
+    """
+    page.wait_for_function(
+        "() => document.getElementById('e2e-modal').contains(document.activeElement)",
+        timeout=5000,
+    )
+
+
 # --- django-cotton: one setting, no consumer template edits ----------------
 
 
@@ -210,9 +223,7 @@ def test_jinja_modal_manages_focus(daisy_jinja_page, daisy_jinja_server_url):
     _wait_for_alpine(page)
 
     page.locator("#open-modal").click()
-    assert page.evaluate(
-        "() => document.getElementById('e2e-modal').contains(document.activeElement)"
-    ), "focus stayed behind the dialog"
+    _wait_for_modal_focus(page)
     page.keyboard.press("Escape")
     expect(page.locator("#e2e-modal")).not_to_have_class(re.compile(r"modal-open"))
     assert page.evaluate("() => document.activeElement.id") == "open-modal"
@@ -226,6 +237,7 @@ def test_jinja_tab_does_not_escape_the_open_modal(daisy_jinja_page, daisy_jinja_
     _wait_for_alpine(page)
 
     page.locator("#open-modal").click()
+    _wait_for_modal_focus(page)
     inside = "() => document.getElementById('e2e-modal').contains(document.activeElement)"
     for _ in range(6):
         page.keyboard.press("Tab")

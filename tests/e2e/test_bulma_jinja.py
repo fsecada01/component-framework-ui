@@ -12,6 +12,20 @@ def _wait_for_alpine(page) -> None:
     )
 
 
+def _wait_for_modal_focus(page) -> None:
+    """Wait for the dialog to actually hold focus.
+
+    `_focusFirst` retries across animation frames until the reveal has been
+    committed, so sampling `document.activeElement` once — right after the
+    reveal class lands — is a race that is only lost on a slow machine. CI lost
+    it on all three Python versions while every local run won it.
+    """
+    page.wait_for_function(
+        "() => document.getElementById('e2e-modal').contains(document.activeElement)",
+        timeout=5000,
+    )
+
+
 def test_modal_opens_and_closes(jinja_page, jinja_server_url):
     page, js_mode = jinja_page
     page.goto(f"{jinja_server_url}/gallery")
@@ -59,9 +73,7 @@ def test_modal_moves_focus_into_the_dialog(jinja_page, jinja_server_url):
 
     page.locator("#open-modal").click()
     expect(page.locator("#e2e-modal")).to_have_class(re.compile(r"is-active"))
-    assert page.evaluate(
-        "() => document.getElementById('e2e-modal').contains(document.activeElement)"
-    ), "focus stayed behind the dialog"
+    _wait_for_modal_focus(page)
 
 
 def test_modal_takes_focus_even_when_the_reveal_is_late(jinja_page, jinja_server_url):
@@ -124,6 +136,7 @@ def test_modal_restores_focus_to_its_trigger(jinja_page, jinja_server_url):
     _wait_for_alpine(page)
 
     page.locator("#open-modal").click()
+    _wait_for_modal_focus(page)
     page.locator("#e2e-modal .delete").click()
     expect(page.locator("#e2e-modal")).not_to_have_class(re.compile(r"is-active"))
     assert page.evaluate("() => document.activeElement.id") == "open-modal"
@@ -138,6 +151,9 @@ def test_escape_closes_the_modal(jinja_page, jinja_server_url):
 
     page.locator("#open-modal").click()
     expect(page.locator("#e2e-modal")).to_have_class(re.compile(r"is-active"))
+    # Escape is handled on the dialog itself, so it only reaches the handler
+    # once focus is inside — press it earlier and the key goes to <body>.
+    _wait_for_modal_focus(page)
     page.keyboard.press("Escape")
     expect(page.locator("#e2e-modal")).not_to_have_class(re.compile(r"is-active"))
     assert page.evaluate("() => document.activeElement.id") == "open-modal"
@@ -156,6 +172,7 @@ def test_tab_does_not_escape_the_open_modal(jinja_page, jinja_server_url):
     _wait_for_alpine(page)
 
     page.locator("#open-modal").click()
+    _wait_for_modal_focus(page)
     inside = "() => document.getElementById('e2e-modal').contains(document.activeElement)"
     seen = set()
     for _ in range(6):
