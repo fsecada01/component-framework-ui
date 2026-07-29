@@ -50,6 +50,28 @@ verified to still resolve.
   parametrized cases in `tests/unit/test_accessibility.py` now run against
   three themes rather than two, with no assertion weakened.
 
+### Added — real Tailwind build in CI (#17)
+
+- **A CI job that builds the vendored plugin through the actual Tailwind CLI.**
+  Nothing did before. The existing suite calls the plugin's exports directly, so
+  every claim it makes about *Tailwind* is a proxy — and both defects fixed in
+  #7 were invisible to it, surfacing only under a real build. The sharpest case
+  is `assert.equal(cfUiAxes.__isOptionsFunction, true)`: it asserts cf-ui still
+  sets a flag, not that Tailwind still reads it. Rename the marker in both the
+  plugin and that assertion and the suite stays green while the CSS-first path
+  silently stops accepting options, leaving only the default composition
+  validated — which always passes.
+
+  The new job compiles a bare `@plugin` and `@plugin { composition: console; }`,
+  asserts the compiled CSS actually carries the axis rules, the
+  `--color-primary` aliases and the `@media (color-gamut: p3)` layer (a build
+  that succeeds and emits nothing is the other silent failure), and asserts an
+  unknown composition exits non-zero — read from the process directly, since
+  piping masks the status. Tailwind is pinned; a break on bump is the signal.
+
+  Run it locally with `just test-tailwind`. It throws rather than skipping when
+  the toolchain is absent, because a skip reads as a pass.
+
 ### Fixed — accessibility (#21)
 
 Three gaps that predate 0.1.0 and were flagged during the #6 review, fixed

@@ -1,0 +1,8 @@
+/* The path #7 shipped and could not actually exercise: options through
+   `@plugin`. Tailwind only forwards these to a plugin marked
+   `__isOptionsFunction`; without the marker this build fails with "does not
+   accept options" and the composition is never validated at all. */
+@import "tailwindcss" source(none);
+@plugin "../../../src/cf_ui/static/cf_ui/cf_ui_tailwind_plugin.mjs" {
+  composition: console;
+}
