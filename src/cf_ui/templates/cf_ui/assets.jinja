@@ -1,12 +1,18 @@
 {#
   Jinja2 macros for cf-ui CDN asset injection.
   Usage:
-    {% from "cf_ui/assets.jinja" import cf_ui_head, cf_ui_body %}
+    {% from "cf_ui/assets.jinja" import cf_ui_head, cf_ui_body, cf_ui_root_attrs %}
     {{ cf_ui_head(theme="bulma") }}
+    <html {{ cf_ui_root_attrs() }}>
     {{ cf_ui_body(theme="bulma", cf_alpine_url="/static/cf_ui/cf_ui_alpine.js") }}
+
+  The axis macros hold no axis data of their own — they delegate to the
+  cf_ui_axis_attrs / cf_ui_axis_style globals registered by install_cf_ui(),
+  so cf_ui/axes.py stays the single source of truth. Without the installer
+  they are inert rather than an error, so plain Jinja2 apps still render.
 #}
 
-{% macro cf_ui_head(theme="bulma", versions={}) %}
+{% macro cf_ui_head(theme="bulma", versions={}, cf_axes_url="/static/cf_ui/cf_ui_axes.css") %}
 {%- set v = {
     "bulma": "1.0.2",
     "bootstrap": "5.3.3",
@@ -26,7 +32,15 @@
 {%- elif theme == "daisy" -%}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@{{ v.daisy }}/dist/full.min.css">
 {%- endif %}
+<link rel="stylesheet" href="{{ cf_axes_url }}">
 <style>[x-cloak] { display: none !important; }</style>
+{%- if cf_ui_axis_style is defined %}
+{{ cf_ui_axis_style()|safe }}
+{%- endif %}
+{% endmacro %}
+
+{% macro cf_ui_root_attrs() %}
+{%- if cf_ui_axis_attrs is defined -%}{{ cf_ui_axis_attrs()|safe }}{%- endif -%}
 {% endmacro %}
 
 {% macro cf_ui_body(theme="bulma", alpine=true, cf_alpine_url="/static/cf_ui/cf_ui_alpine.js", versions={}) %}

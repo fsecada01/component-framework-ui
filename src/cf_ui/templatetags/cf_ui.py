@@ -3,6 +3,9 @@ from django.conf import settings
 from django.templatetags.static import static
 from django.utils.safestring import mark_safe
 
+from cf_ui.axes import root_attrs, style_element
+from cf_ui.django import axis_value_sets
+
 register = template.Library()
 
 _CDN_CSS = {
@@ -51,8 +54,27 @@ def cf_ui_head() -> str:
         url = _CDN_CSS[theme].format(v=v.get(theme, ""))
         parts.append(f'<link rel="stylesheet" href="{url}">')
 
+    parts.append(f'<link rel="stylesheet" href="{static("cf_ui/cf_ui_axes.css")}">')
     parts.append("<style>[x-cloak] { display: none !important; }</style>")
+
+    # Value sets the app supplied itself are not in the static asset.
+    custom = style_element(axis_value_sets())
+    if custom:
+        parts.append(custom)
+
     return mark_safe("\n".join(parts))
+
+
+@register.simple_tag
+def cf_ui_root_attrs() -> str:
+    """Stamp all five axis attributes on the root element.
+
+    One setting in (``CF_UI_COMPOSITION``), five attributes out::
+
+        <html lang="en" {% cf_ui_root_attrs %}>
+    """
+    composition = getattr(settings, "CF_UI_COMPOSITION", None)
+    return mark_safe(root_attrs(composition, value_sets=axis_value_sets()))
 
 
 @register.simple_tag

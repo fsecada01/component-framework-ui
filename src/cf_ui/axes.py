@@ -1,0 +1,606 @@
+"""Theme composition axes — the pluggable token layer.
+
+``CF_UI_THEME`` answers *which CSS framework*. The axes here answer the
+orthogonal question: *within that framework, what does this app look like?*
+
+Five independent axes, each keyed on a data attribute and each carrying a
+**closed set** of named values. Apps pick one value per axis; they never supply
+raw colors. That constraint is the point — unconstrained theming variables
+produce inconsistent, often inaccessible results, and the closed set is what
+makes contrast a package-level guarantee rather than a per-app afterthought.
+
+``data-theme`` stays the light/dark mode switch and is deliberately **not** an
+axis: mode and identity are separate concerns.
+
+This module is the single source of truth. ``static/cf_ui/cf_ui_axes.css`` is
+generated from it — regenerate with::
+
+    python -m cf_ui.axes
+
+The shipped value set is deliberately neutral. A UI kit that hardcodes one
+organization's brand color is a UI kit nobody else adopts; consuming apps
+inject their own sets via :func:`merge_value_sets`.
+"""
+
+from __future__ import annotations
+
+import re
+from collections.abc import Mapping
+from copy import deepcopy
+from pathlib import Path
+from typing import Any
+
+__all__ = [
+    "AXES",
+    "AXIS_ATTRS",
+    "AXIS_CSS_PATH",
+    "DEFAULT_COMPOSITIONS",
+    "DEFAULT_VALUE_SETS",
+    "MODES",
+    "MODE_KEYED_AXES",
+    "AxisConfigError",
+    "build_axis_globals",
+    "contrast_failures",
+    "contrast_ratio",
+    "custom_axis_css",
+    "merge_value_sets",
+    "render_axis_css",
+    "resolve_composition",
+    "root_attrs",
+    "style_element",
+]
+
+
+class AxisConfigError(ValueError):
+    """Raised for an unknown axis, value, composition, or malformed value set."""
+
+
+AXES: tuple[str, ...] = ("accent", "surface", "form", "density", "type")
+
+#: Axes whose tokens are declared once per mode. The remaining axes are
+#: mode-independent — a radius or a font stack does not change in the dark.
+MODE_KEYED_AXES: tuple[str, ...] = ("accent", "surface")
+
+MODES: tuple[str, ...] = ("light", "dark")
+
+AXIS_ATTRS: dict[str, str] = {axis: f"data-{axis}" for axis in AXES}
+
+AXIS_CSS_PATH = Path(__file__).parent / "static" / "cf_ui" / "cf_ui_axes.css"
+
+#: Tailwind v4 reads its theme from custom properties in these namespaces, so
+#: emitting the aliases lets a Tailwind-based theme pick the axes up without
+#: per-component work. Harmless when no Tailwind is present.
+_ALIASES: dict[str, str] = {
+    "--cf-accent": "--color-primary",
+    "--cf-accent-content": "--color-primary-content",
+    "--cf-accent-strong": "--color-primary-strong",
+    "--cf-spacing": "--spacing",
+}
+
+_VALUE_NAME = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
+
+
+# ---------------------------------------------------------------------------
+# Shipped value sets
+#
+# Light and dark are declared independently for every mode-keyed value. Neither
+# is derived from the other by inversion — an inverted palette is a second
+# theme nobody designed.
+#
+# Base declarations are sRGB hex, which is what the WCAG gate below is computed
+# against. Wide-gamut chroma lives in the optional "p3" block and is layered
+# over that base at the same lightness, so the contrast guarantee still holds.
+# ---------------------------------------------------------------------------
+
+DEFAULT_VALUE_SETS: dict[str, dict[str, Any]] = {
+    "accent": {
+        "slate": {
+            "light": {
+                "--cf-accent": "#475569",
+                "--cf-accent-content": "#ffffff",
+                "--cf-accent-strong": "#334155",
+            },
+            "dark": {
+                "--cf-accent": "#94a3b8",
+                "--cf-accent-content": "#0f172a",
+                "--cf-accent-strong": "#cbd5e1",
+            },
+            # No p3 block: slate is near-neutral (chroma < 0.05), so there is
+            # no wide-gamut chroma to recover.
+        },
+        "azure": {
+            "light": {
+                "--cf-accent": "#0369a1",
+                "--cf-accent-content": "#ffffff",
+                "--cf-accent-strong": "#075985",
+            },
+            "dark": {
+                "--cf-accent": "#38bdf8",
+                "--cf-accent-content": "#082f49",
+                "--cf-accent-strong": "#7dd3fc",
+            },
+            "p3": {
+                "light": {
+                    "--cf-accent": "oklch(50.0% 0.137 242.7)",
+                    "--cf-accent-strong": "oklch(44.3% 0.115 240.8)",
+                },
+                "dark": {
+                    "--cf-accent": "oklch(75.4% 0.160 232.7)",
+                    "--cf-accent-strong": "oklch(82.8% 0.116 230.3)",
+                },
+            },
+        },
+        "jade": {
+            "light": {
+                "--cf-accent": "#047857",
+                "--cf-accent-content": "#ffffff",
+                "--cf-accent-strong": "#065f46",
+            },
+            "dark": {
+                "--cf-accent": "#34d399",
+                "--cf-accent-content": "#022c22",
+                "--cf-accent-strong": "#6ee7b7",
+            },
+            "p3": {
+                "light": {
+                    "--cf-accent": "oklch(50.8% 0.121 165.6)",
+                    "--cf-accent-strong": "oklch(43.2% 0.099 166.9)",
+                },
+                "dark": {
+                    "--cf-accent": "oklch(77.3% 0.177 163.2)",
+                    "--cf-accent-strong": "oklch(84.5% 0.149 165.0)",
+                },
+            },
+        },
+    },
+    "surface": {
+        "plain": {
+            "light": {
+                "--cf-ground": "#ffffff",
+                "--cf-lifted": "#f8fafc",
+                "--cf-text": "#0f172a",
+                "--cf-text-muted": "#475569",
+                "--cf-border": "#e2e8f0",
+            },
+            "dark": {
+                "--cf-ground": "#0b1120",
+                "--cf-lifted": "#172033",
+                "--cf-text": "#f1f5f9",
+                "--cf-text-muted": "#94a3b8",
+                "--cf-border": "#1e293b",
+            },
+        },
+        "muted": {
+            "light": {
+                "--cf-ground": "#f1f5f9",
+                "--cf-lifted": "#ffffff",
+                "--cf-text": "#111827",
+                "--cf-text-muted": "#475569",
+                "--cf-border": "#cbd5e1",
+            },
+            "dark": {
+                "--cf-ground": "#111827",
+                "--cf-lifted": "#1f2937",
+                "--cf-text": "#f9fafb",
+                "--cf-text-muted": "#9ca3af",
+                "--cf-border": "#374151",
+            },
+        },
+    },
+    "form": {
+        "sharp": {
+            "--cf-radius": "0",
+            "--cf-border-width": "1px",
+            "--cf-shadow": "none",
+        },
+        "soft": {
+            "--cf-radius": "0.375rem",
+            "--cf-border-width": "1px",
+            "--cf-shadow": "0 1px 2px rgb(0 0 0 / 0.08)",
+        },
+        "round": {
+            "--cf-radius": "0.75rem",
+            "--cf-border-width": "0",
+            "--cf-shadow": "0 2px 8px rgb(0 0 0 / 0.12)",
+        },
+    },
+    "density": {
+        "compact": {
+            "--cf-spacing": "0.2rem",
+            "--cf-line-height": "1.4",
+            "--cf-control-height": "2rem",
+        },
+        "regular": {
+            "--cf-spacing": "0.25rem",
+            "--cf-line-height": "1.5",
+            "--cf-control-height": "2.5rem",
+        },
+        "roomy": {
+            "--cf-spacing": "0.3rem",
+            "--cf-line-height": "1.65",
+            "--cf-control-height": "3rem",
+        },
+    },
+    "type": {
+        "system": {
+            "--cf-font-display": "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
+            "--cf-font-body": "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
+            "--cf-font-mono": "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
+            "--cf-scale-ratio": "1.25",
+        },
+        "humanist": {
+            "--cf-font-display": "Seravek, 'Gill Sans Nova', Ubuntu, Calibri, sans-serif",
+            "--cf-font-body": "Seravek, 'Gill Sans Nova', Ubuntu, Calibri, sans-serif",
+            "--cf-font-mono": "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
+            "--cf-scale-ratio": "1.2",
+        },
+        "mono": {
+            "--cf-font-display": "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
+            "--cf-font-body": "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
+            "--cf-font-mono": "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
+            "--cf-scale-ratio": "1.2",
+        },
+    },
+}
+
+#: Named compositions — one setting resolving to all five axes.
+DEFAULT_COMPOSITIONS: dict[str, dict[str, str]] = {
+    "default": {
+        "accent": "slate",
+        "surface": "plain",
+        "form": "soft",
+        "density": "regular",
+        "type": "system",
+    },
+    "editorial": {
+        "accent": "jade",
+        "surface": "muted",
+        "form": "sharp",
+        "density": "roomy",
+        "type": "humanist",
+    },
+    "console": {
+        "accent": "azure",
+        "surface": "plain",
+        "form": "sharp",
+        "density": "compact",
+        "type": "mono",
+    },
+}
+
+
+# ---------------------------------------------------------------------------
+# Value sets
+# ---------------------------------------------------------------------------
+
+
+def _validate_value_set(axis: str, name: str, tokens: Any) -> None:
+    if not _VALUE_NAME.match(name):
+        raise AxisConfigError(
+            f"invalid axis value name {name!r} for axis {axis!r}: "
+            "expected lowercase words separated by hyphens"
+        )
+    if not isinstance(tokens, Mapping):
+        raise AxisConfigError(f"axis value {axis}/{name} must be a mapping of custom properties")
+
+    if axis in MODE_KEYED_AXES:
+        missing = [mode for mode in MODES if mode not in tokens]
+        if missing:
+            raise AxisConfigError(
+                f"axis value {axis}/{name} is missing {', '.join(missing)} — light and dark "
+                "must each be declared explicitly, never derived by inversion"
+            )
+        for mode in MODES:
+            _validate_tokens(axis, name, tokens[mode])
+    else:
+        _validate_tokens(axis, name, tokens)
+
+
+def _validate_tokens(axis: str, name: str, tokens: Any) -> None:
+    if not isinstance(tokens, Mapping):
+        raise AxisConfigError(f"axis value {axis}/{name} must be a mapping of custom properties")
+    for token in tokens:
+        if not str(token).startswith("--"):
+            raise AxisConfigError(
+                f"axis value {axis}/{name} declares {token!r}: axis tokens must be CSS "
+                "custom properties (a name starting with '--')"
+            )
+
+
+def merge_value_sets(
+    custom: Mapping[str, Mapping[str, Any]] | None,
+    mode: str = "extend",
+) -> dict[str, dict[str, Any]]:
+    """Combine app-supplied value sets with the shipped defaults.
+
+    Args:
+        custom: ``{axis: {value_name: tokens}}`` supplied by the consuming app.
+        mode: ``"extend"`` adds to (or overrides individual values in) the
+            shipped set; ``"replace"`` discards the shipped values for each
+            axis the app supplies, leaving untouched axes at their defaults.
+
+    Returns:
+        A new mapping — the shipped defaults are never mutated.
+    """
+    if mode not in ("extend", "replace"):
+        raise AxisConfigError(f"unknown value-set mode {mode!r}: expected 'extend' or 'replace'")
+
+    merged = deepcopy(DEFAULT_VALUE_SETS)
+    if not custom:
+        return merged
+
+    for axis, values in custom.items():
+        if axis not in AXES:
+            raise AxisConfigError(f"unknown axis {axis!r}: valid axes are {', '.join(AXES)}")
+        if not isinstance(values, Mapping):
+            raise AxisConfigError(f"axis {axis!r} must map value names to tokens")
+        for name, tokens in values.items():
+            _validate_value_set(axis, name, tokens)
+        if mode == "replace":
+            merged[axis] = deepcopy(dict(values))
+        else:
+            merged[axis].update(deepcopy(dict(values)))
+
+    return merged
+
+
+# ---------------------------------------------------------------------------
+# Composition resolution
+# ---------------------------------------------------------------------------
+
+
+def resolve_composition(
+    composition: str | Mapping[str, str] | None = None,
+    value_sets: Mapping[str, Mapping[str, Any]] | None = None,
+) -> dict[str, str]:
+    """Resolve one config value into a value for each of the five axes.
+
+    Args:
+        composition: a named composition, a partial ``{axis: value}`` mapping
+            layered over the default composition, or ``None`` for the default.
+        value_sets: the value sets to validate against. Defaults to the
+            shipped sets.
+
+    Raises:
+        AxisConfigError: for an unknown composition name, axis, or value.
+    """
+    sets = value_sets if value_sets is not None else DEFAULT_VALUE_SETS
+    base = DEFAULT_COMPOSITIONS["default"]
+
+    if composition is None:
+        chosen = dict(base)
+    elif isinstance(composition, str):
+        if composition not in DEFAULT_COMPOSITIONS:
+            known = ", ".join(sorted(DEFAULT_COMPOSITIONS))
+            raise AxisConfigError(
+                f"unknown composition {composition!r}: known compositions {known}"
+            )
+        chosen = dict(DEFAULT_COMPOSITIONS[composition])
+    elif isinstance(composition, Mapping):
+        unknown = sorted(set(composition) - set(AXES))
+        if unknown:
+            raise AxisConfigError(
+                f"unknown axis {', '.join(repr(a) for a in unknown)}: "
+                f"valid axes are {', '.join(AXES)}"
+            )
+        chosen = {**base, **dict(composition)}
+    else:
+        raise AxisConfigError(
+            "composition must be a name, a mapping of axes, or None - got "
+            f"{type(composition).__name__}"
+        )
+
+    for axis in AXES:
+        value = chosen[axis]
+        available = sets.get(axis, {})
+        if value not in available:
+            valid = ", ".join(sorted(available)) or "(none)"
+            raise AxisConfigError(
+                f"unknown value {value!r} for axis {axis!r}: valid values are {valid}"
+            )
+
+    return chosen
+
+
+def root_attrs(
+    composition: str | Mapping[str, str] | None = None,
+    value_sets: Mapping[str, Mapping[str, Any]] | None = None,
+) -> str:
+    """Render the five axis attributes for the document root element.
+
+    One config value in, five attributes out — so axis values are never
+    scattered through a consuming app's templates.
+    """
+    resolved = resolve_composition(composition, value_sets)
+    return " ".join(f'{AXIS_ATTRS[axis]}="{resolved[axis]}"' for axis in AXES)
+
+
+def build_axis_globals(
+    composition: str | Mapping[str, str] | None = None,
+    value_sets: Mapping[str, Mapping[str, Any]] | None = None,
+    value_sets_mode: str = "extend",
+) -> dict[str, Any]:
+    """Build the Jinja globals the ``assets.jinja`` macros delegate to.
+
+    The composition is validated eagerly, so a misconfigured app fails at
+    startup rather than at first render.
+    """
+    sets = merge_value_sets(value_sets, mode=value_sets_mode) if value_sets else DEFAULT_VALUE_SETS
+    attrs = root_attrs(composition, value_sets=sets)
+    style = style_element(sets)
+    return {"cf_ui_axis_attrs": lambda: attrs, "cf_ui_axis_style": lambda: style}
+
+
+# ---------------------------------------------------------------------------
+# CSS generation
+# ---------------------------------------------------------------------------
+
+_BANNER = """\
+/* cf-ui theme composition axes - GENERATED FILE, DO NOT EDIT.
+ *
+ * Regenerate with:  python -m cf_ui.axes
+ * Source of truth:  cf_ui/axes.py
+ *
+ * Light is the unqualified declaration; dark is declared independently and
+ * selected by data-theme="dark" on an ancestor. Wide-gamut chroma is layered
+ * on at the end, gated on display gamut.
+ */
+"""
+
+
+def _block(selector: str, tokens: Mapping[str, str], indent: str = "") -> str:
+    lines = [f"{indent}{selector} {{"]
+    for name, value in tokens.items():
+        lines.append(f"{indent}  {name}: {value};")
+    for name, alias in _ALIASES.items():
+        if name in tokens:
+            lines.append(f"{indent}  {alias}: var({name});")
+    lines.append(f"{indent}}}")
+    return "\n".join(lines) + "\n"
+
+
+def _selector(axis: str, value: str, mode: str | None = None) -> str:
+    attr = f'[{AXIS_ATTRS[axis]}="{value}"]'
+    return f'[data-theme="dark"]{attr}' if mode == "dark" else attr
+
+
+def render_axis_css(
+    value_sets: Mapping[str, Mapping[str, Any]],
+    banner: bool = True,
+) -> str:
+    """Render axis value sets as CSS custom properties keyed on data attributes."""
+    parts: list[str] = [_BANNER] if banner else []
+
+    for axis in AXES:
+        values = value_sets.get(axis, {})
+        if not values:
+            continue
+        parts.append(f"/* --- {axis} ------------------------------------------------ */\n")
+        for value, tokens in values.items():
+            if axis in MODE_KEYED_AXES:
+                parts.append(_block(_selector(axis, value), tokens["light"]))
+                parts.append(_block(_selector(axis, value, "dark"), tokens["dark"]))
+            else:
+                parts.append(_block(_selector(axis, value), tokens))
+
+    p3: list[str] = []
+    for axis in AXES:
+        for value, tokens in value_sets.get(axis, {}).items():
+            gamut = tokens.get("p3") if isinstance(tokens, Mapping) else None
+            if not gamut:
+                continue
+            for mode in MODES:
+                if gamut.get(mode):
+                    p3.append(_block(_selector(axis, value, mode), gamut[mode], indent="  "))
+
+    if p3:
+        parts.append("/* --- wide gamut ------------------------------------------- */\n")
+        parts.append("@media (color-gamut: p3) {\n" + "\n".join(p3) + "}\n")
+
+    return "\n".join(parts)
+
+
+def custom_axis_css(value_sets: Mapping[str, Mapping[str, Any]], banner: bool = False) -> str:
+    """Render only the values the shipped stylesheet does not already cover.
+
+    A value is emitted when it is new, or when it shadows a shipped value name
+    with different tokens — in which case the static asset's copy is stale.
+    """
+    diff: dict[str, dict[str, Any]] = {}
+    for axis in AXES:
+        for value, tokens in value_sets.get(axis, {}).items():
+            if DEFAULT_VALUE_SETS.get(axis, {}).get(value) != tokens:
+                diff.setdefault(axis, {})[value] = tokens
+    if not diff:
+        return ""
+    return render_axis_css(diff, banner=banner)
+
+
+def style_element(value_sets: Mapping[str, Mapping[str, Any]]) -> str:
+    """Wrap :func:`custom_axis_css` in a style element, or return ``""``."""
+    css = custom_axis_css(value_sets)
+    return f"<style>\n{css}</style>" if css else ""
+
+
+# ---------------------------------------------------------------------------
+# Contrast
+# ---------------------------------------------------------------------------
+
+#: (foreground, background, minimum ratio). 4.5 is WCAG AA for body text;
+#: 3.0 is AA for non-text UI components (an accent used as a control fill).
+#: --cf-border is deliberately ungated: in the shipped set it is decorative,
+#: not a meaningful UI boundary.
+_CONTRAST_PAIRS: tuple[tuple[str, str, float], ...] = (
+    ("--cf-text", "--cf-ground", 4.5),
+    ("--cf-text", "--cf-lifted", 4.5),
+    ("--cf-text-muted", "--cf-ground", 4.5),
+    ("--cf-accent-content", "--cf-accent", 4.5),
+    ("--cf-accent-strong", "--cf-ground", 4.5),
+    ("--cf-accent-strong", "--cf-lifted", 4.5),
+    ("--cf-accent", "--cf-ground", 3.0),
+)
+
+
+def _relative_luminance(color: str) -> float:
+    value = color.strip().lstrip("#")
+    if len(value) == 3:
+        value = "".join(char * 2 for char in value)
+    if len(value) != 6 or not all(char in "0123456789abcdefABCDEF" for char in value):
+        raise AxisConfigError(
+            f"cannot compute contrast for {color!r}: axis base declarations must be sRGB hex "
+            "(wide-gamut values belong in the value's 'p3' block)"
+        )
+    channels = []
+    for index in (0, 2, 4):
+        channel = int(value[index : index + 2], 16) / 255
+        channels.append(
+            channel / 12.92 if channel <= 0.04045 else ((channel + 0.055) / 1.055) ** 2.4
+        )
+    return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2]
+
+
+def contrast_ratio(foreground: str, background: str) -> float:
+    """WCAG 2.1 relative-luminance contrast ratio between two sRGB hex colors."""
+    first = _relative_luminance(foreground)
+    second = _relative_luminance(background)
+    lighter, darker = max(first, second), min(first, second)
+    return (lighter + 0.05) / (darker + 0.05)
+
+
+def contrast_failures(
+    value_sets: Mapping[str, Mapping[str, Any]],
+    accent: str,
+    surface: str,
+    mode: str,
+) -> list[str]:
+    """Return WCAG AA failures for one accent x surface x mode combination.
+
+    An empty list means the combination is shippable.
+    """
+    try:
+        tokens = {
+            **value_sets["surface"][surface][mode],
+            **value_sets["accent"][accent][mode],
+        }
+    except KeyError as exc:
+        raise AxisConfigError(f"no such accent/surface/mode combination: {exc}") from exc
+
+    failures: list[str] = []
+    for foreground, background, minimum in _CONTRAST_PAIRS:
+        if foreground not in tokens or background not in tokens:
+            failures.append(f"{foreground} on {background}: token not declared")
+            continue
+        ratio = contrast_ratio(tokens[foreground], tokens[background])
+        if ratio < minimum:
+            failures.append(f"{foreground} on {background}: {ratio:.2f} < {minimum}")
+    return failures
+
+
+def _regenerate() -> Path:
+    AXIS_CSS_PATH.parent.mkdir(parents=True, exist_ok=True)
+    AXIS_CSS_PATH.write_text(render_axis_css(DEFAULT_VALUE_SETS), encoding="utf-8", newline="\n")
+    return AXIS_CSS_PATH
+
+
+if __name__ == "__main__":  # pragma: no cover
+    print(f"wrote {_regenerate()}")
