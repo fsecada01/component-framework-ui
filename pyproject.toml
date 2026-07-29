@@ -82,6 +82,14 @@ target-version = "py311"
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
 
+[tool.ruff.lint.isort]
+# Stated explicitly because the pinned pre-commit hook (ruff v0.3.0) and the
+# ruff CI resolves from `dev` (0.16.x) infer this differently for a src/
+# layout: the older version treats `cf_ui` as third-party, the newer as
+# first-party, so each reverts the other's import fix and `prek` can pass
+# while CI fails I001 on the same file.
+known-first-party = ["cf_ui"]
+
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
