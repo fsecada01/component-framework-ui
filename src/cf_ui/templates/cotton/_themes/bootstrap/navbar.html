@@ -1,0 +1,21 @@
+{# `.collapse:not(.show) { display: none }` and
+   `.navbar-expand-lg .navbar-collapse { display: flex !important }` are both
+   plain CSS, so the menu collapses on mobile and stays open on desktop with
+   Alpine off. Only the toggle needs JS. #}
+<nav class="navbar navbar-expand-lg {{ class }}" role="navigation" aria-label="main navigation"
+     x-data="cfNavbar">
+  <div class="container-fluid">
+    <span class="navbar-brand">{{ brand }}</span>
+    <button type="button"
+            class="navbar-toggler"
+            aria-label="menu"
+            :aria-expanded="menuOpen"
+            @click="toggle()">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" :class="{ 'show': menuOpen }">
+      <div class="navbar-nav me-auto">{{ start }}</div>
+      <div class="navbar-nav">{{ end }}</div>
+    </div>
+  </div>
+</nav>
