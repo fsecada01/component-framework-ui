@@ -43,6 +43,7 @@ __all__ = [
     "DEFAULT_VALUE_SETS",
     "MODES",
     "MODE_KEYED_AXES",
+    "P3_LIGHTNESS_TOLERANCE",
     "AxisConfigError",
     "axis_definition",
     "build_axis_globals",
@@ -50,6 +51,9 @@ __all__ = [
     "contrast_ratio",
     "custom_axis_css",
     "merge_value_sets",
+    "oklab_lightness",
+    "oklch_lightness",
+    "p3_lightness_failures",
     "render_axis_css",
     "resolve_composition",
     "root_attrs",
@@ -82,14 +86,29 @@ AXIS_DEFINITION_PATH = Path(__file__).parent / "static" / "cf_ui" / "cf_ui_axes.
 #: Tailwind v4 reads its theme from custom properties in these namespaces, so
 #: emitting the aliases lets a Tailwind-based theme pick the axes up without
 #: per-component work. Harmless when no Tailwind is present.
+#:
+#: ``--spacing`` is deliberately **not** here. ``--color-primary*`` is a name
+#: cf-ui effectively owns in a Tailwind context; ``--spacing`` is the root of
+#: Tailwind v4's entire spacing scale, so aliasing it made ``data-density``
+#: silently rescale every ``p-4`` and ``gap-2`` in the consuming app — including
+#: for a Bulma consumer using none of it. Apps that want that opt in with one
+#: line: ``@theme { --spacing: var(--cf-spacing); }``.
 _ALIASES: dict[str, str] = {
     "--cf-accent": "--color-primary",
     "--cf-accent-content": "--color-primary-content",
     "--cf-accent-strong": "--color-primary-strong",
-    "--cf-spacing": "--spacing",
 }
 
 _VALUE_NAME = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
+
+#: Token values are interpolated straight into generated CSS, which
+#: :func:`style_element` injects into the page. A value carrying ``;`` or a
+#: brace closes its own declaration and writes rules the app never authored;
+#: ``</style>`` escapes the element entirely. Rejected rather than escaped —
+#: no legitimate axis token needs one, and escaping invites a second round of
+#: "but what about...". Kept identical to ``UNSAFE_VALUE`` in
+#: ``cf_ui_tailwind_plugin.mjs``; a test asserts both reject the same inputs.
+_UNSAFE_VALUE = re.compile(r"[;{}<]|/\*|\*/")
 
 
 # ---------------------------------------------------------------------------
@@ -304,6 +323,14 @@ def _validate_value_set(axis: str, name: str, tokens: Any) -> None:
             )
         for mode in MODES:
             _validate_tokens(axis, name, tokens[mode])
+        # The p3 block reaches the same stylesheet, so it gets the same gate.
+        gamut = tokens.get("p3")
+        if gamut:
+            if not isinstance(gamut, Mapping):
+                raise AxisConfigError(f"axis value {axis}/{name} has a malformed 'p3' block")
+            for mode in MODES:
+                if gamut.get(mode):
+                    _validate_tokens(axis, name, gamut[mode])
     else:
         _validate_tokens(axis, name, tokens)
 
@@ -311,11 +338,21 @@ def _validate_value_set(axis: str, name: str, tokens: Any) -> None:
 def _validate_tokens(axis: str, name: str, tokens: Any) -> None:
     if not isinstance(tokens, Mapping):
         raise AxisConfigError(f"axis value {axis}/{name} must be a mapping of custom properties")
-    for token in tokens:
+    for token, value in tokens.items():
         if not str(token).startswith("--"):
             raise AxisConfigError(
                 f"axis value {axis}/{name} declares {token!r}: axis tokens must be CSS "
                 "custom properties (a name starting with '--')"
+            )
+        if not isinstance(value, str):
+            raise AxisConfigError(
+                f"axis value {axis}/{name} declares a non-string {token}: axis token values "
+                "must be strings"
+            )
+        if _UNSAFE_VALUE.search(value):
+            raise AxisConfigError(
+                f"axis value {axis}/{name} declares {token} with an unsafe value: a token may "
+                "not contain ';', '{', '}', '<', or a comment delimiter"
             )
 
 
@@ -605,6 +642,122 @@ def contrast_failures(
         ratio = contrast_ratio(tokens[foreground], tokens[background])
         if ratio < minimum:
             failures.append(f"{foreground} on {background}: {ratio:.2f} < {minimum}")
+    return failures
+
+
+# ---------------------------------------------------------------------------
+# Wide-gamut lightness invariant
+#
+# The contrast gate above is computed against the sRGB base declarations. The
+# p3 block is what actually renders on a wide-gamut display, and it is never
+# fed through that gate — `_relative_luminance` would reject oklch outright,
+# which is why the p3 block is structured separately in the first place.
+#
+# What makes the sRGB result carry over is the design rule that a p3 override
+# extends *chroma only*, holding lightness constant. That was a convention held
+# by hand: a typo, or a tweak that looked better on someone's monitor, shipped
+# with every test green and was invisible to anyone reviewing on an sRGB
+# display. This enforces it.
+#
+# Checking the invariant beats re-running WCAG over oklch: it is a smaller and
+# more precise check, and it is the property the design actually claims.
+# ---------------------------------------------------------------------------
+
+#: Maximum allowed lightness drift between a p3 override and its sRGB base, in
+#: OKLab L (0..1). The shipped overrides are authored to one decimal place of a
+#: percentage, so they sit within 0.0005 of their base; 0.005 is an order of
+#: magnitude of headroom for that rounding while still catching any drift big
+#: enough to matter — a meaningful lightness error moves several points.
+P3_LIGHTNESS_TOLERANCE = 0.005
+
+# sRGB -> linear -> LMS -> OKLab, per Björn Ottosson's definition. Only the L
+# component is needed, so the a/b rows are omitted.
+_OKLAB_M1 = (
+    (0.4122214708, 0.5363325363, 0.0514459929),
+    (0.2119034982, 0.6806995451, 0.1073969566),
+    (0.0883024619, 0.2817188376, 0.6299787005),
+)
+_OKLAB_L = (0.2104542553, 0.7936177850, -0.0040720468)
+
+_OKLCH = re.compile(r"^\s*oklch\(\s*([0-9]*\.?[0-9]+)(%?)\s", re.IGNORECASE)
+
+
+def _linear_channel(channel: float) -> float:
+    return channel / 12.92 if channel <= 0.04045 else ((channel + 0.055) / 1.055) ** 2.4
+
+
+def oklab_lightness(color: str) -> float:
+    """OKLab lightness (0..1) of an sRGB hex color.
+
+    This is the same quantity ``oklch()`` states as its first component, which
+    is what makes the two directly comparable.
+    """
+    value = str(color).strip().lstrip("#")
+    if len(value) == 3:
+        value = "".join(char * 2 for char in value)
+    if len(value) != 6 or not all(char in "0123456789abcdefABCDEF" for char in value):
+        raise AxisConfigError(
+            f"cannot measure lightness of {color!r}: axis base declarations must be sRGB hex"
+        )
+    rgb = [_linear_channel(int(value[index : index + 2], 16) / 255) for index in (0, 2, 4)]
+    cones = [sum(row[i] * rgb[i] for i in range(3)) for row in _OKLAB_M1]
+    roots = [cone ** (1 / 3) for cone in cones]
+    return sum(_OKLAB_L[i] * roots[i] for i in range(3))
+
+
+def oklch_lightness(value: str) -> float:
+    """Lightness (0..1) declared by an ``oklch(...)`` value."""
+    match = _OKLCH.match(str(value))
+    if not match:
+        raise AxisConfigError(f"not an oklch() value: {value!r}")
+    number = float(match.group(1))
+    return number / 100 if match.group(2) else number
+
+
+def p3_lightness_failures(
+    value_sets: Mapping[str, Mapping[str, Any]],
+    tolerance: float = P3_LIGHTNESS_TOLERANCE,
+) -> list[str]:
+    """Return every p3 override that does not hold its base declaration's lightness.
+
+    An empty list means the wide-gamut layer preserves the contrast guarantee
+    the sRGB base was measured for.
+
+    The message format is mirrored exactly by ``p3LightnessFailures`` in
+    ``cf_ui_tailwind_plugin.mjs`` — a parity test compares the two outputs.
+    """
+    failures: list[str] = []
+    limit = tolerance * 100
+
+    for axis in AXES:
+        for name, tokens in value_sets.get(axis, {}).items():
+            gamut = tokens.get("p3") if isinstance(tokens, Mapping) else None
+            if not gamut:
+                continue
+            for mode in MODES:
+                overrides = gamut.get(mode) or {}
+                base = tokens.get(mode) or {}
+                for token, override in overrides.items():
+                    where = f"{axis}/{name}/{mode}: {token}"
+                    if token not in base:
+                        failures.append(f"{where} has a p3 override but no base declaration")
+                        continue
+                    try:
+                        actual = oklch_lightness(override) * 100
+                    except AxisConfigError:
+                        failures.append(f"{where} p3 override is not an oklch() value: {override}")
+                        continue
+                    try:
+                        expected = oklab_lightness(base[token]) * 100
+                    except AxisConfigError:
+                        failures.append(f"{where} base declaration is not sRGB hex: {base[token]}")
+                        continue
+                    drift = abs(actual - expected)
+                    if drift > limit:
+                        failures.append(
+                            f"{where} p3 lightness {actual:.2f}% deviates from base "
+                            f"{expected:.2f}% by {drift:.2f}pp (tolerance {limit:.2f}pp)"
+                        )
     return failures
 
 

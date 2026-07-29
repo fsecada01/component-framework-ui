@@ -2,7 +2,49 @@
 
 ## [Unreleased]
 
+### Changed — BREAKING (#20)
+
+The axis layer stated four properties it did not enforce. Enforcing them is
+breaking for anyone who was relying, knowingly or not, on the gaps.
+
+- **Token *values* are now validated, not just token names.** A value containing
+  `;`, `{`, `}`, `<`, `/*`, or `*/` raises `AxisConfigError`, and a non-string
+  value is rejected outright. Values are interpolated straight into the
+  `<style>` element `style_element()` injects, so a semicolon or brace closed
+  the declaration and wrote rules the app never authored — `</style>` escaped
+  the element entirely. This mattered most for the deployments cf-ui explicitly
+  targets, where value sets come from a database column or an admin form rather
+  than a hand-written literal. The plugin already rejected these; the two
+  generators now agree, and a test asserts they reject the same inputs.
+  **Migration:** none for hand-written value sets. If a value legitimately needs
+  one of these characters, it is not an axis token.
+- **The `--cf-spacing` → `--spacing` alias is gone.** `--color-primary*` is a
+  name cf-ui owns in a Tailwind context; `--spacing` is the root of Tailwind
+  v4's entire spacing scale, so `data-density` was silently rescaling every
+  `p-4` and `gap-2` in the consuming app by ±20% — including for Bulma consumers
+  using none of it. `--cf-spacing` is still emitted.
+  **Migration:** to keep the old behavior, add `@theme { --spacing: var(--cf-spacing); }`.
+- **`buildAxisBase()` and `buildAxisCss()` validate by default.** They were
+  exported escape hatches that generated CSS with the build error switched off,
+  contradicting the guarantee #7 shipped on. Pass `{ validate: false }` to opt
+  out explicitly.
+  **Migration:** code passing invalid value sets to these now throws. That was
+  already producing malformed CSS.
+
 ### Added
+- **The wide-gamut lightness invariant is enforced (#20).** `p3_lightness_failures()`
+  (Python) and `p3LightnessFailures()` (plugin) convert each sRGB base declaration
+  to OKLab and compare it against the `oklch()` override, failing CI beyond 0.5
+  percentage points. The contrast gate is computed against the sRGB base and
+  cannot measure `oklch()`; "the p3 layer holds the same lightness" was the
+  convention carrying that result to wide-gamut displays, held by hand. A typo
+  or a monitor-driven tweak shipped below AA with every test green, invisible to
+  anyone reviewing on an sRGB display.
+- `cf_ui.axes.oklab_lightness()` / `oklch_lightness()`, and their plugin
+  counterparts `oklabLightness()` / `oklchLightness()`
+- `.gitattributes` pinning the generated axis artifacts to LF — `python -m
+  cf_ui.axes` writes `newline="\n"`, so without it every regeneration left a
+  phantom zero-line diff and "is the tree clean" meant nothing
 - Tailwind plugin with build-time axis validation (#7): an unknown axis value now
   **fails the CSS build** instead of silently producing an unstyled element
 - `static/cf_ui/cf_ui_tailwind_plugin.mjs` — vendored into the wheel, not published

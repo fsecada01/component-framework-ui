@@ -19,6 +19,8 @@ import cfUiAxes, {
   contrastReport,
   loadDefinition,
   mergeValueSets,
+  oklabLightness,
+  p3LightnessFailures,
   resolveComposition,
 } from "../../src/cf_ui/static/cf_ui/cf_ui_tailwind_plugin.mjs";
 
@@ -359,5 +361,138 @@ describe("buildAxisBase", () => {
   it("is exported for consumers not using the plugin form", () => {
     const base = buildAxisBase(DEFINITION.valueSets);
     assert.ok(base['[data-accent="slate"]']);
+  });
+});
+
+// --- issue #20 --------------------------------------------------------------
+
+describe("unsafe token values (#20 §1)", () => {
+  const UNSAFE = [
+    "0; } body { display: none",
+    "red; color: blue",
+    "}",
+    "{",
+    "red /* c",
+    "red */",
+    "</style><script>alert(1)</script>",
+    "<",
+  ];
+
+  for (const value of UNSAFE) {
+    it(`rejects ${JSON.stringify(value)}`, () => {
+      assert.throws(
+        () => mergeValueSets(DEFINITION, { form: { probe: { "--cf-radius": value } } }),
+        /unsafe value/,
+      );
+    });
+  }
+
+  it("rejects '<' so a value cannot escape the <style> element", () => {
+    // Added in #20 to match the Python gate; the original rule allowed it.
+    assert.throws(
+      () => mergeValueSets(DEFINITION, { form: { probe: { "--cf-radius": "</style>" } } }),
+      /unsafe value/,
+    );
+  });
+
+  it("still accepts a shadow value carrying slashes and parentheses", () => {
+    const merged = mergeValueSets(DEFINITION, {
+      form: { probe: { "--cf-radius": "0 1px 2px rgb(0 0 0 / 0.08)" } },
+    });
+    assert.equal(merged.form.probe["--cf-radius"], "0 1px 2px rgb(0 0 0 / 0.08)");
+  });
+});
+
+describe("the exported generators validate by default (#20 §4)", () => {
+  const BAD_NAME = { form: { probe: { "cf-radius": "0" } } };
+  const BAD_VALUE = { form: { probe: { "--cf-radius": "0; } html {" } } };
+
+  it("buildAxisBase rejects a token name that is not a custom property", () => {
+    assert.throws(() => buildAxisBase(BAD_NAME), /custom propert/);
+  });
+
+  it("buildAxisBase rejects an unsafe token value", () => {
+    assert.throws(() => buildAxisBase(BAD_VALUE), /unsafe value/);
+  });
+
+  it("buildAxisCss rejects the same input", () => {
+    assert.throws(() => buildAxisCss(BAD_VALUE), /unsafe value/);
+  });
+
+  it("buildAxisBase rejects an invalid axis value name", () => {
+    assert.throws(() => buildAxisBase({ form: { "Not Valid": { "--cf-radius": "0" } } }), /Not Valid/);
+  });
+
+  it("the opt-out is explicit, and still generates", () => {
+    const base = buildAxisBase(BAD_VALUE, undefined, { validate: false });
+    assert.equal(base['[data-form="probe"]']["--cf-radius"], "0; } html {");
+  });
+
+  it("the opt-out does not change what valid input generates", () => {
+    const checked = buildAxisBase(DEFINITION.valueSets, DEFINITION);
+    const unchecked = buildAxisBase(DEFINITION.valueSets, DEFINITION, { validate: false });
+    assert.deepEqual(unchecked, checked);
+  });
+
+  it("validates the shipped defaults without complaint", () => {
+    assert.ok(buildAxisBase()['[data-accent="slate"]']);
+  });
+});
+
+describe("the p3 lightness invariant (#20 §3)", () => {
+  it("passes for the shipped value sets", () => {
+    assert.deepEqual(p3LightnessFailures(DEFINITION.valueSets, DEFINITION), []);
+  });
+
+  it("flags an override whose lightness drifts from the base", () => {
+    const drifted = structuredClone(DEFINITION.valueSets);
+    drifted.accent.azure.p3.light["--cf-accent"] = "oklch(72.0% 0.137 242.7)";
+    const failures = p3LightnessFailures(drifted, DEFINITION);
+    assert.equal(failures.length, 1);
+    assert.match(failures[0], /azure/);
+    assert.match(failures[0], /--cf-accent/);
+  });
+
+  it("tolerates the rounding in an authored one-decimal value", () => {
+    const rounded = structuredClone(DEFINITION.valueSets);
+    // The measured base is 49.998%; the authored 50.0% must stay legal.
+    rounded.accent.azure.p3.light["--cf-accent"] = "oklch(50.0% 0.137 242.7)";
+    assert.deepEqual(p3LightnessFailures(rounded, DEFINITION), []);
+  });
+
+  it("flags a p3 override of a token the base never declared", () => {
+    const orphan = structuredClone(DEFINITION.valueSets);
+    orphan.accent.azure.p3.light["--cf-nonexistent"] = "oklch(50% 0.1 240)";
+    assert.match(p3LightnessFailures(orphan, DEFINITION).join("\n"), /--cf-nonexistent/);
+  });
+
+  it("flags a p3 value that is not oklch rather than skipping it", () => {
+    const bad = structuredClone(DEFINITION.valueSets);
+    bad.accent.azure.p3.light["--cf-accent"] = "#0369a1";
+    assert.equal(p3LightnessFailures(bad, DEFINITION).length, 1);
+  });
+
+  it("measures oklab lightness against known anchors", () => {
+    assert.ok(Math.abs(oklabLightness("#000000") - 0) < 0.001);
+    assert.ok(Math.abs(oklabLightness("#ffffff") - 1) < 0.001);
+    assert.ok(Math.abs(oklabLightness("#0369a1") - 0.5) < 0.002);
+  });
+});
+
+describe("the --spacing alias is gone (#20 §2)", () => {
+  it("no longer aliases Tailwind's spacing base unit", () => {
+    assert.equal(DEFINITION.aliases["--cf-spacing"], undefined);
+    const base = buildAxisBase();
+    assert.equal(base['[data-density="compact"]']["--spacing"], undefined);
+  });
+
+  it("still emits the cf-ui token itself", () => {
+    const base = buildAxisBase();
+    assert.equal(base['[data-density="compact"]']["--cf-spacing"], "0.2rem");
+  });
+
+  it("keeps the namespaced color aliases", () => {
+    const base = buildAxisBase();
+    assert.equal(base['[data-accent="azure"]']["--color-primary"], "var(--cf-accent)");
   });
 });

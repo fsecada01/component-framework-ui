@@ -19,6 +19,7 @@ import re
 import shutil
 import subprocess
 import sys
+from copy import deepcopy
 from fnmatch import fnmatch
 from pathlib import Path
 
@@ -116,9 +117,17 @@ def _python_rules() -> tuple[dict, dict]:
 def _js_rules() -> tuple[dict, dict]:
     # A file:// URI, not a path: node's ESM loader reads a bare `C:/...` as an
     # unsupported URL scheme.
+    #
+    # `validate: false` is passed deliberately. buildAxisBase validates by
+    # default since #20, and comparing only *validated* input would quietly
+    # narrow this from "the two generators agree" to "they agree on input the
+    # validator already approved" — the unchecked generation path is exactly
+    # the one a consumer reaches through the exported function.
     script = f"""
     import {{ buildAxisBase }} from {json.dumps(PLUGIN_PATH.as_uri())};
-    process.stdout.write(JSON.stringify(buildAxisBase()));
+    process.stdout.write(
+      JSON.stringify(buildAxisBase(undefined, undefined, {{ validate: false }})),
+    );
     """
     base = json.loads(_run_node(script))
     media = base.pop("@media (color-gamut: p3)", {})
@@ -185,3 +194,128 @@ def test_the_plugin_is_dependency_free():
     assert all(name.startswith("node:") for name in bare), (
         f"plugin imports non-builtin modules: {bare}"
     )
+
+
+# --- cross-language validation parity (issue #20) ---------------------------
+#
+# #20 §1 closed an asymmetry: the JS generator rejected unsafe token values and
+# the Python one did not. These assert the two now reject the *same* inputs,
+# which is the property that keeps them from drifting apart again.
+
+UNSAFE = [
+    "0; } body { display: none",
+    "red; color: blue",
+    "}",
+    "{",
+    "red /* c",
+    "red */",
+    "</style><script>alert(1)</script>",
+    "<",
+]
+SAFE = ["0", "0.375rem", "none", "0 1px 2px rgb(0 0 0 / 0.08)", "#ffffff"]
+
+
+def _python_rejects(value: str) -> bool:
+    from cf_ui.axes import AxisConfigError, merge_value_sets
+
+    try:
+        merge_value_sets({"form": {"probe": {"--cf-radius": value}}})
+    except AxisConfigError:
+        return True
+    return False
+
+
+def _js_rejects(values: list[str]) -> list[bool]:
+    """One node process for the whole batch — spawning eight is needlessly slow."""
+    script = f"""
+    import {{ mergeValueSets, loadDefinition }} from {json.dumps(PLUGIN_PATH.as_uri())};
+    const definition = loadDefinition();
+    const results = {json.dumps(values)}.map((value) => {{
+      try {{
+        mergeValueSets(definition, {{ form: {{ probe: {{ "--cf-radius": value }} }} }});
+        return false;
+      }} catch {{
+        return true;
+      }}
+    }});
+    process.stdout.write(JSON.stringify(results));
+    """
+    return json.loads(_run_node(script))
+
+
+@requires_node
+def test_both_generators_reject_the_same_unsafe_values():
+    js = _js_rejects(UNSAFE)
+    python = [_python_rejects(value) for value in UNSAFE]
+    assert python == [True] * len(UNSAFE), f"python accepted: {UNSAFE}"
+    assert js == python, dict(zip(UNSAFE, zip(python, js, strict=True), strict=True))
+
+
+@requires_node
+def test_both_generators_accept_the_same_legitimate_values():
+    """Guards the test above against a rule that simply rejects everything."""
+    js = _js_rejects(SAFE)
+    python = [_python_rejects(value) for value in SAFE]
+    assert python == [False] * len(SAFE), f"python rejected a legal value: {SAFE}"
+    assert js == python, dict(zip(SAFE, zip(python, js, strict=True), strict=True))
+
+
+@requires_node
+def test_both_generators_report_the_same_p3_lightness_failures():
+    """#20 §3 — the invariant is checked on both sides, in the same words."""
+    from cf_ui.axes import DEFAULT_VALUE_SETS, p3_lightness_failures
+
+    script = f"""
+    import {{ p3LightnessFailures, loadDefinition }} from {json.dumps(PLUGIN_PATH.as_uri())};
+    const definition = loadDefinition();
+    const drifted = structuredClone(definition.valueSets);
+    drifted.accent.azure.p3.light["--cf-accent"] = "oklch(72.0% 0.137 242.7)";
+    process.stdout.write(JSON.stringify({{
+      clean: p3LightnessFailures(definition.valueSets, definition),
+      drifted: p3LightnessFailures(drifted, definition),
+    }}));
+    """
+    js = json.loads(_run_node(script))
+
+    drifted = deepcopy(DEFAULT_VALUE_SETS)
+    drifted["accent"]["azure"]["p3"]["light"]["--cf-accent"] = "oklch(72.0% 0.137 242.7)"
+
+    assert js["clean"] == p3_lightness_failures(DEFAULT_VALUE_SETS) == []
+    assert js["drifted"] == p3_lightness_failures(drifted)
+    assert js["drifted"], "the drifted fixture must actually fail, or this is vacuous"
+
+
+# --- generated artifacts stay clean ----------------------------------------
+
+
+def test_generated_artifacts_are_pinned_to_lf():
+    """`python -m cf_ui.axes` writes LF; without this git shows a phantom diff.
+
+    The generator writes ``newline="\\n"`` while git's autocrlf wants CRLF, so
+    regenerating left the tree permanently "modified" with a zero-line diff —
+    which makes "is the tree clean" useless as a signal for every phase that
+    touches these files.
+    """
+    attributes = REPO_ROOT / ".gitattributes"
+    assert attributes.is_file(), "a .gitattributes is needed to pin the generated artifacts"
+    text = attributes.read_text(encoding="utf-8")
+    for name in ("cf_ui_axes.css", "cf_ui_axes.json"):
+        assert name in text, f"{name} is not pinned in .gitattributes"
+    assert "text eol=lf" in text
+
+
+def test_regenerating_the_artifacts_is_a_no_op():
+    """The checked-in artifacts match what the generator produces, byte for byte."""
+    import json as _json
+
+    from cf_ui.axes import (
+        AXIS_CSS_PATH,
+        AXIS_DEFINITION_PATH,
+        DEFAULT_VALUE_SETS,
+        axis_definition,
+        render_axis_css,
+    )
+
+    assert AXIS_CSS_PATH.read_text(encoding="utf-8") == render_axis_css(DEFAULT_VALUE_SETS)
+    expected = _json.dumps(axis_definition(), indent=2) + "\n"
+    assert AXIS_DEFINITION_PATH.read_text(encoding="utf-8") == expected
