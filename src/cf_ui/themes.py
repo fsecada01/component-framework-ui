@@ -92,11 +92,17 @@ def tailwind_content_globs() -> list[str]:
     no error and an unstyled page as the only symptom. Paths are absolute and
     derived from ``cf_ui.__file__`` so they work from a site-packages install,
     an editable install, or a vendored copy.
+
+    Separators are always forward slashes, including on Windows. These strings
+    are pasted into a ``tailwind.config.js`` or an ``@source`` directive, where
+    a backslash is a JavaScript escape character and fast-glob (Tailwind's
+    matcher) treats it as an escape rather than a separator — a native Windows
+    path would match nothing and shake every class out, silently.
     """
     templates = _HERE / "templates"
     return [
-        str(templates / "**" / "*.html"),
-        str(templates / "**" / "*.jinja"),
+        (templates / "**" / "*.html").as_posix(),
+        (templates / "**" / "*.jinja").as_posix(),
     ]
 
 

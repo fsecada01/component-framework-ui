@@ -13,6 +13,16 @@ _THEME_CSS = {
     "daisy": "https://cdn.jsdelivr.net/npm/daisyui@4.7.2/dist/full.min.css",
 }
 
+# DaisyUI ships component classes but no Tailwind utilities. The components use
+# utilities for layout and responsive behavior (`hidden`, `lg:flex`), so without
+# a Tailwind build those classes resolve to nothing and the E2E tier cannot see
+# whether a toggle actually changes anything. The play CDN is a real in-browser
+# Tailwind JIT, which makes the gallery representative of a consuming app.
+_THEME_EXTRA_HEAD = {
+    "bulma": "",
+    "daisy": '<script src="https://cdn.tailwindcss.com"></script>',
+}
+
 
 def make_app(theme: str = "bulma") -> FastAPI:
     """Build a JinjaX gallery app for one theme.
@@ -87,6 +97,7 @@ def make_app(theme: str = "bulma") -> FastAPI:
         return f"""<!DOCTYPE html>
 <html>
 <head>
+  {_THEME_EXTRA_HEAD[theme]}
   <link rel="stylesheet" href="{_THEME_CSS[theme]}">
   <style>[x-cloak] {{ display: none !important; }}</style>
 </head>

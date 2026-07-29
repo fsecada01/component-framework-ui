@@ -46,6 +46,19 @@ def test_content_globs_resolve_to_absolute_paths():
         assert Path(pattern).is_absolute(), pattern
 
 
+def test_content_globs_use_forward_slashes_on_every_platform():
+    """These strings get pasted into JS, where a backslash is an escape.
+
+    fast-glob (Tailwind's matcher) reads ``\\`` as an escape rather than a
+    separator, so a native Windows path matches nothing — and matching nothing
+    is indistinguishable from the tree-shaking this whole module prevents.
+    """
+    from cf_ui.themes import tailwind_content_globs
+
+    for pattern in tailwind_content_globs():
+        assert "\\" not in pattern, pattern
+
+
 def test_content_globs_cover_every_daisy_template():
     """The test that fails when the templates would be tree-shaken away."""
     from cf_ui.themes import tailwind_content_globs

@@ -126,14 +126,17 @@ def test_jinja_navbar_burger_toggles_menu(daisy_jinja_page, daisy_jinja_server_u
     if js_mode == "js_on":
         _wait_for_alpine(page)
         page.set_viewport_size({"width": 600, "height": 800})
-        # classList membership, not a regex — "lg:flex" is always present and
-        # a word-boundary pattern matches inside it.
-        has_flex = "el => el.classList.contains('flex')"
         menu = page.locator(".navbar-end")
-        assert menu.evaluate(has_flex) is False
+        # Assert the computed display, not the class list. An earlier version
+        # toggled `flex` onto an element that kept `hidden`; the class list
+        # changed and the menu still never appeared, because Tailwind emits
+        # `hidden` after `flex`. Only computed style catches that.
+        display = "el => getComputedStyle(el).display"
+        assert menu.evaluate(display) == "none"
         page.locator("button[aria-label='menu']").click()
-        expect(menu).to_have_class(re.compile(r"\bflex\b"))
-        assert menu.evaluate(has_flex) is True
+        # Not to_be_visible(): the gallery passes an empty `end` slot, so the
+        # box has zero height even once it is displayed.
+        assert menu.evaluate(display) != "none"
     else:
         expect(page.locator(".navbar")).to_be_attached()
 
