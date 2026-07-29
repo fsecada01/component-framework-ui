@@ -1,0 +1,197 @@
+/* cf-ui theme composition axes - GENERATED FILE, DO NOT EDIT.
+ *
+ * Regenerate with:  python -m cf_ui.axes
+ * Source of truth:  cf_ui/axes.py
+ *
+ * Light is the unqualified declaration; dark is declared independently and
+ * selected by data-theme="dark" on an ancestor. Wide-gamut chroma is layered
+ * on at the end, gated on display gamut.
+ */
+
+/* --- accent ------------------------------------------------ */
+
+[data-accent="slate"] {
+  --cf-accent: #475569;
+  --cf-accent-content: #ffffff;
+  --cf-accent-strong: #334155;
+  --color-primary: var(--cf-accent);
+  --color-primary-content: var(--cf-accent-content);
+  --color-primary-strong: var(--cf-accent-strong);
+}
+
+[data-theme="dark"][data-accent="slate"] {
+  --cf-accent: #94a3b8;
+  --cf-accent-content: #0f172a;
+  --cf-accent-strong: #cbd5e1;
+  --color-primary: var(--cf-accent);
+  --color-primary-content: var(--cf-accent-content);
+  --color-primary-strong: var(--cf-accent-strong);
+}
+
+[data-accent="azure"] {
+  --cf-accent: #0369a1;
+  --cf-accent-content: #ffffff;
+  --cf-accent-strong: #075985;
+  --color-primary: var(--cf-accent);
+  --color-primary-content: var(--cf-accent-content);
+  --color-primary-strong: var(--cf-accent-strong);
+}
+
+[data-theme="dark"][data-accent="azure"] {
+  --cf-accent: #38bdf8;
+  --cf-accent-content: #082f49;
+  --cf-accent-strong: #7dd3fc;
+  --color-primary: var(--cf-accent);
+  --color-primary-content: var(--cf-accent-content);
+  --color-primary-strong: var(--cf-accent-strong);
+}
+
+[data-accent="jade"] {
+  --cf-accent: #047857;
+  --cf-accent-content: #ffffff;
+  --cf-accent-strong: #065f46;
+  --color-primary: var(--cf-accent);
+  --color-primary-content: var(--cf-accent-content);
+  --color-primary-strong: var(--cf-accent-strong);
+}
+
+[data-theme="dark"][data-accent="jade"] {
+  --cf-accent: #34d399;
+  --cf-accent-content: #022c22;
+  --cf-accent-strong: #6ee7b7;
+  --color-primary: var(--cf-accent);
+  --color-primary-content: var(--cf-accent-content);
+  --color-primary-strong: var(--cf-accent-strong);
+}
+
+/* --- surface ------------------------------------------------ */
+
+[data-surface="plain"] {
+  --cf-ground: #ffffff;
+  --cf-lifted: #f8fafc;
+  --cf-text: #0f172a;
+  --cf-text-muted: #475569;
+  --cf-border: #e2e8f0;
+}
+
+[data-theme="dark"][data-surface="plain"] {
+  --cf-ground: #0b1120;
+  --cf-lifted: #172033;
+  --cf-text: #f1f5f9;
+  --cf-text-muted: #94a3b8;
+  --cf-border: #1e293b;
+}
+
+[data-surface="muted"] {
+  --cf-ground: #f1f5f9;
+  --cf-lifted: #ffffff;
+  --cf-text: #111827;
+  --cf-text-muted: #475569;
+  --cf-border: #cbd5e1;
+}
+
+[data-theme="dark"][data-surface="muted"] {
+  --cf-ground: #111827;
+  --cf-lifted: #1f2937;
+  --cf-text: #f9fafb;
+  --cf-text-muted: #9ca3af;
+  --cf-border: #374151;
+}
+
+/* --- form ------------------------------------------------ */
+
+[data-form="sharp"] {
+  --cf-radius: 0;
+  --cf-border-width: 1px;
+  --cf-shadow: none;
+}
+
+[data-form="soft"] {
+  --cf-radius: 0.375rem;
+  --cf-border-width: 1px;
+  --cf-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
+}
+
+[data-form="round"] {
+  --cf-radius: 0.75rem;
+  --cf-border-width: 0;
+  --cf-shadow: 0 2px 8px rgb(0 0 0 / 0.12);
+}
+
+/* --- density ------------------------------------------------ */
+
+[data-density="compact"] {
+  --cf-spacing: 0.2rem;
+  --cf-line-height: 1.4;
+  --cf-control-height: 2rem;
+  --spacing: var(--cf-spacing);
+}
+
+[data-density="regular"] {
+  --cf-spacing: 0.25rem;
+  --cf-line-height: 1.5;
+  --cf-control-height: 2.5rem;
+  --spacing: var(--cf-spacing);
+}
+
+[data-density="roomy"] {
+  --cf-spacing: 0.3rem;
+  --cf-line-height: 1.65;
+  --cf-control-height: 3rem;
+  --spacing: var(--cf-spacing);
+}
+
+/* --- type ------------------------------------------------ */
+
+[data-type="system"] {
+  --cf-font-display: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --cf-font-body: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --cf-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --cf-scale-ratio: 1.25;
+}
+
+[data-type="humanist"] {
+  --cf-font-display: Seravek, 'Gill Sans Nova', Ubuntu, Calibri, sans-serif;
+  --cf-font-body: Seravek, 'Gill Sans Nova', Ubuntu, Calibri, sans-serif;
+  --cf-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --cf-scale-ratio: 1.2;
+}
+
+[data-type="mono"] {
+  --cf-font-display: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --cf-font-body: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --cf-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --cf-scale-ratio: 1.2;
+}
+
+/* --- wide gamut ------------------------------------------- */
+
+@media (color-gamut: p3) {
+  [data-accent="azure"] {
+    --cf-accent: oklch(50.0% 0.137 242.7);
+    --cf-accent-strong: oklch(44.3% 0.115 240.8);
+    --color-primary: var(--cf-accent);
+    --color-primary-strong: var(--cf-accent-strong);
+  }
+
+  [data-theme="dark"][data-accent="azure"] {
+    --cf-accent: oklch(75.4% 0.160 232.7);
+    --cf-accent-strong: oklch(82.8% 0.116 230.3);
+    --color-primary: var(--cf-accent);
+    --color-primary-strong: var(--cf-accent-strong);
+  }
+
+  [data-accent="jade"] {
+    --cf-accent: oklch(50.8% 0.121 165.6);
+    --cf-accent-strong: oklch(43.2% 0.099 166.9);
+    --color-primary: var(--cf-accent);
+    --color-primary-strong: var(--cf-accent-strong);
+  }
+
+  [data-theme="dark"][data-accent="jade"] {
+    --cf-accent: oklch(77.3% 0.177 163.2);
+    --cf-accent-strong: oklch(84.5% 0.149 165.0);
+    --color-primary: var(--cf-accent);
+    --color-primary-strong: var(--cf-accent-strong);
+  }
+}

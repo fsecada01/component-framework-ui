@@ -1,5 +1,31 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+- Theme composition axes (#5): five orthogonal style axes — accent, surface, form,
+  density, type — each keyed on a data attribute and carrying a closed set of
+  named values. `data-theme` remains the light/dark switch and is not an axis.
+- `cf_ui/axes.py` — single source of truth for axis definitions, named
+  compositions, value-set merging, CSS generation, and WCAG contrast checking
+- `static/cf_ui/cf_ui_axes.css` — generated from `axes.py` via `python -m cf_ui.axes`,
+  delivered by the existing asset tags; a unit test fails on drift
+- `CF_UI_COMPOSITION`, `CF_UI_AXIS_VALUES`, `CF_UI_AXIS_VALUES_MODE` Django settings,
+  validated at startup by `CfUiConfig.ready()`
+- `{% cf_ui_root_attrs %}` template tag and `cf_ui_root_attrs()` Jinja macro —
+  one setting in, five attributes out
+- `composition=` / `value_sets=` / `value_sets_mode=` on both `install_cf_ui()`
+  functions, registering the Jinja globals the macros delegate to
+- `docs/theming.md` — axis reference, custom value sets, and the contrast requirement
+
+### Technical Notes
+- Light and dark are declared independently per value, never derived by inversion;
+  light is the unqualified selector, dark is `[data-theme="dark"][data-*="..."]`
+- Base declarations are sRGB hex (what the contrast gate is computed against);
+  wide-gamut chroma is layered behind `@media (color-gamut: p3)` — not
+  `@supports (color: oklch(...))`, which is a no-op in every current browser
+- Density drives Tailwind v4's `--spacing`; accent aliases to `--color-primary*`
+
 ## [0.1.0] — 2026-04-25
 
 ### Added

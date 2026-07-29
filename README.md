@@ -171,6 +171,42 @@ Jinja2 equivalent:
 
 ---
 
+## Theme Composition Axes
+
+`CF_UI_THEME` picks the CSS framework. Five orthogonal **axes** decide what the app looks like *within* it — each keyed on a data attribute, each carrying a closed set of named values:
+
+| Axis | Attribute | Shipped values |
+|---|---|---|
+| Accent | `data-accent` | `slate`, `azure`, `jade` |
+| Surface | `data-surface` | `plain`, `muted` |
+| Form | `data-form` | `sharp`, `soft`, `round` |
+| Density | `data-density` | `compact`, `regular`, `roomy` |
+| Type | `data-type` | `system`, `humanist`, `mono` |
+
+One setting, five attributes:
+
+```python
+# settings.py
+CF_UI_COMPOSITION = "editorial"          # or {"accent": "jade", "density": "compact"}
+```
+
+```django
+<html lang="en" {% cf_ui_root_attrs %}>
+```
+
+```python
+# FastAPI / Litestar
+install_cf_ui(catalog, theme="bulma", composition="editorial")
+```
+
+Apps supply their own value sets via `CF_UI_AXIS_VALUES` (`value_sets=` for Jinja apps) — the package ships the machinery and a neutral default set, not a brand. `data-theme` remains the light/dark switch and is not an axis; light and dark are declared independently, never derived by inversion.
+
+**Every accent × surface × mode combination in a value set must pass WCAG AA before it ships** — the default set is held to that in CI.
+
+→ Full guide: [`docs/theming.md`](docs/theming.md)
+
+---
+
 ## Alpine.js Integration
 
 `{% cf_ui_body %}` loads `cf_ui_alpine.js` (before the Alpine CDN) which registers:
