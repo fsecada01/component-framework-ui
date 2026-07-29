@@ -1,13 +1,21 @@
-<div class="card bg-base-100 shadow-xl {{ class }}" x-data="cfPanel">
+<div class="card bg-base-100 shadow-xl {{ class }}"
+     x-data="cfPanel"
+     x-init="initPanel()"
+     data-cf-open="{% if open and open != 'false' %}true{% else %}false{% endif %}">
   <button type="button"
           class="btn btn-ghost justify-between w-full"
+          aria-controls="{{ id }}-body"
+          aria-expanded="{% if open and open != 'false' %}true{% else %}false{% endif %}"
           :aria-expanded="open"
           @click="toggle()">
     <span class="card-title text-base">{{ title }}</span>
     <span :style="open ? 'transform:rotate(90deg)' : ''"
           style="display:inline-block;transition:transform 200ms">&#9654;</span>
   </button>
-  <div class="card-body pt-0" x-show="open" x-cloak>
+  <div id="{{ id }}-body"
+       class="card-body pt-0"
+       x-show="open"
+       {% if not open or open == 'false' %}x-cloak{% endif %}>
     {{ slot }}
   </div>
 </div>

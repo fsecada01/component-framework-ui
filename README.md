@@ -235,10 +235,10 @@ which is the exact failure it exists to prevent.
 `{% cf_ui_body %}` loads `cf_ui_alpine.js` (before the Alpine CDN) which registers:
 
 **Named components** — use `x-data="cfModal"` to bind from outside:
-- `cfModal` — `open`, `toggle()`, `close()`, `initModal()`
+- `cfModal` — `open`, `show()`, `toggle()`, `close()`, `initModal()`
 - `cfNavbar` — `menuOpen`, `toggle()`
-- `cfPanel` — `open`, `toggle()`
-- `cfTabs` — `active`, `setActive(id)`
+- `cfPanel` — `open`, `toggle()`, `initPanel()`
+- `cfTabs` — `active`, `setActive(id)`, `initTabs()`, `onKeydown(e)`
 
 **`$cf` global store** — cross-component messaging from any template:
 ```html
@@ -250,6 +250,13 @@ Opt out entirely:
 ```django
 {% cf_ui_body alpine=False %}
 ```
+
+This file is also where the interactive components' accessibility lives — modal
+focus trapping and restoration, `Escape` to close, the tabs roving tabindex. A
+theme partial supplies classes and ARIA state; it never implements behavior, so
+a new theme inherits all of it.
+
+→ Full guide: [`docs/accessibility.md`](docs/accessibility.md)
 
 ---
 

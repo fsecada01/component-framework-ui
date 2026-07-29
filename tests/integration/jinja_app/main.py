@@ -74,23 +74,47 @@ def make_app(theme: str = "bulma") -> FastAPI:
             "Cf:Tabs",
             tabs=[{"id": "one", "url": "/tab/one/"}, {"id": "two", "url": "/tab/two/"}],
             hx_target="tab-content",
+            active="one",
             extra_class="",
         )
 
     @app.get("/gallery", response_class=HTMLResponse)
     async def gallery():
-        modal_html = catalog.render("Cf:Modal", id="e2e-modal", extra_class="")
+        # A header (so aria-labelledby has a target) and a focusable footer
+        # control (so the focus trap has more than one stop to wrap between).
+        modal_html = catalog.render(
+            "Cf:Modal",
+            id="e2e-modal",
+            header="E2E Dialog",
+            footer='<button type="button" id="modal-ok">OK</button>',
+            extra_class="",
+        )
         notification_html = catalog.render(
             "Cf:Notification", message="Hello!", type="info", dismissible=True, extra_class=""
         )
         navbar_html = catalog.render("Cf:Navbar", brand="Brand", start="", end="", extra_class="")
         panel_html = catalog.render(
-            "Cf:Panel", title="Accordion", _content="Hidden content", open=False, extra_class=""
+            "Cf:Panel",
+            id="e2e-panel",
+            title="Accordion",
+            _content="Hidden content",
+            open=False,
+            extra_class="",
+        )
+        # The no-JS case for `open`: this one must be readable with Alpine off.
+        panel_open_html = catalog.render(
+            "Cf:Panel",
+            id="e2e-panel-open",
+            title="Already open",
+            _content="Visible content",
+            open=True,
+            extra_class="",
         )
         tabs_html = catalog.render(
             "Cf:Tabs",
             tabs=[{"id": "tab1", "url": "/tab/one/"}, {"id": "tab2", "url": "/tab/two/"}],
             hx_target="tab-content",
+            active="tab1",
             _content="Initial content",
             extra_class="",
         )
@@ -104,10 +128,11 @@ def make_app(theme: str = "bulma") -> FastAPI:
 <body>
   <section class="section">
     {navbar_html}
-    <button id="open-modal">Open Modal</button>
+    <button id="open-modal" x-data @click="$store.cf.modal.open('e2e-modal')">Open Modal</button>
     {modal_html}
     {notification_html}
     {panel_html}
+    {panel_open_html}
     {tabs_html}
   </section>
   <script src="/static/cf_ui/cf_ui_alpine.js" defer></script>
