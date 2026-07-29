@@ -18,6 +18,15 @@ lint-fix:
 test:
     pytest tests/unit -q --tb=short
 
+# The Tailwind plugin's own suite. `just test` runs it too, via a pytest
+# wrapper that skips when node is missing; this recipe never skips.
+test-js:
+    node --test --test-reporter=spec "tests/js/**/*.test.mjs"
+
+# Rebuild cf_ui_axes.css and cf_ui_axes.json from axes.py.
+axes:
+    python -m cf_ui.axes
+
 test-integration:
     pytest tests/integration -q --tb=short
 

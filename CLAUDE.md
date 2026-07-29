@@ -15,6 +15,8 @@ uv pip install -e ".[dev]"       # install with all dev deps
 playwright install chromium       # install E2E browser
 
 just test                         # unit tests only
+just test-js                      # Tailwind plugin suite (node --test)
+just axes                         # regenerate cf_ui_axes.css + cf_ui_axes.json
 just test-integration             # integration tests (real HTTP)
 just test-e2e                     # E2E Playwright (requires chromium)
 just test-all                     # full suite
@@ -44,7 +46,10 @@ src/cf_ui/
 │   ├── jinja/bulma/         # 14 JinjaX component templates (*.jinja)
 │   └── cotton/bulma/cf/     # 14 django-cotton component templates (*.html)
 └── static/cf_ui/
-    └── cf_ui_alpine.js      # Alpine named components + $cf global store
+    ├── cf_ui_alpine.js      # Alpine named components + $cf global store
+    ├── cf_ui_axes.css       # GENERATED from axes.py
+    ├── cf_ui_axes.json      # GENERATED from axes.py — read by the plugin below
+    └── cf_ui_tailwind_plugin.mjs  # Tailwind plugin: build-time axis validation
 ```
 
 Templates live **inside** the Python package so hatchling includes them automatically.
@@ -65,6 +70,19 @@ Templates live **inside** the Python package so hatchling includes them automati
 
 **Django AppConfig:**
 - Register as `"cf_ui.django.CfUiConfig"` (full class path), NOT `"cf_ui.django"` — `default_app_config` is removed in Django 4.2+
+
+**Theme axes / Tailwind plugin:**
+- `axes.py` is the single source of truth; `cf_ui_axes.css` **and** `cf_ui_axes.json`
+  are build products of it. Edit `axes.py`, run `just axes`, commit both — drift
+  tests fail otherwise
+- The plugin holds no copy of the value sets, and a parity test compares its output
+  against `render_axis_css` declaration by declaration. Never add value data to the
+  `.mjs`
+- The `.mjs` is vendored, so it may import **only** Node builtins — a bare
+  `tailwindcss/plugin` import will not resolve from site-packages. It exports
+  Tailwind's `{ handler, config }` shape by hand instead
+- `node --test` runs as its own CI step because the pytest wrapper skips when node
+  is absent, and a skip is not a pass
 
 **Alpine.js:**
 - `cf_ui_alpine.js` must load BEFORE the Alpine CDN (both use `defer` — DOM order guarantees execution sequence)
