@@ -1,0 +1,13 @@
+<nav class="navbar bg-base-100 {{ class }}" role="navigation" aria-label="main navigation"
+     x-data="cfNavbar">
+  <div class="navbar-start">
+    {{ brand }}
+    <button type="button"
+            class="btn btn-square btn-ghost lg:hidden"
+            aria-label="menu"
+            :aria-expanded="menuOpen"
+            @click="toggle()">&#9776;</button>
+  </div>
+  <div class="navbar-center hidden lg:flex" :class="{ 'flex': menuOpen }">{{ start }}</div>
+  <div class="navbar-end hidden lg:flex" :class="{ 'flex': menuOpen }">{{ end }}</div>
+</nav>

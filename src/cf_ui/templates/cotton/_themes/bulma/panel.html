@@ -1,0 +1,14 @@
+<div class="card {{ class }}" x-data="cfPanel">
+  <header class="card-header" style="cursor:pointer" @click="toggle()">
+    <p class="card-header-title">{{ title }}</p>
+    <button class="card-header-icon" aria-label="toggle panel">
+      <span class="icon">
+        <span :style="open ? 'transform:rotate(90deg)' : ''"
+              style="display:inline-block;transition:transform 200ms">▶</span>
+      </span>
+    </button>
+  </header>
+  <div class="card-content" x-show="open" x-cloak>
+    {{ slot }}
+  </div>
+</div>

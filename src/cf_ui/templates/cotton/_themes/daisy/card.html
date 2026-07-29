@@ -1,0 +1,9 @@
+<div class="card bg-base-100 shadow-xl {{ class }}">
+  <div class="card-body">
+    {% if header %}<h2 class="card-title">{{ header }}</h2>{% endif %}
+    <div>{{ slot }}</div>
+    {% if footer %}
+    <div class="card-actions justify-end">{{ footer }}</div>
+    {% endif %}
+  </div>
+</div>

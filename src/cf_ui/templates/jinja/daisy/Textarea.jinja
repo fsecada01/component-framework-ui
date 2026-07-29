@@ -1,0 +1,14 @@
+{#def name, label, value="", error="", rows=4, extra_class="", input_class="" #}
+{% set value = value if value is defined else "" %}
+{% set error = error if error is defined else "" %}
+{% set rows = rows if rows is defined else 4 %}
+{% set extra_class = extra_class if extra_class is defined else "" %}
+{% set input_class = input_class if input_class is defined else "" %}
+<div class="form-control {{ extra_class }}">
+  <label class="label" for="{{ name }}"><span class="label-text">{{ label }}</span></label>
+  <textarea class="textarea textarea-bordered w-full{% if error %} textarea-error{% endif %}{% if input_class %} {{ input_class }}{% endif %}"
+            id="{{ name }}"
+            name="{{ name }}"
+            rows="{{ rows }}">{{ value }}</textarea>
+  {% if error %}<span class="label-text-alt text-error">{{ error }}</span>{% endif %}
+</div>

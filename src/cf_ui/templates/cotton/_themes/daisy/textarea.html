@@ -1,0 +1,8 @@
+<div class="form-control {{ class }}">
+  <label class="label" for="{{ name }}"><span class="label-text">{{ label }}</span></label>
+  <textarea class="textarea textarea-bordered w-full{% if error %} textarea-error{% endif %}{% if input_class %} {{ input_class }}{% endif %}"
+            id="{{ name }}"
+            name="{{ name }}"
+            rows="{{ rows }}">{{ value }}</textarea>
+  {% if error %}<span class="label-text-alt text-error">{{ error }}</span>{% endif %}
+</div>

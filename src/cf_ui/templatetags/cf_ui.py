@@ -5,6 +5,7 @@ from django.utils.safestring import mark_safe
 
 from cf_ui.axes import root_attrs, style_element
 from cf_ui.django import axis_value_sets
+from cf_ui.themes import cotton_partial
 
 register = template.Library()
 
@@ -75,6 +76,23 @@ def cf_ui_root_attrs() -> str:
     """
     composition = getattr(settings, "CF_UI_COMPOSITION", None)
     return mark_safe(root_attrs(composition, value_sets=axis_value_sets()))
+
+
+@register.simple_tag
+def cf_ui_theme_path(component: str) -> str:
+    """Resolve a component to its partial for the configured theme.
+
+    Used by the public wrappers at ``cotton/cf/<name>.html``::
+
+        {% cf_ui_theme_path "card" as cf_ui_partial %}{% include cf_ui_partial %}
+
+    (Django rejects template variables that begin with an underscore, so the
+    name is prefixed rather than marked private.)
+
+    ``{% include %}`` inherits the caller's context, so the component's own
+    props and ``{{ slot }}`` reach the partial without being re-declared.
+    """
+    return cotton_partial(component, getattr(settings, "CF_UI_THEME", None))
 
 
 @register.simple_tag

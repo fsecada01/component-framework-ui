@@ -20,10 +20,13 @@ Component names are **theme-agnostic** — `<CfCard>` and `<c-cf.card>` render t
 ## Installation
 
 ```bash
-# Bulma (v0.1 — only supported theme)
+# Bulma
 pip install "cf-ui[bulma]"
 
-# All themes (stubs for future Bootstrap, Foundation, Fomantic, DaisyUI)
+# Tailwind + DaisyUI
+pip install "cf-ui[daisy]"
+
+# All themes (Bootstrap, Foundation and Fomantic are still stubs)
 pip install "cf-ui[all]"
 ```
 
@@ -241,25 +244,44 @@ from cf_ui import JINJA_TEMPLATES_DIR, COTTON_TEMPLATES_DIR
 # COTTON_TEMPLATES_DIR / "cf"    →  Path to Cotton component templates
 ```
 
-> **Cotton templates are theme-agnostic on disk.** They live at
+> **Cotton component paths are theme-agnostic.** The public components live at
 > `cotton/cf/*.html` (not `cotton/<theme>/cf/*.html`) so cf-ui can sit
 > alongside any consumer project's own `templates/cotton/<app>/...` tree
-> without colliding on `COTTON_DIR`. The active CSS framework is selected
-> via `CF_UI_THEME` (used by the asset tags) — switching themes in a
-> future release will happen inside the templates, not via the directory
-> layout.
+> without colliding on `COTTON_DIR`. Each one is a thin wrapper that declares
+> its props and includes a theme partial from `cotton/_themes/<theme>/`,
+> selected by `CF_UI_THEME`. Render `<c-cf.card>`; never reach into
+> `_themes/` directly.
+>
+> The Jinja side needs no such indirection — `install_cf_ui(catalog, theme=…)`
+> registers `templates/jinja/<theme>/` and JinjaX resolves `<CfCard>` from there.
 
 ---
 
-## Planned Themes
+## Themes
 
 | Theme | Status |
 |---|---|
 | Bulma | ✅ v0.1.0 |
+| Tailwind + DaisyUI | ✅ — see [docs/daisyui.md](docs/daisyui.md) |
 | Bootstrap | 📋 Planned |
 | Foundation | 📋 Planned |
 | Fomantic UI | 📋 Planned |
-| Tailwind + DaisyUI | 📋 Planned |
+
+Switching is one line — `CF_UI_THEME = "daisy"` on Django, `theme="daisy"` on
+FastAPI/Litestar — and needs no template edits in the consuming app. An
+unimplemented theme name is rejected at startup rather than at first render.
+
+**DaisyUI takes one extra step.** It compiles through Tailwind, so Tailwind's
+content scanner has to reach cf-ui's templates in site-packages or every class
+in them is tree-shaken away, leaving correct markup with no styling and no
+error. Get the glob from the package rather than hand-writing it:
+
+```bash
+python -m cf_ui.themes
+```
+
+[docs/daisyui.md](docs/daisyui.md) covers that, plus disabling Tailwind's
+preflight while an older framework is still styling the app.
 
 ---
 

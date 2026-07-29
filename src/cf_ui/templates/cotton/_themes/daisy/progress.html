@@ -1,0 +1,6 @@
+<div class="{{ class }}">
+  {% if label %}<p class="text-center mb-1">{{ label }}</p>{% endif %}
+  <progress class="progress {% if type == 'danger' or type == 'error' %}progress-error{% elif type == 'success' %}progress-success{% elif type == 'warning' %}progress-warning{% elif type == 'info' %}progress-info{% else %}progress-primary{% endif %} w-full"
+            value="{{ value }}"
+            max="{{ max }}">{{ value }}%</progress>
+</div>

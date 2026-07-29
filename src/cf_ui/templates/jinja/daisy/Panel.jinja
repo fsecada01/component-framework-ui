@@ -1,0 +1,16 @@
+{#def title, content="", open=false, extra_class="" #}
+{% set content = content if content is defined else "" %}
+{% set extra_class = extra_class if extra_class is defined else "" %}
+<div class="card bg-base-100 shadow-xl {{ extra_class }}" x-data="cfPanel">
+  <button type="button"
+          class="btn btn-ghost justify-between w-full"
+          :aria-expanded="open"
+          @click="toggle()">
+    <span class="card-title text-base">{{ title }}</span>
+    <span :style="open ? 'transform:rotate(90deg)' : 'transform:rotate(0deg)'"
+          style="display:inline-block;transition:transform 200ms">&#9654;</span>
+  </button>
+  <div class="card-body pt-0" x-show="open" x-cloak>
+    {{ content }}
+  </div>
+</div>

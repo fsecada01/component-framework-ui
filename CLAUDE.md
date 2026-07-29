@@ -35,14 +35,16 @@ pytest tests/e2e/ --browser chromium -v        # E2E tests
 src/cf_ui/
 ├── __init__.py              # exports JINJA_TEMPLATES_DIR, COTTON_TEMPLATES_DIR, __version__
 ├── _version.py
-├── django.py                # AppConfig — AppConfig auto-registers COTTON_DIRS at startup
+├── django.py                # AppConfig — validates CF_UI_THEME + CF_UI_COMPOSITION at startup
+├── themes.py                # theme registry, cotton partial paths, Tailwind content globs
 ├── fastapi.py               # install_cf_ui(catalog, theme) — add_folder(prefix="Cf")
 ├── litestar.py              # install_cf_ui(config, theme) — appends to TemplateConfig.directory
 ├── templatetags/cf_ui.py    # Django simple_tags: cf_ui_head, cf_ui_body, get_item, make_list_1_to_n
 ├── templates/
 │   ├── cf_ui/assets.jinja   # Jinja2 macros: cf_ui_head(), cf_ui_body()
-│   ├── jinja/bulma/         # 14 JinjaX component templates (*.jinja)
-│   └── cotton/bulma/cf/     # 14 django-cotton component templates (*.html)
+│   ├── jinja/<theme>/       # 14 JinjaX component templates (*.jinja) per theme
+│   ├── cotton/cf/           # 14 public wrappers — <c-cf.x>, props + dispatch only
+│   └── cotton/_themes/<theme>/  # 14 theme partials (*.html), included by the wrappers
 └── static/cf_ui/
     └── cf_ui_alpine.js      # Alpine named components + $cf global store
 ```
@@ -92,9 +94,22 @@ The `Cf` prefix / `cf.` namespace prevents collision with consumer app component
 
 ## Adding a New Theme
 
-1. Create `src/cf_ui/templates/jinja/{theme}/` and `src/cf_ui/templates/cotton/{theme}/cf/`
-2. Copy and adapt all 14 component templates, replacing Bulma-specific classes
-3. Add the theme's CDN URL to `_CDN_CSS` in `templatetags/cf_ui.py` and to `assets.jinja`
-4. Add default version to `_DEFAULTS` in `templatetags/cf_ui.py`
-5. Add a stub `pyproject.toml` extras entry (already present as empty `[]`)
-6. Add unit tests in `tests/unit/jinja/` and `tests/unit/cotton/`
+1. Create `src/cf_ui/templates/jinja/{theme}/` and
+   `src/cf_ui/templates/cotton/_themes/{theme}/`
+2. Copy and adapt all 14 component templates, replacing Bulma-specific classes.
+   The cotton partials carry **no** `<c-vars>` — that lives on the wrapper in
+   `cotton/cf/`, which needs no edit for a new theme
+3. Add `{theme}` to `THEMES` in `themes.py` — until then `resolve_theme` rejects
+   it at startup
+4. Add the theme's CDN URL to `_CDN_CSS` in `templatetags/cf_ui.py` and to
+   `assets.jinja`
+5. Add default version to `_DEFAULTS` in `templatetags/cf_ui.py`
+6. Add a stub `pyproject.toml` extras entry (already present as empty `[]`)
+7. Add unit tests in `tests/unit/jinja/` and `tests/unit/cotton/`; the
+   parametrized tests in `tests/unit/test_theme_dispatch.py` pick the theme up
+   automatically once step 3 lands
+
+**Tailwind-based themes only:** write every variant class out in full
+(`{% if type == 'danger' %}alert-error{% endif %}`) — Tailwind's scanner reads
+source text, so `alert-{{ type }}` gets tree-shaken away silently. See
+`tests/unit/test_tailwind_content.py` and `docs/daisyui.md`.
