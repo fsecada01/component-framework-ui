@@ -40,7 +40,11 @@ verified to still resolve.
     carries `.error`.
   - **Progress** is a div, so `role="progressbar"` and `aria-valuenow` /
     `aria-valuemin` / `aria-valuemax` are written out, and the bar width and
-    `data-percent` are rendered server-side.
+    `data-percent` are rendered server-side. The percentage is also clamped to
+    `0..100`: Bulma and DaisyUI render a real `<progress>`, which the browser
+    clamps for both painting and the accessibility tree, whereas a div would
+    take `width: 150%` and report `aria-valuenow="150"` against a max of 100.
+    The ARIA is stated in percent so it agrees with the visible label.
 
 - Accessibility is at parity with Bulma and DaisyUI, not a reduced subset: the
   parametrized cases in `tests/unit/test_accessibility.py` now run against

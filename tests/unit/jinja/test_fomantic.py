@@ -327,6 +327,30 @@ def test_progress_survives_a_zero_max(render):
     assert 'data-percent="0"' in html
 
 
+def test_progress_clamps_a_value_above_max(render):
+    """Bulma and Daisy get this free from ``<progress>``; a div does not.
+
+    A native ``<progress value="150" max="100">`` renders full and reports 100%
+    to assistive tech. Fomantic has no native element behind it, so an
+    unclamped percentage would emit ``width: 150%`` — a bar wider than its
+    track — and ``aria-valuenow="150"`` against ``aria-valuemax="100"``, which
+    is invalid.
+    """
+    html = render("Progress.jinja", value=150, max=100, label="L")
+    assert 'data-percent="100"' in html
+    assert "width:100%" in html.replace(" ", "")
+    assert 'aria-valuenow="100"' in html
+    assert "150" not in html
+
+
+def test_progress_clamps_a_negative_value(render):
+    html = render("Progress.jinja", value=-10, max=100, label="L")
+    assert 'data-percent="0"' in html
+    assert "width:0%" in html.replace(" ", "")
+    assert 'aria-valuenow="0"' in html
+    assert "-10" not in html
+
+
 # --- Content + navigation --------------------------------------------------
 
 

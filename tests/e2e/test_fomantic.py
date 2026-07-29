@@ -193,11 +193,18 @@ def test_jinja_modal_is_actually_visible_when_open(fomantic_jinja_page, fomantic
 
     Asserting the class alone would pass against markup that never appears —
     which is the failure the accessibility phase called out.
+
+    This is the only test here that needs the stylesheet to have *arrived*:
+    every other assertion is on attributes, which do not wait on CSS. Fomantic
+    ships as a single 1.6 MB file from the CDN, so the default 5s navigation
+    budget is not reliably enough on a cold or contended connection. The
+    timeout is raised here rather than globally so the rest of the file keeps
+    failing fast.
     """
     page, js_mode = fomantic_jinja_page
     if js_mode != "js_on":
         pytest.skip("reveal requires JS")
-    page.goto(f"{fomantic_jinja_server_url}/gallery")
+    page.goto(f"{fomantic_jinja_server_url}/gallery", timeout=30_000)
     _wait_for_alpine(page)
 
     box = page.locator("#e2e-modal .ui.modal")

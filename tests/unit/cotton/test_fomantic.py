@@ -166,6 +166,23 @@ def test_progress_maps_danger_to_error(fomantic_render):
     assert "ui error progress" in html
 
 
+def test_progress_clamps_a_value_above_max(fomantic_render):
+    """Must match the Jinja side — the two template sets are one contract."""
+    html = fomantic_render("cf/progress.html", value="150", max="100", type="primary")
+    assert 'data-percent="100"' in html
+    assert "width:100%" in html.replace(" ", "")
+    assert 'aria-valuenow="100"' in html
+    assert "150" not in html
+
+
+def test_progress_clamps_a_negative_value(fomantic_render):
+    html = fomantic_render("cf/progress.html", value="-10", max="100", type="primary")
+    assert 'data-percent="0"' in html
+    assert "width:0%" in html.replace(" ", "")
+    assert 'aria-valuenow="0"' in html
+    assert "-10" not in html
+
+
 # --- Content + navigation --------------------------------------------------
 
 

@@ -5,18 +5,25 @@
 {% set label = label if label is defined else "" %}
 {% set extra_class = extra_class if extra_class is defined else "" %}
 {% set cf_max = max|float %}
-{% set cf_pct = ((value|float / cf_max) * 100)|round|int if cf_max > 0 else 0 %}
+{% set cf_raw = ((value|float / cf_max) * 100)|round|int if cf_max > 0 else 0 %}
+{% set cf_pct = [[cf_raw, 0]|max, 100]|min %}
 {# Fomantic's progress is a div whose `.bar` is sized by its Progress module.
    With no JS the width is written server-side, and `data-percent` has to be
    present — `.ui.progress:not([data-percent]) .bar` is given a transparent
-   background. A div is also not a `<progress>`, so the ARIA is explicit. #}
+   background. A div is also not a `<progress>`, so the ARIA is explicit.
+
+   The percentage is clamped to 0..100 because nothing else will do it here.
+   Bulma and Daisy render a real `<progress>`, which the browser clamps for
+   both painting and the accessibility tree; a plain div would happily take
+   `width: 150%` and report `aria-valuenow="150"` against a max of 100. The
+   ARIA is stated in percent so it agrees with the visible "40%" text. #}
 <div class="{{ extra_class }}">
   <div class="ui {% if type == 'danger' or type == 'error' %}error{% elif type == 'success' %}success{% elif type == 'warning' %}warning{% elif type == 'info' %}teal{% else %}blue{% endif %} progress"
        data-percent="{{ cf_pct }}"
        role="progressbar"
-       aria-valuenow="{{ value }}"
+       aria-valuenow="{{ cf_pct }}"
        aria-valuemin="0"
-       aria-valuemax="{{ max }}"
+       aria-valuemax="100"
        {% if label %}aria-label="{{ label }}"{% endif %}>
     <div class="bar" style="width: {{ cf_pct }}%">
       <div class="progress">{{ cf_pct }}%</div>
