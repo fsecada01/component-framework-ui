@@ -23,6 +23,14 @@ test:
 test-js:
     node --test --test-reporter=spec "tests/js/**/*.test.mjs"
 
+# The vendored plugin through a real Tailwind build: the good paths compile,
+# the CSS actually lands, and an unknown composition exits non-zero. `test-js`
+# covers the same plugin but never invokes Tailwind, so it cannot notice the
+# contract changing underneath it.
+test-tailwind:
+    npm ci --prefix tests/tailwind
+    node --test --test-reporter=spec tests/tailwind/build.test.mjs
+
 # Rebuild cf_ui_axes.css and cf_ui_axes.json from axes.py.
 axes:
     python -m cf_ui.axes

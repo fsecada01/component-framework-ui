@@ -52,3 +52,32 @@ jobs:
 
       - name: E2E tests
         run: pytest tests/e2e/ -q --tb=short --browser chromium
+
+  # Deliberately its own job, not a step on the matrix above: nothing here
+  # depends on the Python version, and running it three times would only buy
+  # three copies of the same answer.
+  #
+  # Everything the `test` job asserts about Tailwind is a proxy — it calls the
+  # plugin's exports directly and never invokes Tailwind. Both defects fixed in
+  # #7 were invisible to that suite and only appeared under a real build. This
+  # job is the one that would notice if Tailwind changed the contract.
+  tailwind-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      # `npm ci` installs the lockfile exactly. The Tailwind version is pinned
+      # in tests/tailwind/package.json — a bump breaking this job is the signal
+      # this job exists to produce, so bump it deliberately rather than
+      # floating the range.
+      - name: Install pinned Tailwind
+        working-directory: tests/tailwind
+        run: npm ci
+
+      - name: Build the vendored plugin against real Tailwind
+        run: node --test --test-reporter=spec "tests/tailwind/build.test.mjs"
