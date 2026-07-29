@@ -36,6 +36,14 @@ jobs:
       - name: Format check
         run: ruff format --check src tests
 
+      # Run directly, not only through the pytest wrapper: that wrapper skips
+      # when node is absent, and a skip is not a pass. This step has no such
+      # escape hatch, so the plugin's own suite is always exercised in CI.
+      - name: Tailwind plugin tests (node)
+        run: |
+          node --version
+          node --test --test-reporter=spec "tests/js/**/*.test.mjs"
+
       - name: Unit tests
         run: pytest tests/unit/ -q --tb=short
 

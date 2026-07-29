@@ -7,8 +7,13 @@ repos:
       - id: check-yaml
       - id: check-merge-conflict
 
+  # Keep this in step with the `ruff` that `dev` resolves to (pyproject:
+  # `ruff>=0.1`), which is what CI runs. When the two drifted, v0.3.0 and
+  # 0.16.x disagreed about first-party imports and about `assert x, (msg)`
+  # wrapping, and each reverted the other's fix — so `prek` could pass while
+  # CI failed on the very same file.
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.3.0
+    rev: v0.16.0
     hooks:
       - id: ruff
         args: [--fix]

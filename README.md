@@ -208,6 +208,26 @@ Apps supply their own value sets via `CF_UI_AXIS_VALUES` (`value_sets=` for Jinj
 
 → Full guide: [`docs/theming.md`](docs/theming.md)
 
+### Build-time validation (Tailwind)
+
+The closed value sets are only a promise until something enforces them.
+`data-accent="hotpink"` produces no error on its own — it produces an element
+with no accent. cf-ui ships a Tailwind plugin that **fails the build** on an
+unknown axis value, generates the axis CSS and its `@media (color-gamut: p3)`
+layer from the same definition, and can warn with WCAG numbers for every
+accent × surface × mode.
+
+```css
+@import "tailwindcss";
+@plugin "../.venv/lib/python3.12/site-packages/cf_ui/static/cf_ui/cf_ui_tailwind_plugin.mjs";
+```
+
+The plugin is **vendored in the wheel, not published to npm** — a separate npm
+version could disagree with the installed package about what a valid value is,
+which is the exact failure it exists to prevent.
+
+→ Full guide: [`docs/tailwind-plugin.md`](docs/tailwind-plugin.md)
+
 ---
 
 ## Alpine.js Integration
