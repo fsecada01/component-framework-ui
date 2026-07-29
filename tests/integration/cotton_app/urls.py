@@ -6,4 +6,6 @@ urlpatterns = [
     path("form-field/", views.form_field_view),
     path("modal/", views.modal_view),
     path("card/", views.card_view),
+    path("tabs/", views.tabs_view),
+    path("panel/", views.panel_view),
 ]

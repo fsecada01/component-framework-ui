@@ -1,17 +1,21 @@
-{#def id="modal", header="", content="", footer="", extra_class="" #}
+{#def id="modal", header="", content="", footer="", label="Dialog", extra_class="" #}
 {% set header = header if header is defined else "" %}
 {% set content = content if content is defined else "" %}
 {% set footer = footer if footer is defined else "" %}
+{% set label = label if label is defined and label else "Dialog" %}
 <div id="{{ id }}"
      class="modal {{ extra_class }}"
+     role="dialog"
+     aria-modal="true"
+     {% if header %}aria-labelledby="{{ id }}-title"{% else %}aria-label="{{ label }}"{% endif %}
      x-data="cfModal"
      x-init="initModal()"
      :class="{ 'is-active': open }">
   <div class="modal-background" @click="close()"></div>
   <div class="modal-card">
     <header class="modal-card-head">
-      <p class="modal-card-title">{{ header }}</p>
-      <button class="delete" aria-label="close" @click="close()"></button>
+      <p class="modal-card-title" id="{{ id }}-title">{{ header }}</p>
+      <button type="button" class="delete" aria-label="close" @click="close()"></button>
     </header>
     <section class="modal-card-body">
       {{ content }}

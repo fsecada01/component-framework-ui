@@ -142,17 +142,148 @@ def test_jinja_navbar_burger_toggles_menu(daisy_jinja_page, daisy_jinja_server_u
 
 
 def test_jinja_tabs_activate(daisy_jinja_page, daisy_jinja_server_url):
+    """Clicking a tab moves the marker; the server-rendered one is the start.
+
+    Was: assert the first tab is *not* active, click it, assert it is. That
+    only held because no tab was ever active to begin with — the js_off half
+    of the same test could do no better than `to_be_attached()`. The gallery
+    now ships `active="tab1"`, so this asserts a move rather than a first
+    appearance, and js_off has something real to check (see below).
+    """
+    page, js_mode = daisy_jinja_page
+    if js_mode != "js_on":
+        pytest.skip("covered without JS by test_jinja_exactly_one_tab_is_active")
+    page.goto(f"{daisy_jinja_server_url}/gallery")
+    _wait_for_alpine(page)
+
+    tabs = page.locator("[role='tab']")
+    expect(tabs.nth(0)).to_have_class(re.compile(r"tab-active"))
+    tabs.nth(1).click()
+    expect(tabs.nth(1)).to_have_class(re.compile(r"tab-active"))
+    expect(tabs.nth(0)).not_to_have_class(re.compile(r"tab-active"))
+
+
+def test_jinja_exactly_one_tab_is_active(daisy_jinja_page, daisy_jinja_server_url):
+    """#21: `to_be_attached()` passed against markup that was unusable."""
     page, js_mode = daisy_jinja_page
     page.goto(f"{daisy_jinja_server_url}/gallery")
-    first_tab = page.locator("[role='tab']").first
-
     if js_mode == "js_on":
         _wait_for_alpine(page)
-        expect(first_tab).not_to_have_class(re.compile(r"tab-active"))
-        first_tab.click()
-        expect(first_tab).to_have_class(re.compile(r"tab-active"))
-    else:
-        expect(first_tab).to_be_attached()
+    expect(page.locator("[role='tab'].tab-active")).to_have_count(1)
+    expect(page.locator("[role='tab'].tab-active")).to_have_text("tab1")
+    expect(page.locator("[role='tab'][aria-selected='true']")).to_have_count(1)
+    expect(page.locator("[role='tab'][tabindex='0']")).to_have_count(1)
+
+
+def test_jinja_arrow_keys_rove_focus_across_the_tablist(daisy_jinja_page, daisy_jinja_server_url):
+    page, js_mode = daisy_jinja_page
+    if js_mode != "js_on":
+        pytest.skip("roving tabindex requires JS")
+    page.goto(f"{daisy_jinja_server_url}/gallery")
+    _wait_for_alpine(page)
+
+    page.locator("[role='tab']").first.focus()
+    page.keyboard.press("ArrowRight")
+    assert page.evaluate("() => document.activeElement.dataset.cfTab") == "tab2"
+    page.keyboard.press("Home")
+    assert page.evaluate("() => document.activeElement.dataset.cfTab") == "tab1"
+
+
+# --- Dialog semantics and focus management (#21) ---------------------------
+
+
+def test_jinja_modal_declares_dialog_semantics(daisy_jinja_page, daisy_jinja_server_url):
+    page, _ = daisy_jinja_page
+    page.goto(f"{daisy_jinja_server_url}/gallery")
+    modal = page.locator("#e2e-modal")
+    expect(modal).to_have_attribute("role", "dialog")
+    expect(modal).to_have_attribute("aria-modal", "true")
+    expect(modal).to_have_attribute("aria-labelledby", "e2e-modal-title")
+
+
+def test_jinja_modal_manages_focus(daisy_jinja_page, daisy_jinja_server_url):
+    """Same Alpine contract as Bulma — the theme changes classes, not behavior."""
+    page, js_mode = daisy_jinja_page
+    if js_mode != "js_on":
+        pytest.skip("focus management requires JS")
+    page.goto(f"{daisy_jinja_server_url}/gallery")
+    _wait_for_alpine(page)
+
+    page.locator("#open-modal").click()
+    assert page.evaluate(
+        "() => document.getElementById('e2e-modal').contains(document.activeElement)"
+    ), "focus stayed behind the dialog"
+    page.keyboard.press("Escape")
+    expect(page.locator("#e2e-modal")).not_to_have_class(re.compile(r"modal-open"))
+    assert page.evaluate("() => document.activeElement.id") == "open-modal"
+
+
+def test_jinja_tab_does_not_escape_the_open_modal(daisy_jinja_page, daisy_jinja_server_url):
+    page, js_mode = daisy_jinja_page
+    if js_mode != "js_on":
+        pytest.skip("focus management requires JS")
+    page.goto(f"{daisy_jinja_server_url}/gallery")
+    _wait_for_alpine(page)
+
+    page.locator("#open-modal").click()
+    inside = "() => document.getElementById('e2e-modal').contains(document.activeElement)"
+    for _ in range(6):
+        page.keyboard.press("Tab")
+        assert page.evaluate(inside), "focus escaped the dialog on Tab"
+
+
+def test_jinja_open_panel_is_readable_without_js(daisy_jinja_page, daisy_jinja_server_url):
+    page, js_mode = daisy_jinja_page
+    page.goto(f"{daisy_jinja_server_url}/gallery")
+    if js_mode == "js_on":
+        _wait_for_alpine(page)
+    expect(page.locator("#e2e-panel-open-body")).to_be_visible()
+
+
+def test_jinja_panel_toggle_reports_its_state(daisy_jinja_page, daisy_jinja_server_url):
+    page, js_mode = daisy_jinja_page
+    page.goto(f"{daisy_jinja_server_url}/gallery")
+    if js_mode == "js_on":
+        _wait_for_alpine(page)
+    expect(page.locator('button[aria-controls="e2e-panel-body"]')).to_have_attribute(
+        "aria-expanded", "false"
+    )
+    expect(page.locator('button[aria-controls="e2e-panel-open-body"]')).to_have_attribute(
+        "aria-expanded", "true"
+    )
+
+
+# --- django-cotton: the same contract through the real compiler ------------
+
+
+def test_cotton_modal_declares_dialog_semantics(daisy_cotton_page, daisy_cotton_server_url):
+    page, _ = daisy_cotton_page
+    page.goto(f"{daisy_cotton_server_url}/modal/")
+    modal = page.locator("#test-modal")
+    expect(modal).to_have_attribute("role", "dialog")
+    expect(modal).to_have_attribute("aria-modal", "true")
+    expect(modal).to_have_attribute("aria-labelledby", "test-modal-title")
+
+
+def test_cotton_tabs_render_the_active_tab(daisy_cotton_page, daisy_cotton_server_url):
+    """`active` has to survive <c-vars> — unit tests bypass that compiler."""
+    page, _ = daisy_cotton_page
+    page.goto(f"{daisy_cotton_server_url}/tabs/")
+    expect(page.locator("[role='tab'].tab-active")).to_have_count(1)
+    expect(page.locator("[role='tab'].tab-active")).to_have_text("tab1")
+    expect(page.locator("[role='tab'][aria-selected='true']")).to_have_count(1)
+
+
+def test_cotton_panel_honors_its_open_prop(daisy_cotton_page, daisy_cotton_server_url):
+    page, _ = daisy_cotton_page
+    page.goto(f"{daisy_cotton_server_url}/panel/")
+    expect(page.locator("#open-panel-body")).not_to_have_attribute("x-cloak", "")
+    expect(page.locator('button[aria-controls="open-panel-body"]')).to_have_attribute(
+        "aria-expanded", "true"
+    )
+    expect(page.locator('button[aria-controls="closed-panel-body"]')).to_have_attribute(
+        "aria-expanded", "false"
+    )
 
 
 def test_jinja_form_field_renders(daisy_jinja_page, daisy_jinja_server_url):

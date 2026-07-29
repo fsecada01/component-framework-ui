@@ -2,6 +2,55 @@
 
 ## [Unreleased]
 
+### Fixed — accessibility (#21)
+
+Three gaps that predate 0.1.0 and were flagged during the #6 review, fixed
+against both shipped themes before the theme-expansion epic copies the patterns
+into three more.
+
+- **The modal had no dialog semantics and no focus management.** It rendered a
+  plain `<div>`: a screen reader had no way to know a dialog opened, and
+  keyboard focus stayed behind it. It now carries `role="dialog"` and
+  `aria-modal="true"`, is named by its header via `aria-labelledby` (or by a new
+  `label` prop, defaulting to `"Dialog"`, when there is no header), moves focus
+  into itself on open, returns focus to whatever opened it on close, traps `Tab`
+  and `Shift+Tab` while open, and closes on `Escape`.
+
+  It stays a `<div>` rather than becoming a native `<dialog>`. `showModal()`
+  would give all of the above for free, but only where a theme's CSS is built
+  around it — it would make `cfModal` branch per theme, and the identical
+  cross-theme Alpine contract is what the theme work exists to protect. The
+  whole implementation is in `cf_ui_alpine.js`, once, so a new theme inherits it
+  by writing markup. See [`docs/accessibility.md`](docs/accessibility.md).
+
+- **Tabs showed no active tab without JavaScript.** The active marker existed
+  only as an Alpine binding, so a JS-less page rendered every tab identically —
+  navigation worked (tabs are HTMX-driven), but nothing said which one you were
+  on. `CfTabs` / `<c-cf.tabs>` now take an `active` prop and server-render the
+  active class, `aria-selected`, `aria-controls`, and a roving `tabindex` from
+  it. The Alpine binding stays on top: the server value is the initial state,
+  not a replacement. Keyboard support follows the ARIA tabs pattern with manual
+  activation — arrows move focus, `Enter`/`Space` activates — because automatic
+  activation would fire an HTMX request on every arrow press.
+
+- **`CfPanel`'s `open` prop was declared but never rendered.** An open panel
+  still emitted `x-cloak`, so with Alpine off it was hidden permanently. The
+  panel now renders its open state server-side, seeds Alpine from it rather than
+  resetting to closed, and its toggle is a real `<button type="button">` with
+  `aria-controls` and `aria-expanded`.
+
+  **New prop:** `CfPanel` takes an `id` (default `"panel"`), used for
+  `aria-controls="{id}-body"`. Two panels on one page need distinct `id`s or
+  they will emit duplicate element ids.
+
+- Tabs and Panel receive their server state through `data-` attributes read in
+  `x-init`, never through an interpolated `x-data="cfTabs('{{ active }}')"`. The
+  value is request-controlled, and a template engine escapes an attribute
+  correctly but has no idea it is writing JavaScript source.
+
+- `docs/accessibility.md` records the `<div>`-over-`<dialog>` decision and its
+  reasoning, so it is not relitigated per theme.
+
 ### Changed — BREAKING (#20)
 
 The axis layer stated four properties it did not enforce. Enforcing them is
