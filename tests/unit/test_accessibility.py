@@ -25,11 +25,13 @@ from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoes
 TEMPLATES_DIR = Path(__file__).parent.parent.parent / "src" / "cf_ui" / "templates"
 JINJA_DIR = TEMPLATES_DIR / "jinja"
 
-THEMES = ["bulma", "daisy"]
+THEMES = ["bulma", "daisy", "fomantic"]
 
 #: The class each theme puts on the *selected* tab, and the element it sits on.
-#: Bulma marks the ``<li>``; DaisyUI marks the ``<a role="tab">`` itself.
-ACTIVE_TAB_CLASS = {"bulma": "is-active", "daisy": "tab-active"}
+#: Bulma marks the ``<li>``; DaisyUI and Fomantic mark the ``<a role="tab">``
+#: itself. Fomantic's marker is the bare word ``active``, which is why every
+#: assertion below matches on whole class *tokens* rather than substrings.
+ACTIVE_TAB_CLASS = {"bulma": "is-active", "daisy": "tab-active", "fomantic": "active"}
 
 
 @pytest.fixture(params=THEMES)

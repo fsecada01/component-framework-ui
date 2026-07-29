@@ -1,0 +1,13 @@
+{#def items=[], extra_class="" #}
+{% set items = items if items is defined else [] %}
+{% set extra_class = extra_class if extra_class is defined else "" %}
+<nav class="ui breadcrumb {{ extra_class }}" aria-label="breadcrumbs">
+  {% for item in items %}
+  {% if not loop.first %}<span class="divider">/</span>{% endif %}
+  {% if loop.last %}
+  <a class="active section" href="{{ item.url }}" aria-current="page">{{ item.label }}</a>
+  {% else %}
+  <a class="section" href="{{ item.url }}">{{ item.label }}</a>
+  {% endif %}
+  {% endfor %}
+</nav>

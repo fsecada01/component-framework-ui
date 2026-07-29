@@ -1,0 +1,21 @@
+{% comment %} Every Fomantic form rule is scoped `.ui.form .field`, so a standalone field
+   with no `.ui.form` ancestor is unstyled. The component carries its own, which
+   nests harmlessly inside a consumer's `<form class="ui form">`. `input_class`
+   lands on the `.ui.input` wrapper because that is where Fomantic's size and
+   state modifiers live (`ui mini input`, `ui icon input`). {% endcomment %}
+<div class="ui form {{ class }}">
+  <div class="field{% if error %} error{% endif %}">
+    <label for="{{ name }}">{{ label }}</label>
+    <div class="ui fluid input{% if input_class %} {{ input_class }}{% endif %}">
+      <input id="{{ name }}"
+             type="{{ type }}"
+             name="{{ name }}"
+             value="{{ value }}"
+             {% if required == "true" %}required{% endif %}>
+    </div>
+    {% comment %} Not `<div class="ui error message">`: `.ui.form .error.message` is
+       display:none until the *form* itself carries `.error`. The prompt label
+       is what Fomantic actually shows for a single field. {% endcomment %}
+    {% if error %}<div class="ui basic red pointing prompt label">{{ error }}</div>{% endif %}
+  </div>
+</div>

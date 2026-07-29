@@ -1,0 +1,10 @@
+<nav class="ui breadcrumb {{ class }}" aria-label="breadcrumbs">
+  {% for item in items %}
+  {% if not forloop.first %}<span class="divider">/</span>{% endif %}
+  {% if forloop.last %}
+  <a class="active section" href="{{ item.url }}" aria-current="page">{{ item.label }}</a>
+  {% else %}
+  <a class="section" href="{{ item.url }}">{{ item.label }}</a>
+  {% endif %}
+  {% endfor %}
+</nav>

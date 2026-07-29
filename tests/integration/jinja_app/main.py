@@ -11,6 +11,7 @@ _CF_UI_STATIC_DIR = JINJA_TEMPLATES_DIR.parent.parent / "static" / "cf_ui"
 _THEME_CSS = {
     "bulma": "https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css",
     "daisy": "https://cdn.jsdelivr.net/npm/daisyui@4.7.2/dist/full.min.css",
+    "fomantic": "https://cdn.jsdelivr.net/npm/fomantic-ui@2.9.3/dist/semantic.min.css",
 }
 
 # DaisyUI ships component classes but no Tailwind utilities. The components use
@@ -21,6 +22,10 @@ _THEME_CSS = {
 _THEME_EXTRA_HEAD = {
     "bulma": "",
     "daisy": '<script src="https://cdn.tailwindcss.com"></script>',
+    # Fomantic ships prebuilt CSS and needs no build step. Deliberately nothing
+    # here: its Modal/Tab/Accordion/Dropdown modules are jQuery plugins, and the
+    # point of the theme is that the pages work without them.
+    "fomantic": "",
 }
 
 

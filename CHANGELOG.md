@@ -2,6 +2,50 @@
 
 ## [Unreleased]
 
+### Added — Fomantic UI theme (#24)
+
+All 14 components in both template sets, replacing the `PLANNED.md` stub.
+`CF_UI_THEME = "fomantic"` (Django) or `theme="fomantic"` (FastAPI/Litestar)
+now resolves; it was rejected at startup before. The CDN entry and pinned
+version (`fomantic-ui@2.9.3`, `dist/semantic.min.css`) already existed and were
+verified to still resolve.
+
+- **CSS only — no jQuery, and no Fomantic JS.** Fomantic's Modal, Tab,
+  Accordion and Dropdown are jQuery plugins, which makes this the most
+  JS-dependent of the five themes. Loading them would mean a *styling* choice
+  silently changed a consuming app's dependency graph, so the theme uses
+  Fomantic's classes and markup structure only and Alpine drives every
+  behaviour, exactly as it does for Bulma and DaisyUI. A unit test scans all 28
+  templates and an E2E test checks the delivered page and the live `window`.
+
+- Consequences of that, where they are not obvious from the markup:
+  - **Modal** renders its own `.ui.dimmer`. Fomantic normally injects it from
+    `$('.ui.modal').modal('show')`; here the dimmer and the modal each take
+    `active` from the same Alpine `open`, since both are `display:none` without
+    it.
+  - **Panel** binds `active` as a class rather than relying on `x-show` alone.
+    `.ui.accordion .title ~ .content:not(.active)` is `display:none`, so Alpine
+    merely dropping its inline style would leave the panel hidden.
+  - **Select** is a plain `<select class="ui fluid selection dropdown">`.
+    Fomantic's `ui dropdown` is a JS-built widget over a hidden select;
+    reproducing its DOM by hand would be a combobox nobody could drive.
+  - **Tabs** puts its panel in a `ui bottom attached segment`, not `.ui.tab` —
+    `.ui.tab` is `display:none` until Fomantic's Tab module adds `active`.
+  - **Navbar** uses `ui stackable menu`, Fomantic's CSS-only responsive
+    collapse. Its burger reports state through `aria-expanded` and the `active`
+    class but hides nothing, because Fomantic's collapse is a Sidebar/Dropdown
+    JS module that cf-ui does not load.
+  - **Field errors** use `ui basic red pointing prompt label`, not
+    `ui error message` — the latter is `display:none` until the *form* itself
+    carries `.error`.
+  - **Progress** is a div, so `role="progressbar"` and `aria-valuenow` /
+    `aria-valuemin` / `aria-valuemax` are written out, and the bar width and
+    `data-percent` are rendered server-side.
+
+- Accessibility is at parity with Bulma and DaisyUI, not a reduced subset: the
+  parametrized cases in `tests/unit/test_accessibility.py` now run against
+  three themes rather than two, with no assertion weakened.
+
 ### Fixed — accessibility (#21)
 
 Three gaps that predate 0.1.0 and were flagged during the #6 review, fixed
