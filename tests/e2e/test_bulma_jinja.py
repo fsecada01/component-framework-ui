@@ -64,6 +64,58 @@ def test_modal_moves_focus_into_the_dialog(jinja_page, jinja_server_url):
     ), "focus stayed behind the dialog"
 
 
+def test_modal_takes_focus_even_when_the_reveal_is_late(jinja_page, jinja_server_url):
+    """Regression: CI failed here while every local run passed.
+
+    `focus()` on an element that is not rendered yet is a silent no-op — on the
+    first tabbable child *and* on the `$el` fallback — so if the class that
+    reveals the dialog has not been committed when focus is attempted, focus
+    stays on `<body>` and the dialog is unusable. Nothing orders Alpine's
+    `:class` effect against a `$watch`'s `$nextTick`, so this is a race, and a
+    theme revealing behind a transition would hit it deterministically.
+
+    Rather than reproduce the timing, this pins the dialog hidden with a rule
+    that outranks `is-active`, opens it, and lifts the rule a couple of frames
+    later. It runs entirely in the page so the reveal lands inside the retry
+    window instead of racing the test harness's round trips.
+    """
+    page, js_mode = jinja_page
+    if js_mode != "js_on":
+        pytest.skip("focus management requires JS")
+    page.goto(f"{jinja_server_url}/gallery")
+    _wait_for_alpine(page)
+
+    result = page.evaluate("""
+        async () => {
+            const frame = () => new Promise((r) => requestAnimationFrame(r));
+            const inside = () =>
+                document.getElementById('e2e-modal').contains(document.activeElement);
+
+            const style = document.createElement('style');
+            style.textContent = '#e2e-modal { display: none !important; }';
+            document.head.appendChild(style);
+
+            document.getElementById('open-modal').click();
+            await frame();
+            await frame();
+            const whilePinned = inside();
+
+            style.remove();
+            for (let i = 0; i < 30; i++) {
+                await frame();
+                if (inside()) return { whilePinned, recovered: true };
+            }
+            return { whilePinned, recovered: false };
+        }
+    """)
+
+    assert not result["whilePinned"], (
+        "the dialog took focus while pinned hidden — the reveal was never "
+        "actually blocked, so this test proves nothing"
+    )
+    assert result["recovered"], "focus never reached the revealed dialog"
+
+
 def test_modal_restores_focus_to_its_trigger(jinja_page, jinja_server_url):
     page, js_mode = jinja_page
     if js_mode != "js_on":

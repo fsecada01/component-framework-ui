@@ -23,18 +23,17 @@ const CF_FOCUSABLE = [
     '[tabindex]:not([tabindex="-1"])',
 ].join(',');
 
-/**
- * Tabbable descendants of `root` that are actually rendered.
- *
- * `getClientRects()` forces a layout flush, which is why the modal can call
- * this straight out of `$nextTick`: by the time the list comes back, the
- * class that reveals the dialog has been applied and `focus()` will take.
- */
+/** Tabbable descendants of `root` that are actually rendered. */
 function cfFocusable(root) {
     return Array.from(root.querySelectorAll(CF_FOCUSABLE)).filter(
         (el) => el.getClientRects().length > 0
     );
 }
+
+// Frames `_focusFirst` will keep retrying for before giving up. ~10 frames is
+// well past any reveal transition and still bounded, so a dialog that never
+// becomes visible cannot spin forever.
+const CF_FOCUS_ATTEMPTS = 10;
 
 document.addEventListener('alpine:init', () => {
     // ── Named components ──────────────────────────────────────────────────────
@@ -74,16 +73,28 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
-        _focusFirst() {
+        _focusFirst(attempt = 0) {
+            // A retry scheduled before the dialog was closed again must not
+            // yank focus back into it.
+            if (!this.open) return;
+
             const targets = cfFocusable(this.$el);
-            if (targets.length) {
-                targets[0].focus();
-                return;
-            }
             // A dialog with nothing tabbable in it still has to take focus, or
             // the reader stays behind it and the trap has nothing to hold.
-            this.$el.setAttribute('tabindex', '-1');
-            this.$el.focus();
+            if (!targets.length) this.$el.setAttribute('tabindex', '-1');
+            (targets[0] || this.$el).focus();
+
+            // `focus()` on an element that is not rendered yet is a silent
+            // no-op — on both the child and the $el fallback. Nothing
+            // guarantees the class that reveals the dialog has been committed
+            // by the time this runs: Alpine does not order the `:class` effect
+            // against a $watch's $nextTick, and a theme may reveal behind a
+            // transition. So verify and retry per frame rather than trusting
+            // one flush's ordering. CI caught exactly this; it passed locally
+            // every time.
+            if (!this.$el.contains(document.activeElement) && attempt < CF_FOCUS_ATTEMPTS) {
+                requestAnimationFrame(() => this._focusFirst(attempt + 1));
+            }
         },
 
         _trapTab(event) {

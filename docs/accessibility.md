@@ -40,6 +40,23 @@ The trigger is **captured**, not declared: `show()` records
 `document.activeElement`. Any opener works — a button, a link, a keyboard
 shortcut, `Alpine.store('cf').modal.open(id)` — and no template has to name it.
 
+#### Why `_focusFirst()` retries
+
+`focus()` on an element that is not rendered yet is a silent no-op — on the
+first tabbable child *and* on the `$el` fallback. So focus can only be taken
+once the class that reveals the dialog has actually been committed, and nothing
+guarantees that has happened by the time the watcher's `$nextTick` runs: Alpine
+does not order the `:class` effect against it, and a theme is free to reveal
+behind a transition. `_focusFirst()` therefore verifies the result and retries
+per animation frame, bounded by `CF_FOCUS_ATTEMPTS`, rather than trusting one
+flush's ordering. A retry that finds the dialog closed again bails out instead
+of yanking focus back in.
+
+This was not theoretical: it passed locally every run and failed on CI. The
+regression test (`test_modal_takes_focus_even_when_the_reveal_is_late`) pins the
+dialog hidden with a rule that outranks the reveal class, opens it, and lifts
+the rule a couple of frames later — the race made deterministic.
+
 ### Labelling, and the `label` fallback
 
 A dialog needs an accessible name. cf-ui picks one of two, never both:
