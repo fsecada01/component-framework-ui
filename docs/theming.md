@@ -44,8 +44,8 @@ One setting resolves to all five axes.
 
 ```python
 # settings.py
-CF_UI_COMPOSITION = "editorial"          # or a per-axis mapping:
-CF_UI_COMPOSITION = {"accent": "jade"}   # unnamed axes fall back to `default`
+CF_UI_COMPOSITION = "editorial"  # or a per-axis mapping:
+CF_UI_COMPOSITION = {"accent": "jade"}  # unnamed axes fall back to `default`
 ```
 
 ```django
@@ -112,8 +112,8 @@ CF_UI_AXIS_VALUES = {
         }
     }
 }
-CF_UI_AXIS_VALUES_MODE = "extend"   # default; "replace" drops the shipped
-                                    # values for each axis you supply
+CF_UI_AXIS_VALUES_MODE = "extend"  # default; "replace" drops the shipped
+# values for each axis you supply
 CF_UI_COMPOSITION = {"accent": "brand"}
 ```
 
@@ -164,8 +164,12 @@ for accent in sets["accent"]:
 
 The shipped set is held to exactly this check in `tests/unit/test_axes.py`.
 
-> Issue #7 will move this from a runtime check to a build-time one via a
-> Tailwind v4 plugin, so an inaccessible value set cannot compile.
+> The Tailwind plugin (#7) surfaces this at build time as well, via
+> `contrastReport: true`. It **warns** rather than failing the build: an unknown
+> axis value is always a mistake, but a ratio below AA may be a deliberate
+> choice in a value set cf-ui did not ship, and making it fatal would mean this
+> package decides when your app may compile. See
+> [the plugin docs](tailwind-plugin.md#what-fails-the-build-and-what-only-warns).
 
 ### Why `--cf-accent-strong` exists
 
@@ -211,6 +215,31 @@ guarantee carries over.
 Near-neutral accents (`slate`) ship no p3 block; there is no wide-gamut chroma
 to recover.
 
+### The lightness invariant is enforced, not assumed
+
+"Holds lightness constant" used to be a convention maintained by hand. It is now
+a gate: `p3_lightness_failures()` converts each sRGB base declaration to OKLab
+and compares its lightness against the `oklch()` override, and a unit test fails
+CI if any override drifts by more than **0.5 percentage points**.
+
+That tolerance is set from the shipped data — the overrides are authored to one
+decimal place, which puts them within 0.05pp of their base, so 0.5pp leaves an
+order of magnitude of headroom while still catching any drift large enough to
+change the contrast result.
+
+```python
+from cf_ui.axes import p3_lightness_failures, DEFAULT_VALUE_SETS
+
+p3_lightness_failures(DEFAULT_VALUE_SETS)  # [] — shippable
+```
+
+The same check runs in the Tailwind plugin as `p3LightnessFailures()`, with
+byte-identical messages; a parity test compares the two. Because the sRGB
+contrast gate cannot measure `oklch()` directly, this invariant is what carries
+the WCAG result over to wide-gamut displays — without it, a p3 override could
+ship below AA with every test green, invisible to anyone reviewing on an sRGB
+display.
+
 ---
 
 ## Tailwind interop
@@ -223,10 +252,30 @@ a Tailwind-based theme picks the axes up without per-component work:
 | `--cf-accent` | `--color-primary` |
 | `--cf-accent-content` | `--color-primary-content` |
 | `--cf-accent-strong` | `--color-primary-strong` |
-| `--cf-spacing` | `--spacing` |
 
-Density therefore drives Tailwind's spacing base unit, so it propagates through
-every spacing utility. The aliases are inert when no Tailwind is present.
+The aliases are inert when no Tailwind is present.
+
+### `--spacing` is not aliased
+
+`--cf-spacing` is emitted, but it is **not** wired to Tailwind's `--spacing`.
+
+`--color-primary` is a name cf-ui effectively owns in a Tailwind context.
+`--spacing` is the root of Tailwind v4's *entire* spacing scale — `p-4`, `gap-2`,
+`m-8` and every other spacing utility derive from it. Aliasing it meant
+`data-density="compact"` silently rescaled the whole consuming app by ±20%,
+scoped to an attribute the app set for cf-ui's benefit. A Bulma consumer who
+also ran Tailwind got that as pure collateral damage.
+
+Apps that *want* density to drive the Tailwind scale opt in with one line:
+
+```css
+@theme {
+  --spacing: var(--cf-spacing);
+}
+```
+
+> **Changed in 0.2.0.** This alias used to be emitted for every theme. If you
+> were relying on it, add the rule above.
 
 ---
 

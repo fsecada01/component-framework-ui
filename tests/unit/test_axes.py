@@ -88,11 +88,19 @@ def test_p3_layer_is_layered_over_an_srgb_base_declaration():
     assert "oklch(" in p3
 
 
-def test_density_drives_tailwind_spacing_base_unit():
+def test_density_does_not_alias_tailwinds_spacing_base_unit():
+    """#20: --spacing is Tailwind's whole spacing scale, not a name cf-ui owns.
+
+    Aliasing it meant `data-density` silently rescaled every `p-4` and `gap-2`
+    in the consuming app, including for Bulma consumers who use none of it.
+    `--cf-spacing` is still emitted; wiring it up is now the app's explicit
+    one-line opt-in.
+    """
     from cf_ui.axes import AXIS_CSS_PATH
 
     css = AXIS_CSS_PATH.read_text(encoding="utf-8")
-    assert "--spacing:" in css
+    assert "--cf-spacing:" in css, "the axis token itself must still be emitted"
+    assert "--spacing:" not in css.replace("--cf-spacing:", "")
 
 
 def test_accent_exposes_a_strong_token_for_small_text():
@@ -409,3 +417,237 @@ def test_light_mode_css_is_the_unqualified_declaration():
 
     css = AXIS_CSS_PATH.read_text(encoding="utf-8")
     assert '[data-theme="light"]' not in css
+
+
+# --------------------------------------------------------------------------
+# Issue #20 §1: token *values* are validated, not just token names.
+#
+# Values are interpolated straight into a <style> element. A value carrying a
+# semicolon or a brace closes its own declaration and writes rules the app
+# never authored; "</style>" escapes the element entirely.
+# --------------------------------------------------------------------------
+
+UNSAFE_VALUES = [
+    pytest.param("0; } body { display: none", id="semicolon-and-braces"),
+    pytest.param("red; color: blue", id="semicolon"),
+    pytest.param("}", id="close-brace"),
+    pytest.param("{", id="open-brace"),
+    pytest.param("red /* c", id="comment-open"),
+    pytest.param("red */", id="comment-close"),
+    pytest.param("</style><script>alert(1)</script>", id="style-escape"),
+    pytest.param("<", id="angle-bracket"),
+]
+
+
+@pytest.mark.parametrize("value", UNSAFE_VALUES)
+def test_unsafe_token_values_are_rejected(value):
+    from cf_ui.axes import AxisConfigError, merge_value_sets
+
+    with pytest.raises(AxisConfigError, match="unsafe value"):
+        merge_value_sets({"form": {"evil": {"--cf-radius": value}}})
+
+
+@pytest.mark.parametrize("value", UNSAFE_VALUES)
+def test_unsafe_token_values_are_rejected_inside_a_mode_block(value):
+    """Mode-keyed axes validate through a different branch — cover it too."""
+    from cf_ui.axes import AxisConfigError, merge_value_sets
+
+    payload = {
+        "accent": {
+            "evil": {
+                "light": {"--cf-accent": value},
+                "dark": {"--cf-accent": "#ffffff"},
+            }
+        }
+    }
+    with pytest.raises(AxisConfigError, match="unsafe value"):
+        merge_value_sets(payload)
+
+
+def test_unsafe_token_values_are_rejected_inside_a_p3_block():
+    """The p3 block reaches the same stylesheet, so it needs the same gate."""
+    from cf_ui.axes import AxisConfigError, merge_value_sets
+
+    payload = {
+        "accent": {
+            "evil": {
+                "light": {"--cf-accent": "#0369a1"},
+                "dark": {"--cf-accent": "#38bdf8"},
+                "p3": {"light": {"--cf-accent": "oklch(50% 0.1 240); } html { x: y"}},
+            }
+        }
+    }
+    with pytest.raises(AxisConfigError, match="unsafe value"):
+        merge_value_sets(payload)
+
+
+def test_a_non_string_token_value_is_rejected():
+    """Mirrors the plugin, which rejects anything that is not a string."""
+    from cf_ui.axes import AxisConfigError, merge_value_sets
+
+    with pytest.raises(AxisConfigError, match="non-string"):
+        merge_value_sets({"form": {"odd": {"--cf-radius": 0}}})
+
+
+@pytest.mark.parametrize(
+    "value",
+    ["0", "0.375rem", "none", "0 1px 2px rgb(0 0 0 / 0.08)", "#ffffff", "1.25"],
+)
+def test_legitimate_token_values_are_still_accepted(value):
+    from cf_ui.axes import merge_value_sets
+
+    merged = merge_value_sets({"form": {"fine": {"--cf-radius": value}}})
+    assert merged["form"]["fine"]["--cf-radius"] == value
+
+
+def test_no_shipped_value_trips_the_new_rule():
+    """Font stacks carry commas and quotes — they must survive the gate."""
+    from cf_ui.axes import DEFAULT_VALUE_SETS, merge_value_sets
+
+    # Re-validating the shipped sets through the public entry point is the
+    # point: a rule that rejected our own defaults would be caught here.
+    merged = merge_value_sets(DEFAULT_VALUE_SETS)
+    assert "Segoe UI" in merged["type"]["system"]["--cf-font-display"]
+
+
+def test_the_injection_payload_never_reaches_a_style_element():
+    """End-to-end: the escape hatch this closes is style_element()."""
+    from cf_ui.axes import AxisConfigError, merge_value_sets
+
+    with pytest.raises(AxisConfigError):
+        merge_value_sets({"form": {"evil": {"--cf-radius": "0; } body { display: none"}}})
+
+
+# --------------------------------------------------------------------------
+# Issue #20 §4: the exported generators validate too, not just merge_value_sets.
+#
+# An exported function that generates CSS with the gate switched off is the
+# generator with the build error removed. The plugin's buildAxisBase/buildAxisCss
+# were fixed for exactly this; these are their Python counterparts, and
+# style_element() is the sink the whole §1 gate exists to protect.
+# --------------------------------------------------------------------------
+
+EVIL_SET = {"form": {"evil": {"--cf-radius": "0; } body { display: none"}}}
+
+
+@pytest.mark.parametrize("generator", ["render_axis_css", "custom_axis_css", "style_element"])
+def test_the_exported_generators_validate_by_default(generator):
+    import cf_ui.axes as axes
+
+    with pytest.raises(axes.AxisConfigError, match="unsafe value"):
+        getattr(axes, generator)(EVIL_SET)
+
+
+@pytest.mark.parametrize("generator", ["render_axis_css", "custom_axis_css", "style_element"])
+def test_the_generators_take_an_explicit_opt_out(generator):
+    """The escape hatch stays — you just have to ask for it."""
+    import cf_ui.axes as axes
+
+    output = getattr(axes, generator)(EVIL_SET, validate=False)
+    assert "display: none" in output
+
+
+def test_style_element_no_longer_emits_an_injection_payload():
+    """The concrete regression: this used to render the payload into the page."""
+    from cf_ui.axes import AxisConfigError, style_element
+
+    with pytest.raises(AxisConfigError):
+        style_element(EVIL_SET)
+
+
+def test_the_opt_out_does_not_change_what_valid_input_produces():
+    """Guards against validation quietly altering the generated CSS."""
+    from cf_ui.axes import DEFAULT_VALUE_SETS, render_axis_css
+
+    assert render_axis_css(DEFAULT_VALUE_SETS) == render_axis_css(
+        DEFAULT_VALUE_SETS, validate=False
+    )
+
+
+def test_the_generators_reject_an_unknown_axis():
+    from cf_ui.axes import AxisConfigError, render_axis_css
+
+    with pytest.raises(AxisConfigError, match="flavour"):
+        render_axis_css({"flavour": {"vanilla": {"--cf-radius": "0"}}})
+
+
+# --------------------------------------------------------------------------
+# Issue #20 §3: the p3 layer holds the base declaration's lightness.
+#
+# The contrast gate is computed against the sRGB base. The docs claim the p3
+# override is "layered over that base at the same lightness, so the contrast
+# guarantee still holds" — that was a convention held by hand until now.
+# --------------------------------------------------------------------------
+
+
+def test_oklab_lightness_matches_known_reference_values():
+    """Guards the conversion itself — a wrong L would make the gate vacuous."""
+    from cf_ui.axes import oklab_lightness
+
+    assert oklab_lightness("#000000") == pytest.approx(0.0, abs=0.001)
+    assert oklab_lightness("#ffffff") == pytest.approx(1.0, abs=0.001)
+    # Authored p3 override for azure/light is oklch(50.0% ...)
+    assert oklab_lightness("#0369a1") == pytest.approx(0.500, abs=0.002)
+
+
+def test_oklch_lightness_parses_the_authored_form():
+    from cf_ui.axes import oklch_lightness
+
+    assert oklch_lightness("oklch(50.0% 0.137 242.7)") == pytest.approx(0.50, abs=0.0001)
+    assert oklch_lightness("oklch(82.8% 0.116 230.3)") == pytest.approx(0.828, abs=0.0001)
+
+
+def test_shipped_p3_overrides_hold_the_lightness_invariant():
+    """This is the guarantee the docs already claim. Now it fails CI."""
+    from cf_ui.axes import DEFAULT_VALUE_SETS, p3_lightness_failures
+
+    assert p3_lightness_failures(DEFAULT_VALUE_SETS) == []
+
+
+def test_a_p3_override_with_a_different_lightness_is_flagged():
+    """The mutation the gate exists to catch."""
+    from copy import deepcopy
+
+    from cf_ui.axes import DEFAULT_VALUE_SETS, p3_lightness_failures
+
+    drifted = deepcopy(DEFAULT_VALUE_SETS)
+    drifted["accent"]["azure"]["p3"]["light"]["--cf-accent"] = "oklch(72.0% 0.137 242.7)"
+    failures = p3_lightness_failures(drifted)
+    assert failures, "a 22-point lightness shift must be flagged"
+    assert "--cf-accent" in failures[0]
+    assert "azure" in failures[0]
+
+
+def test_the_lightness_gate_tolerates_authored_rounding():
+    """Values are authored to one decimal place; the gate must not be brittle."""
+    from copy import deepcopy
+
+    from cf_ui.axes import DEFAULT_VALUE_SETS, p3_lightness_failures
+
+    rounded = deepcopy(DEFAULT_VALUE_SETS)
+    # azure/light base measures 49.998%; the authored 50.0% must stay legal.
+    rounded["accent"]["azure"]["p3"]["light"]["--cf-accent"] = "oklch(50.0% 0.137 242.7)"
+    assert p3_lightness_failures(rounded) == []
+
+
+def test_a_p3_override_of_an_undeclared_token_is_flagged():
+    """A p3 block may only refine tokens the base declares."""
+    from copy import deepcopy
+
+    from cf_ui.axes import DEFAULT_VALUE_SETS, p3_lightness_failures
+
+    orphan = deepcopy(DEFAULT_VALUE_SETS)
+    orphan["accent"]["azure"]["p3"]["light"]["--cf-nonexistent"] = "oklch(50% 0.1 240)"
+    failures = p3_lightness_failures(orphan)
+    assert any("--cf-nonexistent" in failure for failure in failures)
+
+
+def test_a_non_oklch_p3_value_is_flagged_rather_than_skipped():
+    """Silently skipping unparseable values is how the gate went blind before."""
+    from copy import deepcopy
+
+    from cf_ui.axes import DEFAULT_VALUE_SETS, p3_lightness_failures
+
+    bad = deepcopy(DEFAULT_VALUE_SETS)
+    bad["accent"]["azure"]["p3"]["light"]["--cf-accent"] = "#0369a1"
+    assert p3_lightness_failures(bad) != []

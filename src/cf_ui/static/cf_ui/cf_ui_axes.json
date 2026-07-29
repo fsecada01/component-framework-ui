@@ -24,8 +24,7 @@
   "aliases": {
     "--cf-accent": "--color-primary",
     "--cf-accent-content": "--color-primary-content",
-    "--cf-accent-strong": "--color-primary-strong",
-    "--cf-spacing": "--spacing"
+    "--cf-accent-strong": "--color-primary-strong"
   },
   "valueNamePattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
   "valueSets": {

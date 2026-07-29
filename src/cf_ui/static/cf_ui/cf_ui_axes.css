@@ -124,21 +124,18 @@
   --cf-spacing: 0.2rem;
   --cf-line-height: 1.4;
   --cf-control-height: 2rem;
-  --spacing: var(--cf-spacing);
 }
 
 [data-density="regular"] {
   --cf-spacing: 0.25rem;
   --cf-line-height: 1.5;
   --cf-control-height: 2.5rem;
-  --spacing: var(--cf-spacing);
 }
 
 [data-density="roomy"] {
   --cf-spacing: 0.3rem;
   --cf-line-height: 1.65;
   --cf-control-height: 3rem;
-  --spacing: var(--cf-spacing);
 }
 
 /* --- type ------------------------------------------------ */

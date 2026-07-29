@@ -88,14 +88,16 @@ Tailwind never tree-shakes; the two concerns are separate.
 - a value name that is not lowercase-and-hyphens
 - a mode-keyed value (`accent`, `surface`) missing `light` or `dark`
 - a token that is not a CSS custom property
-- a token value containing `;`, `{`, `}`, or a comment delimiter — those close
-  the declaration and write rules you did not author
+- a token value containing `;`, `{`, `}`, `<`, or a comment delimiter — those
+  close the declaration and write rules you did not author
+- a token value that is not a string
 - a value or composition name that exists only on `Object.prototype`
   (`toString`, `hasOwnProperty`, …), and a value set keyed on `__proto__`
 
 **Warns** — `contrastReport: true`:
 
 - a combination below WCAG AA
+- a p3 override that does not hold its base declaration's lightness
 
 Contrast is advisory on purpose. An unknown axis value is always wrong. A
 contrast number below AA may be a deliberate choice in a value set the package
@@ -108,6 +110,55 @@ cf-ui: contrast report — 1 of 12 combinations fail WCAG AA:
   faint x plain (light):
     --cf-accent-content on --cf-accent: 1.09 < 4.5
     --cf-accent-strong on --cf-ground: 1.13 < 4.5
+```
+
+## Every export, and whether it validates
+
+`createPlugin` used to be the only path that ran the gate, so the two exported
+generators were the generator with the build error switched off. Passing junk
+produced junk quietly. Since 0.2.0 **everything validates by default**, and the
+escape hatch has to be asked for.
+
+| Export | Validates | Notes |
+|---|---|---|
+| `default` (`cfUiAxes`) | yes | The plugin. Callable as a factory or used directly. |
+| `buildAxisBase(valueSets?, definition?, options?)` | yes | `{ validate: false }` skips the gate. |
+| `buildAxisCss(valueSets?, definition?, options?)` | yes | Same options as above. |
+| `mergeValueSets(definition, custom, mode?)` | yes | This *is* the gate for value sets. |
+| `resolveComposition(definition, composition, valueSets)` | yes | Throws on an unknown value — the headline feature. |
+| `loadDefinition()` | n/a | Reads `cf_ui_axes.json`; fresh deep copy per call. |
+| `contrastRatio(fg, bg)` | n/a | `null` for anything that is not sRGB hex. |
+| `contrastReport(valueSets, pairs, modes?)` | no | Pure measurement; returns rows, never throws. |
+| `oklabLightness(color)` | n/a | `null` for anything that is not sRGB hex. |
+| `oklchLightness(value)` | n/a | `null` for anything that is not `oklch(...)`. |
+| `p3LightnessFailures(valueSets?, definition?, tolerance?)` | no | Pure measurement; returns messages. |
+| `AxisPluginError` | n/a | Every throw above is one of these. |
+| `P3_LIGHTNESS_TOLERANCE` | n/a | `0.005` — 0.5 percentage points of OKLab L. |
+
+The opt-out exists for legitimate uses — writing the axis CSS to a file,
+inspecting a build, comparing the two generators — and the parity test uses it
+deliberately, so that test compares raw generation rather than narrowing to
+"they agree on input the validator already approved". Do not reach for it with
+input you did not write.
+
+```js
+// Explicit, and only ever for input you control.
+const css = buildAxisCss(mySets, undefined, { validate: false });
+```
+
+The Python generators carry the identical contract, so neither side is the lax
+one:
+
+| Python | JavaScript |
+|---|---|
+| `render_axis_css(sets, banner=True, validate=True)` | `buildAxisCss(sets, definition, { validate })` |
+| `custom_axis_css(sets, banner=False, validate=True)` | — |
+| `style_element(sets, validate=True)` | — |
+| `merge_value_sets(custom, mode)` | `mergeValueSets(definition, custom, mode)` |
+
+```python
+# Same shape, same default, same escape hatch.
+css = render_axis_css(my_sets, validate=False)
 ```
 
 ## One definition, two generators — and a test that proves it

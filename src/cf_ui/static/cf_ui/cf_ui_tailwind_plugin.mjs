@@ -65,8 +65,13 @@ export function loadDefinition() {
  * `;` or a brace closes its own declaration and writes rules the app never
  * asked for, so it is rejected rather than escaped — there is no legitimate
  * axis token that needs one.
+ *
+ * `<` joined the set in #20: on the Python side the same tokens reach a
+ * `<style>` element, where `</style>` escapes the element entirely. Both
+ * generators carry the identical rule, and a parity test asserts they reject
+ * the same inputs.
  */
-const UNSAFE_VALUE = /[;{}]|\/\*|\*\//;
+const UNSAFE_VALUE = /[;{}<]|\/\*|\*\//;
 
 function validateTokens(axis, name, tokens) {
   if (tokens === null || typeof tokens !== "object" || Array.isArray(tokens)) {
@@ -85,7 +90,7 @@ function validateTokens(axis, name, tokens) {
     if (UNSAFE_VALUE.test(value)) {
       throw new AxisPluginError(
         `axis value ${axis}/${name} declares ${token} with an unsafe value: a token may not ` +
-          `contain ';', '{', '}', or a comment delimiter`,
+          `contain ';', '{', '}', '<', or a comment delimiter`,
       );
     }
   }
@@ -228,12 +233,44 @@ function blockFor(definition, tokens) {
 }
 
 /**
+ * Run every supplied value set through the same gate `mergeValueSets` applies.
+ *
+ * `createPlugin` used to be the only path that validated, so the two exported
+ * generators below were the generator with the build error switched off — junk
+ * in produced junk quietly, contradicting the promise #7 shipped on. They now
+ * validate by default and the escape hatch has to be asked for (#20 §4).
+ */
+function validateSets(definition, valueSets) {
+  for (const [axis, values] of Object.entries(valueSets)) {
+    if (!definition.axes.includes(axis)) {
+      throw new AxisPluginError(
+        `unknown axis '${axis}': valid axes are ${definition.axes.join(", ")}`,
+      );
+    }
+    if (values === null || typeof values !== "object") {
+      throw new AxisPluginError(`axis '${axis}' must map value names to tokens`);
+    }
+    for (const [name, tokens] of Object.entries(values)) {
+      validateValueSet(definition, axis, name, tokens);
+    }
+  }
+}
+
+/**
  * Build the axis rules as a Tailwind `addBase` object, wide-gamut layer
  * included.
+ *
+ * @param {object}  [valueSets]         Defaults to the shipped sets.
+ * @param {object}  [definition]        Defaults to the shipped definition.
+ * @param {object}  [options]
+ * @param {boolean} [options.validate]  On by default. `false` skips the gate —
+ *   an explicit escape hatch for inspecting a build or comparing generators,
+ *   never something to reach for with untrusted input.
  */
-export function buildAxisBase(valueSets, definition) {
+export function buildAxisBase(valueSets, definition, options = {}) {
   const def = definition ?? loadDefinition();
   const sets = valueSets ?? def.valueSets;
+  if (options.validate !== false) validateSets(def, sets);
   const base = {};
 
   for (const axis of def.axes) {
@@ -269,9 +306,12 @@ export function buildAxisBase(valueSets, definition) {
   return base;
 }
 
-/** The same rules as CSS text, for writing to a file or eyeballing a build. */
-export function buildAxisCss(valueSets, definition) {
-  const base = buildAxisBase(valueSets, definition);
+/**
+ * The same rules as CSS text, for writing to a file or eyeballing a build.
+ * Validates by default; see {@link buildAxisBase} for the opt-out.
+ */
+export function buildAxisCss(valueSets, definition, options = {}) {
+  const base = buildAxisBase(valueSets, definition, options);
   const render = (rules, indent) =>
     Object.entries(rules)
       .map(([selector, block]) => {
@@ -318,6 +358,12 @@ export function contrastRatio(foreground, background) {
  * contrast number below AA may be a deliberate choice in a value set the
  * package did not ship, and turning it into a hard error would mean cf-ui
  * decides when a consuming app is allowed to compile.
+ *
+ * Measures the sRGB base declarations only — `oklch()` returns "cannot be
+ * checked" here by design, because a ratio is not the right question for the
+ * p3 layer. What that layer has to hold is its base's *lightness*, which is
+ * what {@link p3LightnessFailures} checks; the two together cover the wide
+ * gamut. This function does not validate and never throws.
  */
 export function contrastReport(valueSets, contrastPairs, modes = ["light", "dark"]) {
   const rows = [];
@@ -348,6 +394,109 @@ export function contrastReport(valueSets, contrastPairs, modes = ["light", "dark
     }
   }
   return rows;
+}
+
+// --- wide-gamut lightness invariant ----------------------------------------
+//
+// `contrastReport` above measures the sRGB base declarations and, for anything
+// else, said "not an sRGB hex value, cannot be checked" and moved on. The p3
+// block is what actually renders on a wide-gamut display, so that shrug was
+// the whole wide-gamut layer going unchecked.
+//
+// What carries the sRGB result over is the design rule that a p3 override
+// extends chroma only, holding lightness constant. This enforces it, mirroring
+// `cf_ui.axes.p3_lightness_failures` message for message — a parity test in
+// `tests/unit/test_tailwind_plugin.py` compares the two outputs directly.
+
+/** @see cf_ui.axes.P3_LIGHTNESS_TOLERANCE — keep the two in step. */
+export const P3_LIGHTNESS_TOLERANCE = 0.005;
+
+const OKLAB_M1 = [
+  [0.4122214708, 0.5363325363, 0.0514459929],
+  [0.2119034982, 0.6806995451, 0.1073969566],
+  [0.0883024619, 0.2817188376, 0.6299787005],
+];
+const OKLAB_L = [0.2104542553, 0.793617785, -0.0040720468];
+const OKLCH = /^\s*oklch\(\s*([0-9]*\.?[0-9]+)(%?)\s/i;
+
+/** OKLab lightness (0..1) of an sRGB hex color, or null if it is not one. */
+export function oklabLightness(color) {
+  let value = String(color).trim().replace(/^#/, "");
+  if (value.length === 3) value = [...value].map((char) => char + char).join("");
+  if (!/^[0-9a-fA-F]{6}$/.test(value)) return null;
+
+  const rgb = [0, 2, 4].map((index) => {
+    const channel = parseInt(value.slice(index, index + 2), 16) / 255;
+    return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+  });
+  const roots = OKLAB_M1.map((row) => Math.cbrt(row.reduce((sum, k, i) => sum + k * rgb[i], 0)));
+  return OKLAB_L.reduce((sum, k, i) => sum + k * roots[i], 0);
+}
+
+/** Lightness (0..1) declared by an `oklch(...)` value, or null. */
+export function oklchLightness(value) {
+  const match = OKLCH.exec(String(value));
+  if (!match) return null;
+  const number = Number.parseFloat(match[1]);
+  return match[2] ? number / 100 : number;
+}
+
+/**
+ * Every p3 override that does not hold its base declaration's lightness.
+ *
+ * An empty array means the wide-gamut layer preserves the contrast guarantee
+ * the sRGB base was measured for.
+ */
+export function p3LightnessFailures(valueSets, definition, tolerance = P3_LIGHTNESS_TOLERANCE) {
+  const def = definition ?? loadDefinition();
+  const sets = valueSets ?? def.valueSets;
+  const failures = [];
+  const limit = tolerance * 100;
+
+  for (const axis of def.axes) {
+    for (const [name, tokens] of Object.entries(sets[axis] ?? {})) {
+      const gamut = tokens && typeof tokens === "object" ? tokens.p3 : null;
+      if (!gamut) continue;
+      for (const mode of def.modes) {
+        const overrides = gamut[mode] ?? {};
+        const base = tokens[mode] ?? {};
+        for (const [token, override] of Object.entries(overrides)) {
+          const where = `${axis}/${name}/${mode}: ${token}`;
+          if (!Object.hasOwn(base, token)) {
+            failures.push(`${where} has a p3 override but no base declaration`);
+            continue;
+          }
+          const actual = oklchLightness(override);
+          if (actual === null) {
+            failures.push(`${where} p3 override is not an oklch() value: ${override}`);
+            continue;
+          }
+          const expected = oklabLightness(base[token]);
+          if (expected === null) {
+            failures.push(`${where} base declaration is not sRGB hex: ${base[token]}`);
+            continue;
+          }
+          const drift = Math.abs(actual * 100 - expected * 100);
+          if (drift > limit) {
+            failures.push(
+              `${where} p3 lightness ${(actual * 100).toFixed(2)}% deviates from base ` +
+                `${(expected * 100).toFixed(2)}% by ${drift.toFixed(2)}pp ` +
+                `(tolerance ${limit.toFixed(2)}pp)`,
+            );
+          }
+        }
+      }
+    }
+  }
+  return failures;
+}
+
+function warnP3(failures) {
+  if (!failures.length) return;
+  console.warn(
+    `cf-ui: ${failures.length} wide-gamut override(s) do not hold their base lightness, so ` +
+      `the sRGB contrast result does not carry over:\n  ${failures.join("\n  ")}`,
+  );
 }
 
 function warnContrast(rows) {
@@ -391,6 +540,10 @@ function createPlugin(options = {}) {
 
   if (options.contrastReport) {
     warnContrast(contrastReport(valueSets, definition.contrastPairs, definition.modes));
+    // The sRGB rows above are only half the picture: on a wide-gamut display
+    // the p3 layer is what renders, and it inherits the contrast result only
+    // while it holds the base lightness.
+    warnP3(p3LightnessFailures(valueSets, definition));
   }
 
   const base = buildAxisBase(valueSets, definition);
