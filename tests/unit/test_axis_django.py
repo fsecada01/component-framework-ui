@@ -5,6 +5,7 @@ the axis stylesheet through the existing asset tags.
 """
 
 import pytest
+from django.utils.safestring import SafeString
 
 CUSTOM_ACCENT = {
     "accent": {
@@ -94,7 +95,6 @@ def test_root_attrs_tag_defaults_when_setting_is_absent(settings):
 
 def test_root_attrs_tag_output_is_marked_safe(settings):
     from cf_ui.templatetags.cf_ui import cf_ui_root_attrs
-    from django.utils.safestring import SafeString
 
     settings.CF_UI_COMPOSITION = "default"
     assert isinstance(cf_ui_root_attrs(), SafeString)

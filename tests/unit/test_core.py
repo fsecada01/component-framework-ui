@@ -14,7 +14,8 @@ def test_cotton_templates_dir_exported():
 
     assert isinstance(COTTON_TEMPLATES_DIR, Path)
     assert COTTON_TEMPLATES_DIR.exists()
-    assert (COTTON_TEMPLATES_DIR / "bulma").exists()
+    assert (COTTON_TEMPLATES_DIR / "cf").exists()
+    assert (COTTON_TEMPLATES_DIR / "cf" / "card.html").exists()
 
 
 def test_jinja_templates_dir_points_inside_package():
@@ -32,10 +33,17 @@ def test_django_appconfig_name():
     assert app is not None
 
 
-def test_django_appconfig_ready_sets_cotton_dir():
+def test_django_appconfig_does_not_override_cotton_dir():
+    """cf-ui must not set COTTON_DIR; doing so breaks consumer cotton trees.
+
+    cf-ui templates live at cotton/cf/*.html so the django-cotton default
+    (COTTON_DIR="cotton") resolves <c-cf.foo>. Consumers keep whatever value
+    they configured (or the default).
+    """
     from django.conf import settings
 
-    assert getattr(settings, "COTTON_DIR", None) == "cotton/bulma"
+    cf_ui_managed_value = "cotton/bulma"
+    assert getattr(settings, "COTTON_DIR", None) != cf_ui_managed_value
 
 
 def test_fastapi_install_cf_ui_adds_template_dir():
@@ -80,4 +88,4 @@ def test_version_exported():
     from cf_ui import __version__
 
     assert isinstance(__version__, str)
-    assert __version__ == "0.1.0"
+    assert __version__ == "0.1.1"

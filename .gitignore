@@ -22,3 +22,4 @@ test-results/
 Thumbs.db
 .idea/
 .vscode/
+uv.lock

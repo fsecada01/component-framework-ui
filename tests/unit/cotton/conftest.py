@@ -10,6 +10,6 @@ def cotton_render():
     from django.template.loader import render_to_string
 
     def _render(template_name: str, **props: object) -> str:
-        return render_to_string(f"cotton/bulma/{template_name}", props)
+        return render_to_string(f"cotton/{template_name}", props)
 
     return _render

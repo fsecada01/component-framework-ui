@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from django.apps import AppConfig
 from django.core.exceptions import ImproperlyConfigured
 
@@ -32,27 +30,20 @@ class CfUiConfig(AppConfig):
     label = "cf_ui"
     verbose_name = "Component Framework UI"
 
+    # cf-ui Cotton templates live at src/cf_ui/templates/cotton/cf/*.html.
+    # Django's app-templates loader (APP_DIRS=True) picks them up directly
+    # and django-cotton's default COTTON_DIR ("cotton") resolves
+    # <c-cf.foo> -> cotton/cf/foo.html. We deliberately do not touch
+    # COTTON_DIR here: doing so would break consumer projects whose own
+    # cotton templates live at cotton/<their-app>/*.html.
+
     def ready(self) -> None:
+        """Validate the axis composition at startup, not at first render.
+
+        Deliberately touches no template settings — see the note above.
+        """
         from django.conf import settings
 
-        theme = getattr(settings, "CF_UI_THEME", "bulma")
-        cotton_dir = Path(__file__).parent / "templates" / "cotton" / theme
-
-        if not cotton_dir.is_dir():
-            raise ImproperlyConfigured(
-                f"cf-ui: no templates found for theme {theme!r} at {cotton_dir}. "
-                f"Check CF_UI_THEME in settings."
-            )
-
-        # django-cotton reads COTTON_DIR (singular). Setting it to
-        # "cotton/<theme>" makes <c-cf.foo> resolve to
-        # cotton/<theme>/cf/foo.html, which the cotton loader finds via
-        # the app-templates walk (cf_ui/templates/cotton/<theme>/cf/foo.html).
-        # Don't overwrite a value the consumer has already set.
-        if not getattr(settings, "COTTON_DIR", None):
-            settings.COTTON_DIR = f"cotton/{theme}"
-
-        # Fail at startup, not at first render, on a bad axis composition.
         try:
             resolve_composition(
                 getattr(settings, "CF_UI_COMPOSITION", None),
