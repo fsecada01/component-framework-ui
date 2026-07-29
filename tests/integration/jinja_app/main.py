@@ -8,79 +8,97 @@ from cf_ui.fastapi import install_cf_ui
 
 _CF_UI_STATIC_DIR = JINJA_TEMPLATES_DIR.parent.parent / "static" / "cf_ui"
 
-catalog = Catalog()
-install_cf_ui(catalog, theme="bulma")
+_THEME_CSS = {
+    "bulma": "https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css",
+    "daisy": "https://cdn.jsdelivr.net/npm/daisyui@4.7.2/dist/full.min.css",
+}
 
-app = FastAPI()
-app.mount("/static/cf_ui", StaticFiles(directory=str(_CF_UI_STATIC_DIR)), name="cf_ui_static")
-
-
-@app.get("/form-field", response_class=HTMLResponse)
-async def form_field():
-    return catalog.render(
-        "Cf:FormField",
-        name="email",
-        label="Email",
-        value="",
-        error="",
-        type="email",
-        required=False,
-        extra_class="",
-    )
+# DaisyUI ships component classes but no Tailwind utilities. The components use
+# utilities for layout and responsive behavior (`hidden`, `lg:flex`), so without
+# a Tailwind build those classes resolve to nothing and the E2E tier cannot see
+# whether a toggle actually changes anything. The play CDN is a real in-browser
+# Tailwind JIT, which makes the gallery representative of a consuming app.
+_THEME_EXTRA_HEAD = {
+    "bulma": "",
+    "daisy": '<script src="https://cdn.tailwindcss.com"></script>',
+}
 
 
-@app.get("/modal", response_class=HTMLResponse)
-async def modal():
-    return catalog.render("Cf:Modal", id="test-modal", extra_class="")
+def make_app(theme: str = "bulma") -> FastAPI:
+    """Build a JinjaX gallery app for one theme.
 
+    Parameterized by theme so the E2E tier can run the same pages under both
+    Bulma and DaisyUI — the component names and props are identical, which is
+    the property being tested.
+    """
+    catalog = Catalog()
+    install_cf_ui(catalog, theme=theme)
 
-@app.get("/card", response_class=HTMLResponse)
-async def card():
-    return catalog.render(
-        "Cf:Card",
-        _content="Card body",
-        header="Card Title",
-        footer="",
-        extra_class="",
-    )
+    app = FastAPI()
+    app.mount("/static/cf_ui", StaticFiles(directory=str(_CF_UI_STATIC_DIR)), name="cf_ui_static")
 
+    @app.get("/form-field", response_class=HTMLResponse)
+    async def form_field():
+        return catalog.render(
+            "Cf:FormField",
+            name="email",
+            label="Email",
+            value="",
+            error="",
+            type="email",
+            required=False,
+            extra_class="",
+        )
 
-@app.get("/navbar", response_class=HTMLResponse)
-async def navbar():
-    return catalog.render("Cf:Navbar", brand="", start="", end="", extra_class="")
+    @app.get("/modal", response_class=HTMLResponse)
+    async def modal():
+        return catalog.render("Cf:Modal", id="test-modal", extra_class="")
 
+    @app.get("/card", response_class=HTMLResponse)
+    async def card():
+        return catalog.render(
+            "Cf:Card",
+            _content="Card body",
+            header="Card Title",
+            footer="",
+            extra_class="",
+        )
 
-@app.get("/tabs", response_class=HTMLResponse)
-async def tabs():
-    return catalog.render(
-        "Cf:Tabs",
-        tabs=[{"id": "one", "url": "/tab/one/"}, {"id": "two", "url": "/tab/two/"}],
-        hx_target="tab-content",
-        extra_class="",
-    )
+    @app.get("/navbar", response_class=HTMLResponse)
+    async def navbar():
+        return catalog.render("Cf:Navbar", brand="", start="", end="", extra_class="")
 
+    @app.get("/tabs", response_class=HTMLResponse)
+    async def tabs():
+        return catalog.render(
+            "Cf:Tabs",
+            tabs=[{"id": "one", "url": "/tab/one/"}, {"id": "two", "url": "/tab/two/"}],
+            hx_target="tab-content",
+            extra_class="",
+        )
 
-@app.get("/gallery", response_class=HTMLResponse)
-async def gallery():
-    modal_html = catalog.render("Cf:Modal", id="e2e-modal", extra_class="")
-    notification_html = catalog.render(
-        "Cf:Notification", message="Hello!", type="info", dismissible=True, extra_class=""
-    )
-    navbar_html = catalog.render("Cf:Navbar", brand="Brand", start="", end="", extra_class="")
-    panel_html = catalog.render(
-        "Cf:Panel", title="Accordion", _content="Hidden content", open=False, extra_class=""
-    )
-    tabs_html = catalog.render(
-        "Cf:Tabs",
-        tabs=[{"id": "tab1", "url": "/tab/one/"}, {"id": "tab2", "url": "/tab/two/"}],
-        hx_target="tab-content",
-        _content="Initial content",
-        extra_class="",
-    )
-    return f"""<!DOCTYPE html>
+    @app.get("/gallery", response_class=HTMLResponse)
+    async def gallery():
+        modal_html = catalog.render("Cf:Modal", id="e2e-modal", extra_class="")
+        notification_html = catalog.render(
+            "Cf:Notification", message="Hello!", type="info", dismissible=True, extra_class=""
+        )
+        navbar_html = catalog.render("Cf:Navbar", brand="Brand", start="", end="", extra_class="")
+        panel_html = catalog.render(
+            "Cf:Panel", title="Accordion", _content="Hidden content", open=False, extra_class=""
+        )
+        tabs_html = catalog.render(
+            "Cf:Tabs",
+            tabs=[{"id": "tab1", "url": "/tab/one/"}, {"id": "tab2", "url": "/tab/two/"}],
+            hx_target="tab-content",
+            _content="Initial content",
+            extra_class="",
+        )
+        return f"""<!DOCTYPE html>
 <html>
 <head>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css">
+  {_THEME_EXTRA_HEAD[theme]}
+  <link rel="stylesheet" href="{_THEME_CSS[theme]}">
   <style>[x-cloak] {{ display: none !important; }}</style>
 </head>
 <body>
@@ -96,3 +114,8 @@ async def gallery():
   <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js" defer></script>
 </body>
 </html>"""
+
+    return app
+
+
+app = make_app("bulma")

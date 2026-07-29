@@ -1,0 +1,13 @@
+<div class="{{ class }}" x-data="cfTabs">
+  <div role="tablist" class="tabs tabs-bordered">
+    {% for tab in tabs %}
+    <a role="tab"
+       class="tab"
+       :class="{ 'tab-active': active === '{{ tab.id }}' }"
+       @click.prevent="setActive('{{ tab.id }}')"
+       hx-get="{{ tab.url }}"
+       hx-target="#{{ hx_target }}">{{ tab.id }}</a>
+    {% endfor %}
+  </div>
+  <div id="{{ hx_target }}">{{ slot }}</div>
+</div>

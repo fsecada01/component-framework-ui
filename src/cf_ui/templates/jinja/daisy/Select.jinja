@@ -1,0 +1,19 @@
+{#def name, label, value="", error="", options=[], extra_class="", input_class="" #}
+{% set value = value if value is defined else "" %}
+{% set error = error if error is defined else "" %}
+{% set options = options if options is defined else [] %}
+{% set extra_class = extra_class if extra_class is defined else "" %}
+{% set input_class = input_class if input_class is defined else "" %}
+<div class="form-control {{ extra_class }}">
+  <label class="label" for="{{ name }}"><span class="label-text">{{ label }}</span></label>
+  <select class="select select-bordered w-full{% if error %} select-error{% endif %}{% if input_class %} {{ input_class }}{% endif %}"
+          id="{{ name }}"
+          name="{{ name }}">
+    {% for opt in options %}
+    <option value="{{ opt.value }}"{% if opt.value|string == value|string %} selected{% endif %}>
+      {{ opt.label }}
+    </option>
+    {% endfor %}
+  </select>
+  {% if error %}<span class="label-text-alt text-error">{{ error }}</span>{% endif %}
+</div>

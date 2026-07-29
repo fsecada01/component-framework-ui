@@ -1,0 +1,10 @@
+<div class="form-control {{ class }}">
+  <label class="label" for="{{ name }}"><span class="label-text">{{ label }}</span></label>
+  <input class="input input-bordered w-full{% if error %} input-error{% endif %}{% if input_class %} {{ input_class }}{% endif %}"
+         id="{{ name }}"
+         type="{{ type }}"
+         name="{{ name }}"
+         value="{{ value }}"
+         {% if required == "true" %}required{% endif %}>
+  {% if error %}<span class="label-text-alt text-error">{{ error }}</span>{% endif %}
+</div>

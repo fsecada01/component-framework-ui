@@ -8,6 +8,7 @@ It MUST NOT be imported by the main pytest process to avoid polluting
 the shared Django settings used by unit and integration tests.
 """
 
+import os
 from pathlib import Path
 
 from cf_ui import JINJA_TEMPLATES_DIR
@@ -41,7 +42,8 @@ TEMPLATES = [
         },
     }
 ]
-CF_UI_THEME = "bulma"
+# Set by the conftest fixture so one server script covers both themes.
+CF_UI_THEME = os.environ.get("CF_UI_E2E_THEME", "bulma")
 # django-cotton default COTTON_DIR="cotton" resolves <c-cf.card> ->
 # cotton/cf/card.html, picked up via APP_DIRS from cf_ui's package templates.
 # Allow hyphenated filenames (form-field.html, checkbox-group.html)

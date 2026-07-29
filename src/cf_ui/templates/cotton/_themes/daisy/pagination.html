@@ -1,0 +1,26 @@
+{% load cf_ui %}
+<nav class="join {{ class }}" role="navigation" aria-label="pagination">
+  {% if page|add:"0" > 1 %}
+  <a class="join-item btn"
+     hx-get="{{ hx_url }}?page={{ page|add:"-1" }}"
+     hx-target="{{ hx_target }}">Previous</a>
+  {% else %}
+  <a class="join-item btn btn-disabled" aria-disabled="true">Previous</a>
+  {% endif %}
+  {% for p in total_pages|make_list_1_to_n %}
+  <a class="join-item btn{% if p == page|add:'0' %} btn-active{% endif %}"
+     {% if p != page|add:"0" %}
+     hx-get="{{ hx_url }}?page={{ p }}"
+     hx-target="{{ hx_target }}"
+     {% endif %}
+     aria-label="Page {{ p }}"
+     {% if p == page|add:'0' %}aria-current="page"{% endif %}>{{ p }}</a>
+  {% endfor %}
+  {% if page|add:"0" < total_pages|add:"0" %}
+  <a class="join-item btn"
+     hx-get="{{ hx_url }}?page={{ page|add:"1" }}"
+     hx-target="{{ hx_target }}">Next</a>
+  {% else %}
+  <a class="join-item btn btn-disabled" aria-disabled="true">Next</a>
+  {% endif %}
+</nav>

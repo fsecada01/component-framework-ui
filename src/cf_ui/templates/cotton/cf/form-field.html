@@ -1,13 +1,2 @@
 <c-vars name label value="" error="" type="text" required="false" input_class="" class="" />
-<div class="field {{ class }}">
-  <label class="label" for="{{ name }}">{{ label }}</label>
-  <div class="control">
-    <input class="input{% if error %} is-danger{% endif %}{% if input_class %} {{ input_class }}{% endif %}"
-           id="{{ name }}"
-           type="{{ type }}"
-           name="{{ name }}"
-           value="{{ value }}"
-           {% if required == "true" %}required{% endif %}>
-  </div>
-  {% if error %}<p class="help is-danger">{{ error }}</p>{% endif %}
-</div>
+{% load cf_ui %}{% cf_ui_theme_path "form-field" as cf_ui_partial %}{% include cf_ui_partial %}

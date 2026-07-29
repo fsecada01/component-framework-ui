@@ -1,0 +1,21 @@
+{% load cf_ui %}
+<div class="overflow-x-auto {{ class }}">
+  <table class="table table-zebra w-full">
+    <thead>
+      <tr>
+        {% for col in columns %}
+        <th>{{ col.label }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>
+        {% for col in columns %}
+        <td>{{ row|get_item:col.key }}</td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
