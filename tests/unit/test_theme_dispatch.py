@@ -37,7 +37,7 @@ COMPONENT_STEMS = [
     "textarea",
 ]
 
-IMPLEMENTED_THEMES = ["bulma", "daisy"]
+IMPLEMENTED_THEMES = ["bulma", "daisy", "foundation"]
 
 
 # --- The theme registry ----------------------------------------------------

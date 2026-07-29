@@ -11,6 +11,9 @@ _CF_UI_STATIC_DIR = JINJA_TEMPLATES_DIR.parent.parent / "static" / "cf_ui"
 _THEME_CSS = {
     "bulma": "https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css",
     "daisy": "https://cdn.jsdelivr.net/npm/daisyui@4.7.2/dist/full.min.css",
+    "foundation": (
+        "https://cdn.jsdelivr.net/npm/foundation-sites@6.7.5/dist/css/foundation.min.css"
+    ),
 }
 
 # DaisyUI ships component classes but no Tailwind utilities. The components use
@@ -21,6 +24,9 @@ _THEME_CSS = {
 _THEME_EXTRA_HEAD = {
     "bulma": "",
     "daisy": '<script src="https://cdn.tailwindcss.com"></script>',
+    # Foundation ships prebuilt CSS — no build step, and deliberately no
+    # foundation.js: the theme is CSS-only and Alpine owns every behaviour.
+    "foundation": "",
 }
 
 
