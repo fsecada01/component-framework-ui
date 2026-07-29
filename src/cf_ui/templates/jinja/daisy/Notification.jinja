@@ -1,0 +1,16 @@
+{#def message, type="info", dismissible=true, extra_class="" #}
+{% set type = type if type is defined else "info" %}
+{% set dismissible = dismissible if dismissible is defined else true %}
+{% set extra_class = extra_class if extra_class is defined else "" %}
+<div role="alert"
+     class="alert {% if type == 'danger' or type == 'error' %}alert-error{% elif type == 'success' %}alert-success{% elif type == 'warning' %}alert-warning{% else %}alert-info{% endif %} {{ extra_class }}"
+     x-data="{ visible: true }"
+     x-show="visible">
+  <span>{{ message }}</span>
+  {% if dismissible %}
+  <button type="button"
+          class="btn btn-sm btn-circle btn-ghost"
+          aria-label="dismiss"
+          @click="visible = false">&times;</button>
+  {% endif %}
+</div>

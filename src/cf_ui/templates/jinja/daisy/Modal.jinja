@@ -1,0 +1,23 @@
+{#def id="modal", header="", content="", footer="", extra_class="" #}
+{% set id = id if id is defined else "modal" %}
+{% set header = header if header is defined else "" %}
+{% set content = content if content is defined else "" %}
+{% set footer = footer if footer is defined else "" %}
+{% set extra_class = extra_class if extra_class is defined else "" %}
+<div id="{{ id }}"
+     class="modal {{ extra_class }}"
+     x-data="cfModal"
+     x-init="initModal()"
+     :class="{ 'modal-open': open }">
+  <div class="modal-box">
+    <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+            aria-label="close"
+            @click="close()">&times;</button>
+    {% if header %}<h3 class="text-lg font-bold">{{ header }}</h3>{% endif %}
+    <div class="py-4">{{ content }}</div>
+    {% if footer %}
+    <div class="modal-action">{{ footer }}</div>
+    {% endif %}
+  </div>
+  <div class="modal-backdrop" @click="close()"></div>
+</div>

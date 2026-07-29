@@ -21,6 +21,21 @@
   semantics as `merge_value_sets` (#5)
 - `tests/js/` — a `node --test` tier, run directly in CI and wrapped by pytest
 - `docs/tailwind-plugin.md`; `just test-js` and `just axes`
+- **DaisyUI theme (#6)** — all 14 components in both template sets
+  (`jinja/daisy/*.jinja` and `cotton/_themes/daisy/*.html`), covered by the
+  full three-tier suite including Playwright E2E in `js_on` and `js_off`
+- `cf_ui/themes.py` — theme registry (`THEMES`, `COMPONENTS`, `resolve_theme`,
+  `cotton_partial`, `tailwind_content_globs`); `CF_UI_THEME` is now validated
+  by `CfUiConfig.ready()` instead of failing later as `TemplateDoesNotExist`
+- django-cotton theme dispatch: `cotton/cf/<name>.html` is now a wrapper that
+  declares `<c-vars>` and includes `cotton/_themes/<theme>/<name>.html` via the
+  new `{% cf_ui_theme_path %}` tag. Consumer templates are unchanged —
+  `<c-cf.card>` still resolves at the same path, and `COTTON_DIR` is still
+  untouched (see #4)
+- `docs/daisyui.md` — theme switch, the Tailwind content glob, and preflight
+  coexistence while migrating off another framework
+- `python -m cf_ui.themes` prints the absolute Tailwind content globs for the
+  installed package, so consumers do not hand-write a site-packages path
 - Theme composition axes (#5): five orthogonal style axes — accent, surface, form,
   density, type — each keyed on a data attribute and carrying a closed set of
   named values. `data-theme` remains the light/dark switch and is not an axis.
@@ -36,12 +51,30 @@
   functions, registering the Jinja globals the macros delegate to
 - `docs/theming.md` — axis reference, custom value sets, and the contrast requirement
 
+### Changed
+- E2E harness is parameterized by theme: `make_app(theme)` for the FastAPI
+  gallery and `CF_UI_E2E_THEME` for the Django server. The DaisyUI E2E run
+  reuses the Bulma consumer templates verbatim, which is what makes
+  "switching themes needs no template edits" an executed claim rather than a
+  documented one
+
 ### Technical Notes
 - `axes.py` remains the single source of truth. The plugin holds no copy of the
   value sets, and a parity test compares both generators' output declaration by
   declaration — selectors, custom properties, values, and the p3 layer
 - Token values containing `;`, `{`, `}`, or a comment delimiter are rejected by the
   plugin: they close their own declaration and write rules the app never authored
+- Every DaisyUI variant class is written out in full
+  (`{% if type == 'danger' %}alert-error{% endif %}`, never `alert-{{ type }}`)
+  because Tailwind's scanner reads source text and cannot see a class assembled
+  at render time. A test scans the DaisyUI templates for split class tokens
+- The prop vocabulary is unchanged across themes: `type="danger"` still works,
+  and the templates map it onto DaisyUI's `alert-error` / `progress-error`
+- Alpine components are untouched — `cfModal`, `cfNavbar`, `cfPanel`, `cfTabs`
+  and the `$cf` store are theme-independent; only the toggled class differs
+  (`is-active` → `modal-open` / `tab-active`)
+- Django rejects template variables beginning with an underscore, so the
+  dispatch variable is `cf_ui_partial`, not `_cf_partial`
 - Light and dark are declared independently per value, never derived by inversion;
   light is the unqualified selector, dark is `[data-theme="dark"][data-*="..."]`
 - Base declarations are sRGB hex (what the contrast gate is computed against);

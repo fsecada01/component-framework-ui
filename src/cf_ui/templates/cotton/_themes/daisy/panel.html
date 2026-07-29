@@ -1,0 +1,13 @@
+<div class="card bg-base-100 shadow-xl {{ class }}" x-data="cfPanel">
+  <button type="button"
+          class="btn btn-ghost justify-between w-full"
+          :aria-expanded="open"
+          @click="toggle()">
+    <span class="card-title text-base">{{ title }}</span>
+    <span :style="open ? 'transform:rotate(90deg)' : ''"
+          style="display:inline-block;transition:transform 200ms">&#9654;</span>
+  </button>
+  <div class="card-body pt-0" x-show="open" x-cloak>
+    {{ slot }}
+  </div>
+</div>

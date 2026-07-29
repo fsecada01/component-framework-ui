@@ -1,7 +1,2 @@
 <c-vars value="0" max="100" type="primary" label="" class="" />
-<div class="{{ class }}">
-  {% if label %}<p class="has-text-centered mb-1">{{ label }}</p>{% endif %}
-  <progress class="progress is-{{ type }}"
-            value="{{ value }}"
-            max="{{ max }}">{{ value }}%</progress>
-</div>
+{% load cf_ui %}{% cf_ui_theme_path "progress" as cf_ui_partial %}{% include cf_ui_partial %}

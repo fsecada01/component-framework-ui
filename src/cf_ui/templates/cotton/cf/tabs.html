@@ -1,15 +1,2 @@
 <c-vars hx_target="tab-content" tabs="[]" class="" />
-<div class="{{ class }}" x-data="cfTabs">
-  <div class="tabs">
-    <ul>
-      {% for tab in tabs %}
-      <li :class="{ 'is-active': active === '{{ tab.id }}' }">
-        <a @click.prevent="setActive('{{ tab.id }}')"
-           hx-get="{{ tab.url }}"
-           hx-target="#{{ hx_target }}">{{ tab.id }}</a>
-      </li>
-      {% endfor %}
-    </ul>
-  </div>
-  <div id="{{ hx_target }}">{{ slot }}</div>
-</div>
+{% load cf_ui %}{% cf_ui_theme_path "tabs" as cf_ui_partial %}{% include cf_ui_partial %}

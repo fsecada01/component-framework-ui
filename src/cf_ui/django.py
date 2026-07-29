@@ -7,6 +7,7 @@ from cf_ui.axes import (
     merge_value_sets,
     resolve_composition,
 )
+from cf_ui.themes import ThemeError, resolve_theme
 
 
 def axis_value_sets() -> dict:
@@ -38,11 +39,20 @@ class CfUiConfig(AppConfig):
     # cotton templates live at cotton/<their-app>/*.html.
 
     def ready(self) -> None:
-        """Validate the axis composition at startup, not at first render.
+        """Validate the theme and axis composition at startup.
+
+        Both would otherwise surface at first render — an unknown theme as a
+        ``TemplateDoesNotExist`` naming a partial the app never wrote, which
+        is a poor way to learn that ``CF_UI_THEME`` holds a stub theme's name.
 
         Deliberately touches no template settings — see the note above.
         """
         from django.conf import settings
+
+        try:
+            resolve_theme(getattr(settings, "CF_UI_THEME", None))
+        except ThemeError as exc:
+            raise ImproperlyConfigured(f"cf-ui: {exc}. Check CF_UI_THEME in settings.") from exc
 
         try:
             resolve_composition(
