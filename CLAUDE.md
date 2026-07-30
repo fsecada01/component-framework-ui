@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `component-framework-ui` (`cf-ui`) is a standalone PyPI package providing CSS framework component templates for [`component-framework`](https://github.com/fsecada01/component-framework). It ships two first-class template sets — Jinja2/JinjaX (FastAPI, Litestar) and django-cotton (Django) — for Bulma CSS, with stubs for Bootstrap, Foundation, Fomantic UI, and DaisyUI.
 
-**Design principle:** `component-framework` stays renderer-agnostic. `cf-ui` is the opinionated UI layer. Component names are theme-agnostic (`CfCard`, `<c-cf.card>`) — switching CSS frameworks means changing `CF_UI_THEME` in one place.
+**Design principle:** `component-framework` stays renderer-agnostic. `cf-ui` is the opinionated UI layer. Component names are theme-agnostic (`<Cf:Card>`, `<c-cf.card>`) — switching CSS frameworks means changing `CF_UI_THEME` in one place.
 
 ## Commands
 
@@ -60,8 +60,10 @@ Templates live **inside** the Python package so hatchling includes them automati
 
 **JinjaX (`jinjax>=0.41`):**
 - API is `catalog.add_folder(path, prefix="Cf")` — NOT `add_path()`
+- jinjax exports `Catalog`, **not** `ComponentCatalog` — the latter name does not exist and README documented it for two releases
+- `Cf` is a JinjaX *prefix* and the prefix separator is `:` (jinjax's `PREFIX_SEP`; `DELIMITER` is `.` and is for subfolders) — so the tag is `<Cf:Card>` and the render name is `"Cf:Card"`. `<CfCard>` and `<Cf.Card>` both raise `ComponentNotFound`. `tests/unit/test_docs_samples.py` renders all three forms so the docs cannot drift back
 - `class` is a Python reserved word in `{#def}` headers — use `extra_class` instead
-- `content` kwarg is reserved by JinjaX (becomes the slot `CallerWrapper`) — call `catalog.render("CfCard", _content="body text")` for slot content; never use `content=` as a prop name
+- `content` kwarg is reserved by JinjaX (becomes the slot `CallerWrapper`) — call `catalog.render("Cf:Card", _content="body text")` for slot content; never use `content=` as a prop name
 - Every cf-ui Jinja template escapes its own output via `{% autoescape true %}` (#36) — the block opens right after the `{#def}` header and closes at EOF; the installers never touch the environment's `autoescape`. A prop carrying real markup must be `markupsafe.Markup`. In `assets.jinja` the blocks live *inside* the macro bodies — a file-scope block stops the macros exporting
 - `{#def}` defaults only work under JinjaX; plain Jinja2 treats `{#def}` as a comment — templates add `{% set x = x if x is defined else "" %}` guards for `StrictUndefined` compatibility
 
@@ -106,7 +108,7 @@ The Cotton unit tests pass even when cotton is not in INSTALLED_APPS (variables 
 
 | Template engine | Component syntax |
 |---|---|
-| JinjaX | `<CfCard>`, `<CfModal>`, `<CfFormField>` |
+| JinjaX | `<Cf:Card>`, `<Cf:Modal>`, `<Cf:FormField>` |
 | django-cotton | `<c-cf.card>`, `<c-cf.modal>`, `<c-cf.form-field>` |
 
 The `Cf` prefix / `cf.` namespace prevents collision with consumer app components. Theme is controlled by `CF_UI_THEME` (Django) or `theme=` argument (FastAPI/Litestar) — never in component names.

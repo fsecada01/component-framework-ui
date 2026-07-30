@@ -23,3 +23,6 @@ Thumbs.db
 .idea/
 .vscode/
 uv.lock
+
+# mkdocs build output
+site/

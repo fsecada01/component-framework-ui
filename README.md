@@ -3,303 +3,68 @@
 > CSS framework UI kit for [`component-framework`](https://github.com/fsecada01/component-framework) — Bulma, Bootstrap, Foundation, Fomantic UI, DaisyUI.
 
 [![CI](https://github.com/fsecada01/component-framework-ui/actions/workflows/ci.yml/badge.svg)](https://github.com/fsecada01/component-framework-ui/actions/workflows/ci.yml)
+[![Docs](https://github.com/fsecada01/component-framework-ui/actions/workflows/docs.yml/badge.svg)](https://fsecada01.github.io/component-framework-ui/)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![Status: Beta](https://img.shields.io/badge/status-beta-blue.svg)]()
 
-Provides ready-to-use Bulma component templates in two first-class template sets:
+**📖 Full documentation: <https://fsecada01.github.io/component-framework-ui/>**
 
-| Template set | Engine | Frameworks |
+---
+
+Fourteen ready-to-use components in two first-class template sets:
+
+| Template set | Engine | Web frameworks |
 |---|---|---|
 | `jinja/` | Jinja2 / JinjaX | FastAPI, Litestar |
 | `cotton/` | django-cotton | Django |
 
-Component names are **theme-agnostic** — `<CfCard>` and `<c-cf.card>` render the active theme. Switching CSS frameworks means changing one config line, not hundreds of templates.
+Component names are **theme-agnostic** — `<Cf:Card>` and `<c-cf.card>` render
+whichever theme is active. Switching CSS frameworks means changing one config
+line, not hundreds of templates.
 
----
-
-## Installation
+## Install
 
 ```bash
-# Bulma
-pip install "cf-ui[bulma]"
-
-# Tailwind + DaisyUI
-pip install "cf-ui[daisy]"
-
-# Bootstrap 5
-pip install "cf-ui[bootstrap]"
-
-# Foundation 6
-pip install "cf-ui[foundation]"
-
-# Fomantic UI
-pip install "cf-ui[fomantic]"
-
-# All themes
-pip install "cf-ui[all]"
+pip install "cf-ui[django,bulma]"        # Django + Bulma
+pip install "cf-ui[fastapi,daisy]"       # FastAPI + Tailwind/DaisyUI
+pip install "cf-ui[litestar,bootstrap]"  # Litestar + Bootstrap 5
 ```
 
-All template sets ship in every install. Theme selection is runtime config, not install-time.
+All template sets ship in every install. Theme selection is runtime config, not
+install-time.
 
----
+→ [Installation guide](https://fsecada01.github.io/component-framework-ui/installation/)
 
-## Quick Start
-
-### Django
-
-```python
-# settings.py
-INSTALLED_APPS = [
-    ...
-    "cf_ui.django.CfUiConfig",
-]
-CF_UI_THEME = "bulma"
-
-TEMPLATES = [{
-    "BACKEND": "django.template.backends.django.DjangoTemplates",
-    "APP_DIRS": True,
-    "OPTIONS": {
-        "libraries": {"cf_ui": "cf_ui.templatetags.cf_ui"},
-    },
-}]
-```
+## Thirty-second look
 
 ```django
-{# base.html #}
+{# Django #}
 {% load cf_ui %}
-<!DOCTYPE html>
-<html>
-<head>
-  {% cf_ui_head %}
-</head>
-<body>
-  {% block content %}{% endblock %}
-  {% cf_ui_body %}
-</body>
-</html>
-
-{# any template #}
-<c-cf.card>
-  <c-slot name="header">My Title</c-slot>
-  Card body content here.
-</c-cf.card>
-
-<c-cf.form-field name="email" label="Email" value="{{ form.email.value }}"
-                 error="{{ form.email.errors.0 }}" type="email" />
+<c-cf.card header="Welcome">Card body content.</c-cf.card>
+<c-cf.form-field name="email" label="Email" type="email" />
 ```
 
-### FastAPI + JinjaX
-
 ```python
-from jinjax import ComponentCatalog
+# FastAPI
+from jinjax import Catalog
+
 from cf_ui.fastapi import install_cf_ui
 
-catalog = ComponentCatalog()
+catalog = Catalog()
 install_cf_ui(catalog, theme="bulma")
+
+html = catalog.render("Cf:Card", header="Welcome", _content="Card body.")
 ```
 
-```html
-{# any JinjaX template #}
-<CfCard header="Title">
-  Card body content.
-</CfCard>
-
-<CfFormField name="email" label="Email" value="" extra_class="mb-4" />
-```
-
-### Litestar
-
-```python
-from litestar.contrib.jinja import JinjaTemplateEngine
-from litestar.template import TemplateConfig
-from cf_ui.litestar import install_cf_ui
-
-config = TemplateConfig(engine=JinjaTemplateEngine, directory="templates")
-install_cf_ui(config, theme="bulma")
-```
-
----
-
-## Components (v0.1 — Bulma)
-
-### Forms
-
-| Component | Key props |
-|---|---|
-| `CfFormField` / `<c-cf.form-field>` | `name`, `label`, `value`, `error`, `type`, `required`, `extra_class` |
-| `CfSelect` / `<c-cf.select>` | `name`, `label`, `value`, `error`, `options` |
-| `CfTextarea` / `<c-cf.textarea>` | `name`, `label`, `value`, `error`, `rows` |
-| `CfCheckboxGroup` / `<c-cf.checkbox-group>` | `name`, `label`, `choices`, `selected`, `error` |
-
-### Feedback
-
-| Component | Key props / slots |
-|---|---|
-| `CfModal` / `<c-cf.modal>` | `id`, `extra_class`; slots: `header`, default body, `footer` |
-| `CfNotification` / `<c-cf.notification>` | `message`, `type`, `dismissible` |
-| `CfProgress` / `<c-cf.progress>` | `value`, `max`, `type`, `label` |
-
-### Content
-
-| Component | Key props / slots |
-|---|---|
-| `CfCard` / `<c-cf.card>` | `extra_class`; slots: `header`, default body, `footer` |
-| `CfTable` / `<c-cf.table>` | `columns`, `rows`, `hx_target`, `hx_url` |
-| `CfPagination` / `<c-cf.pagination>` | `page`, `total_pages`, `hx_target`, `hx_url` |
-| `CfPanel` / `<c-cf.panel>` | `title`, `open`, `extra_class`; slot: default body |
-
-### Navigation
-
-| Component | Key props / slots |
-|---|---|
-| `CfNavbar` / `<c-cf.navbar>` | `extra_class`; slots: `brand`, `start`, `end` |
-| `CfBreadcrumb` / `<c-cf.breadcrumb>` | `items` (list of `{label, url}`) |
-| `CfTabs` / `<c-cf.tabs>` | `tabs` (list of `{id, url}`), `hx_target` |
-
-All components accept an `extra_class` prop for consumer CSS overrides.
-
----
-
-## CDN Asset Tags
-
-`{% cf_ui_head %}` and `{% cf_ui_body %}` inject CDN links for the active theme + AlpineJS. CDN versions are pinned defaults, overridable:
-
-```python
-# settings.py
-CF_UI_CDN_VERSIONS = {
-    "bulma": "1.0.2",
-    "alpinejs": "3.14.1",
-}
-```
-
-Opt out of CDN entirely — just don't call the tags and load assets yourself.
-
-Jinja2 equivalent:
-```jinja
-{% from "cf_ui/assets.jinja" import cf_ui_head, cf_ui_body %}
-{{ cf_ui_head(theme="bulma") }}
-{{ cf_ui_body(theme="bulma", cf_alpine_url="/static/cf_ui/cf_ui_alpine.js") }}
-```
-
----
-
-## Theme Composition Axes
-
-`CF_UI_THEME` picks the CSS framework. Five orthogonal **axes** decide what the app looks like *within* it — each keyed on a data attribute, each carrying a closed set of named values:
-
-| Axis | Attribute | Shipped values |
-|---|---|---|
-| Accent | `data-accent` | `slate`, `azure`, `jade` |
-| Surface | `data-surface` | `plain`, `muted` |
-| Form | `data-form` | `sharp`, `soft`, `round` |
-| Density | `data-density` | `compact`, `regular`, `roomy` |
-| Type | `data-type` | `system`, `humanist`, `mono` |
-
-One setting, five attributes:
-
-```python
-# settings.py
-CF_UI_COMPOSITION = "editorial"          # or {"accent": "jade", "density": "compact"}
-```
-
-```django
-<html lang="en" {% cf_ui_root_attrs %}>
-```
-
-```python
-# FastAPI / Litestar
-install_cf_ui(catalog, theme="bulma", composition="editorial")
-```
-
-Apps supply their own value sets via `CF_UI_AXIS_VALUES` (`value_sets=` for Jinja apps) — the package ships the machinery and a neutral default set, not a brand. `data-theme` remains the light/dark switch and is not an axis; light and dark are declared independently, never derived by inversion.
-
-**Every accent × surface × mode combination in a value set must pass WCAG AA before it ships** — the default set is held to that in CI.
-
-→ Full guide: [`docs/theming.md`](docs/theming.md)
-
-### Build-time validation (Tailwind)
-
-The closed value sets are only a promise until something enforces them.
-`data-accent="hotpink"` produces no error on its own — it produces an element
-with no accent. cf-ui ships a Tailwind plugin that **fails the build** on an
-unknown axis value, generates the axis CSS and its `@media (color-gamut: p3)`
-layer from the same definition, and can warn with WCAG numbers for every
-accent × surface × mode.
-
-```css
-@import "tailwindcss";
-@plugin "../.venv/lib/python3.12/site-packages/cf_ui/static/cf_ui/cf_ui_tailwind_plugin.mjs";
-```
-
-The plugin is **vendored in the wheel, not published to npm** — a separate npm
-version could disagree with the installed package about what a valid value is,
-which is the exact failure it exists to prevent.
-
-→ Full guide: [`docs/tailwind-plugin.md`](docs/tailwind-plugin.md)
-
----
-
-## Alpine.js Integration
-
-`{% cf_ui_body %}` loads `cf_ui_alpine.js` (before the Alpine CDN) which registers:
-
-**Named components** — use `x-data="cfModal"` to bind from outside:
-- `cfModal` — `open`, `show()`, `toggle()`, `close()`, `initModal()`
-- `cfNavbar` — `menuOpen`, `toggle()`
-- `cfPanel` — `open`, `toggle()`, `initPanel()`
-- `cfTabs` — `active`, `setActive(id)`, `initTabs()`, `onKeydown(e)`
-
-**`$cf` global store** — cross-component messaging from any template:
-```html
-<button @click="$store.cf.notify('Saved!', 'success')">Save</button>
-<button @click="Alpine.store('cf').modal.open('confirm-dialog')">Delete</button>
-```
-
-Opt out entirely:
-```django
-{% cf_ui_body alpine=False %}
-```
-
-This file is also where the interactive components' accessibility lives — modal
-focus trapping and restoration, `Escape` to close, the tabs roving tabindex. A
-theme partial supplies classes and ARIA state; it never implements behavior, so
-a new theme inherits all of it.
-
-→ Full guide: [`docs/accessibility.md`](docs/accessibility.md)
-
----
-
-## Escape Hatch
-
-If you need direct access to template directories for custom configuration:
-
-```python
-from cf_ui import JINJA_TEMPLATES_DIR, COTTON_TEMPLATES_DIR
-
-# JINJA_TEMPLATES_DIR / "bulma"  →  Path to Jinja2 templates (theme-prefixed)
-# COTTON_TEMPLATES_DIR / "cf"    →  Path to Cotton component templates
-```
-
-> **Cotton component paths are theme-agnostic.** The public components live at
-> `cotton/cf/*.html` (not `cotton/<theme>/cf/*.html`) so cf-ui can sit
-> alongside any consumer project's own `templates/cotton/<app>/...` tree
-> without colliding on `COTTON_DIR`. Each one is a thin wrapper that declares
-> its props and includes a theme partial from `cotton/_themes/<theme>/`,
-> selected by `CF_UI_THEME`. Render `<c-cf.card>`; never reach into
-> `_themes/` directly.
->
-> The Jinja side needs no such indirection — `install_cf_ui(catalog, theme=…)`
-> registers `templates/jinja/<theme>/` and JinjaX resolves `<CfCard>` from there.
-
----
+→ [Quickstart for all three frameworks](https://fsecada01.github.io/component-framework-ui/quickstart/)
 
 ## Themes
 
 | Theme | Status |
 |---|---|
-| Bulma | ✅ v0.1.0 |
-| Tailwind + DaisyUI | ✅ — see [docs/daisyui.md](docs/daisyui.md) |
-| Bootstrap 5 | ✅ — CSS only, no `bootstrap.bundle.js`; see [docs/bootstrap.md](docs/bootstrap.md) |
+| Bulma | ✅ |
+| Tailwind + DaisyUI | ✅ — [guide](docs/daisyui.md) |
+| Bootstrap 5 | ✅ — CSS only, no `bootstrap.bundle.js`; [decision record](docs/bootstrap.md) |
 | Foundation 6 | ✅ — CSS only, no jQuery |
 | Fomantic UI | ✅ — CSS only, no jQuery |
 
@@ -307,29 +72,19 @@ Switching is one line — `CF_UI_THEME = "daisy"` on Django, `theme="daisy"` on
 FastAPI/Litestar — and needs no template edits in the consuming app. An
 unimplemented theme name is rejected at startup rather than at first render.
 
-**Bootstrap ships CSS only, on purpose.** Do not load `bootstrap.bundle.js`.
-Bootstrap's `data-bs-*` API is a second state owner for the modal, the tabs and
-the accordion, and `cf_ui_alpine.js` is already the first — loading both makes
-`Alpine.store('cf').modal.open(id)` mean something different under this theme
-than under every other one. The templates use Bootstrap's classes and markup
-structure and wire state through Alpine, so the CDN stylesheet is all a
-consuming app needs. [docs/bootstrap.md](docs/bootstrap.md) is the decision
-record: which of Bootstrap's 12 JS components cf-ui replaces, what to do about
-the eight it does not, and what changes at Bootstrap 6.
+## Documentation
 
-**DaisyUI takes one extra step.** It compiles through Tailwind, so Tailwind's
-content scanner has to reach cf-ui's templates in site-packages or every class
-in them is tree-shaken away, leaving correct markup with no styling and no
-error. Get the glob from the package rather than hand-writing it:
-
-```bash
-python -m cf_ui.themes
-```
-
-[docs/daisyui.md](docs/daisyui.md) covers that, plus disabling Tailwind's
-preflight while an older framework is still styling the app.
-
----
+| Page | What's in it |
+|---|---|
+| [Installation](https://fsecada01.github.io/component-framework-ui/installation/) | Extras, requirements, asset options |
+| [Quickstart](https://fsecada01.github.io/component-framework-ui/quickstart/) | Django, FastAPI, and Litestar setups |
+| [Getting started](https://fsecada01.github.io/component-framework-ui/getting-started/) | Themes, assets, composition axes, Alpine, escaping |
+| [Use cases](https://fsecada01.github.io/component-framework-ui/use-cases/) | HTMX tables, modals, forms with errors |
+| [Components](https://fsecada01.github.io/component-framework-ui/components/) | All fourteen, with every prop |
+| [Escaping](https://fsecada01.github.io/component-framework-ui/escaping/) | Why cf-ui escapes its own output |
+| [Theming](docs/theming.md) | Composition axes and custom value sets |
+| [Tailwind plugin](docs/tailwind-plugin.md) | Build-time axis validation |
+| [Accessibility](docs/accessibility.md) | Focus management, ARIA, keyboard behavior |
 
 ## Development
 
@@ -345,9 +100,8 @@ just test-e2e         # E2E Playwright tests (requires chromium)
 just test-all         # everything
 just lint             # ruff check
 just format           # ruff format
+just docs             # serve the docs site locally
 ```
-
----
 
 ## Requirements
 
@@ -359,8 +113,6 @@ Optional extras:
 - `[django]` — Django 4.2+, django-cotton 2.x
 - `[fastapi]` — FastAPI 0.109+, JinjaX 0.41+
 - `[litestar]` — Litestar 2.0+, Jinja2 3.1+
-
----
 
 ## License
 
