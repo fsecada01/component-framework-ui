@@ -1,0 +1,30 @@
+{% comment %} Deliberately not Foundation's accordion. `.accordion-content` is
+   `display: none` and — unlike `.tabs-panel` — the stylesheet carries *no*
+   rule that ever un-hides it; the plugin opens it with an inline
+   `slideDown()`. A server-open accordion panel would therefore be invisible
+   with Alpine off, which is exactly what the accessibility contract forbids.
+   `.card-section` has no such rule, so `x-show` + `x-cloak` behave here the
+   way they do in every other theme. {% endcomment %}
+<div class="card {{ class }}"
+     x-data="cfPanel"
+     x-init="initPanel()"
+     data-cf-open="{% if open and open != 'false' %}true{% else %}false{% endif %}">
+  <button type="button"
+          class="card-divider"
+          style="width:100%;text-align:left;cursor:pointer"
+          aria-controls="{{ id }}-body"
+          aria-expanded="{% if open and open != 'false' %}true{% else %}false{% endif %}"
+          :aria-expanded="open"
+          @click="toggle()">
+    <span>{{ title }}</span>
+    <span style="display:inline-block;transition:transform 200ms"
+          :style="open ? 'display:inline-block;transform:rotate(90deg)' : 'display:inline-block'"
+          aria-hidden="true">&#9654;</span>
+  </button>
+  <div id="{{ id }}-body"
+       class="card-section"
+       x-show="open"
+       {% if not open or open == 'false' %}x-cloak{% endif %}>
+    {{ slot }}
+  </div>
+</div>

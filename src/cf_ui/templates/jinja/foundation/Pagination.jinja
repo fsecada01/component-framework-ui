@@ -1,0 +1,44 @@
+{#def page=1, total_pages=1, hx_target="", hx_url="", extra_class="" #}
+{% set page = page if page is defined else 1 %}
+{% set total_pages = total_pages if total_pages is defined else 1 %}
+{% set hx_target = hx_target if hx_target is defined else "" %}
+{% set hx_url = hx_url if hx_url is defined else "" %}
+{% set extra_class = extra_class if extra_class is defined else "" %}
+{# Foundation generates the « / » arrows from `.pagination-previous a::before`
+   and `.pagination-next a::after`, and disabled edges are bare text rather
+   than links (`.pagination-previous.disabled::before` covers that case). #}
+<nav role="navigation" aria-label="pagination">
+  <ul class="pagination {{ extra_class }}">
+    {% if page > 1 %}
+    <li class="pagination-previous">
+      <a hx-get="{{ hx_url }}?page={{ page - 1 }}"
+         hx-target="{{ hx_target }}">Previous <span class="show-for-sr">page</span></a>
+    </li>
+    {% else %}
+    <li class="pagination-previous disabled">Previous <span class="show-for-sr">page</span></li>
+    {% endif %}
+
+    {% for p in range(1, total_pages + 1) %}
+    {% if p == page %}
+    <li class="current" aria-current="page">
+      <span class="show-for-sr">You're on page</span> {{ p }}
+    </li>
+    {% else %}
+    <li>
+      <a hx-get="{{ hx_url }}?page={{ p }}"
+         hx-target="{{ hx_target }}"
+         aria-label="Page {{ p }}">{{ p }}</a>
+    </li>
+    {% endif %}
+    {% endfor %}
+
+    {% if page < total_pages %}
+    <li class="pagination-next">
+      <a hx-get="{{ hx_url }}?page={{ page + 1 }}"
+         hx-target="{{ hx_target }}">Next <span class="show-for-sr">page</span></a>
+    </li>
+    {% else %}
+    <li class="pagination-next disabled">Next <span class="show-for-sr">page</span></li>
+    {% endif %}
+  </ul>
+</nav>

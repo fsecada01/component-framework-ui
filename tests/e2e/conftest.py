@@ -95,6 +95,25 @@ def bootstrap_cotton_server_url() -> Generator[str, None, None]:
     proc.wait(timeout=5)
 
 
+@pytest.fixture(scope="session")
+def foundation_jinja_server_url() -> Generator[str, None, None]:
+    thread = threading.Thread(target=_run_fastapi_server, args=("foundation", "127.0.0.1", 8777))
+    thread.daemon = True
+    thread.start()
+    time.sleep(2.0)
+    yield "http://127.0.0.1:8777"
+
+
+@pytest.fixture(scope="session")
+def foundation_cotton_server_url() -> Generator[str, None, None]:
+    """The same consumer templates again, CF_UI_THEME="foundation"."""
+    proc = _start_cotton_server(8778, "foundation")
+    time.sleep(2.0)
+    yield "http://127.0.0.1:8778"
+    proc.terminate()
+    proc.wait(timeout=5)
+
+
 @pytest.fixture(params=["js_on", "js_off"])
 def jinja_page(request, browser, jinja_server_url):
     ctx = browser.new_context(java_script_enabled=(request.param == "js_on"))
@@ -142,6 +161,24 @@ def bootstrap_jinja_page(request, browser, bootstrap_jinja_server_url):
 
 @pytest.fixture(params=["js_on", "js_off"])
 def bootstrap_cotton_page(request, browser, bootstrap_cotton_server_url):
+    ctx = browser.new_context(java_script_enabled=(request.param == "js_on"))
+    page = ctx.new_page()
+    page.set_default_timeout(5000)
+    yield page, request.param
+    ctx.close()
+
+
+@pytest.fixture(params=["js_on", "js_off"])
+def foundation_jinja_page(request, browser, foundation_jinja_server_url):
+    ctx = browser.new_context(java_script_enabled=(request.param == "js_on"))
+    page = ctx.new_page()
+    page.set_default_timeout(5000)
+    yield page, request.param
+    ctx.close()
+
+
+@pytest.fixture(params=["js_on", "js_off"])
+def foundation_cotton_page(request, browser, foundation_cotton_server_url):
     ctx = browser.new_context(java_script_enabled=(request.param == "js_on"))
     page = ctx.new_page()
     page.set_default_timeout(5000)

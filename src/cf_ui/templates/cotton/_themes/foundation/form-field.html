@@ -1,0 +1,17 @@
+{% comment %} `.form-error` is `display: none` until `.is-visible` joins it — emitting the
+   text without it renders an error nobody can see. These three classes are the
+   whole of what Foundation's Abide plugin does at runtime, so rendering them
+   server-side is a complete substitute for loading it. {% endcomment %}
+<div class="{{ class }}">
+  <label for="{{ name }}"{% if error %} class="is-invalid-label"{% endif %}>{{ label }}</label>
+  <input class="{% if error %}is-invalid-input{% endif %}{% if input_class %} {{ input_class }}{% endif %}"
+         id="{{ name }}"
+         type="{{ type }}"
+         name="{{ name }}"
+         value="{{ value }}"
+         {% if error %}aria-invalid="true" aria-describedby="{{ name }}-error"{% endif %}
+         {% if required == "true" %}required{% endif %}>
+  {% if error %}
+  <span class="form-error is-visible" id="{{ name }}-error">{{ error }}</span>
+  {% endif %}
+</div>

@@ -9,9 +9,9 @@
   (`:class`, `:aria-selected`, `:tabindex`, `@click.prevent`), so an id
   containing an apostrophe closed its string literal, ran, and reopened it —
   no user interaction, and the surrounding expression still parsed, so Alpine
-  logged nothing. Sixteen sites across bulma and daisy, plus eight more in
-  bootstrap, which carried the same fix in on its own branch (#29) rather
-  than merging with a known injection. Foundation and Fomantic follow the
+  logged nothing. Sixteen sites across bulma and daisy, plus eight more each in
+  bootstrap and foundation, which carried the same fix in on their own branches
+  (#29, #30) rather than merging with a known injection. Fomantic follows the
   same way. Fixing it in two themes now instead of five later is the whole
   reason this went ahead of the expansion epic.
 
@@ -36,6 +36,52 @@
   fifth, and `tests/e2e/test_alpine_injection.py` proves the payload is inert in
   a real browser — asserting both that it did not run and that the bindings did
   evaluate, since a fix that made Alpine throw would satisfy the first alone.
+
+### Added — Foundation 6 theme (#23)
+
+All 14 components in both template sets, replacing the `PLANNED.md` stub at
+`templates/jinja/foundation/` and creating `templates/cotton/_themes/foundation/`.
+`foundation` is now accepted by `CF_UI_THEME` and by `install_cf_ui(theme=…)`;
+`_CDN_CSS` and `_DEFAULTS` already carried it at `6.7.5`.
+
+- **CSS only, and no jQuery.** Foundation's interactive components — Reveal,
+  Tabs, Accordion, Dropdown Menu — are jQuery plugins. Loading them would make a
+  theme choice change a consuming app's dependency graph, and would put a second
+  owner on state `cf_ui_alpine.js` already holds. The templates use Foundation's
+  classes and markup structure; every piece of state is wired through the
+  existing Alpine components. Asserted per component rather than left to prose.
+
+- **Three places where Foundation's CSS assumes its JS is present**, and what
+  each does instead:
+  - `.reveal` has no open-state class — Foundation's Reveal writes
+    `style.display` directly — so the modal toggles inline display rather than a
+    class, and the E2E tier asserts visibility instead of a class list.
+  - `.accordion-content` is `display: none` with no un-hiding rule in the
+    stylesheet, so the panel stays off the accordion entirely and `x-show` owns
+    display, seeded from `data-cf-open`. Same shape as the bug #21 fixed.
+  - The navbar collapse uses `hide-for-small-only`, not `hide`: `hide` would
+    collapse the desktop menu too, and with Alpine off no class is emitted at
+    all, so the menu is simply visible.
+
+- **`aria-selected` on a tab is load-bearing for appearance here.**
+  `.tabs-title > a[aria-selected=true]` is the rule that restyles the selected
+  tab; `.is-active` on the `<li>` alone changes nothing visually. Both are
+  rendered server-side and both keep their Alpine binding. The tab panel is
+  `.tabs-content` rather than `.tabs-panel`, because this widget has one
+  always-shown HTMX-swapped panel, and `.tabs-panel` is hidden until
+  `.is-active` picks one of several siblings.
+
+- **Variant vocabulary maps inside the partial**, as designed: Foundation's
+  callout uses bare `alert` / `success` / `warning` with no `is-` prefix, and has
+  no `info` variant — `type="info"` maps to `primary`. Public prop values are
+  unchanged. `progress` needs a `.progress-meter` child because 6.7.5 does not
+  style a native `<progress>`; a zero `max` yields 0% rather than a
+  `ZeroDivisionError` on an empty result set.
+
+- Tab ids reach Alpine through `$el.dataset.cfTab`, never as interpolated
+  expression source (#32) — applied here so the theme does not land with the bug
+  and need patching twice.
+
 ### Added — Bootstrap JS decision record and a version tripwire (#33)
 
 - **`docs/bootstrap.md`.** The CSS-only, Alpine-driven stance was a decision
