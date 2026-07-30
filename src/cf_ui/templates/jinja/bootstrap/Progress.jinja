@@ -1,0 +1,22 @@
+{#def value=0, max=100, type="primary", label="", extra_class="" #}
+{% set value = value if value is defined else 0 %}
+{% set max = max if max is defined else 100 %}
+{% set type = type if type is defined else "primary" %}
+{% set label = label if label is defined else "" %}
+{% set extra_class = extra_class if extra_class is defined else "" %}
+{# Bootstrap's bar is a div sized in percent, not a native <progress>, so the
+   width has to be computed from value/max rather than emitted verbatim. #}
+{% set cf_max = max | float %}
+{% set cf_pct = (((value | float) / cf_max * 100) | round | int) if cf_max else 0 %}
+<div class="{{ extra_class }}">
+  {% if label %}<p class="text-center mb-1">{{ label }}</p>{% endif %}
+  <div class="progress"
+       role="progressbar"
+       aria-label="{% if label %}{{ label }}{% else %}progress{% endif %}"
+       aria-valuenow="{{ value }}"
+       aria-valuemin="0"
+       aria-valuemax="{{ max }}">
+    <div class="progress-bar {% if type == 'danger' or type == 'error' %}bg-danger{% elif type == 'success' %}bg-success{% elif type == 'warning' %}bg-warning{% elif type == 'info' %}bg-info{% else %}bg-primary{% endif %}"
+         style="width: {{ cf_pct }}%"></div>
+  </div>
+</div>
