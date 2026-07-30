@@ -1,4 +1,5 @@
 {#def id="modal", header="", content="", footer="", label="Dialog", extra_class="" #}
+{% autoescape true %}
 {% set id = id if id is defined else "modal" %}
 {% set header = header if header is defined else "" %}
 {% set content = content if content is defined else "" %}
@@ -26,3 +27,4 @@
   </div>
   <div class="modal-backdrop" @click="close()"></div>
 </div>
+{% endautoescape %}

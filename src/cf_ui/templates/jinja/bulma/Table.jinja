@@ -1,4 +1,5 @@
 {#def columns=[], rows=[], hx_target="", hx_url="", extra_class="" #}
+{% autoescape true %}
 {% set columns = columns if columns is defined else [] %}
 {% set rows = rows if rows is defined else [] %}
 <div class="{{ extra_class }}">
@@ -21,3 +22,4 @@
     </tbody>
   </table>
 </div>
+{% endautoescape %}

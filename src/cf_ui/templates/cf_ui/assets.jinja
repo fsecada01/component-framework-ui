@@ -12,7 +12,7 @@
   they are inert rather than an error, so plain Jinja2 apps still render.
 #}
 
-{% macro cf_ui_head(theme="bulma", versions={}, cf_axes_url="/static/cf_ui/cf_ui_axes.css") %}
+{% macro cf_ui_head(theme="bulma", versions={}, cf_axes_url="/static/cf_ui/cf_ui_axes.css") %}{% autoescape true %}
 {%- set v = {
     "bulma": "1.0.2",
     "bootstrap": "5.3.3",
@@ -37,17 +37,17 @@
 {%- if cf_ui_axis_style is defined %}
 {{ cf_ui_axis_style()|safe }}
 {%- endif %}
-{% endmacro %}
+{% endautoescape %}{% endmacro %}
 
-{% macro cf_ui_root_attrs() %}
+{% macro cf_ui_root_attrs() %}{% autoescape true %}
 {%- if cf_ui_axis_attrs is defined -%}{{ cf_ui_axis_attrs()|safe }}{%- endif -%}
-{% endmacro %}
+{% endautoescape %}{% endmacro %}
 
-{% macro cf_ui_body(theme="bulma", alpine=true, cf_alpine_url="/static/cf_ui/cf_ui_alpine.js", versions={}) %}
+{% macro cf_ui_body(theme="bulma", alpine=true, cf_alpine_url="/static/cf_ui/cf_ui_alpine.js", versions={}) %}{% autoescape true %}
 {%- set v = {"alpinejs": "3.14.1"} -%}
 {%- for k, val in versions.items() -%}{%- set _ = v.update({k: val}) -%}{%- endfor -%}
 {%- if alpine -%}
 <script src="{{ cf_alpine_url }}" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/alpinejs@{{ v.alpinejs }}/dist/cdn.min.js" defer></script>
 {%- endif -%}
-{% endmacro %}
+{% endautoescape %}{% endmacro %}

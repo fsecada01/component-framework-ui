@@ -1,4 +1,5 @@
 {#def tabs=[], hx_target="tab-content", active="", content="", extra_class="" #}
+{% autoescape true %}
 {% set tabs = tabs if tabs is defined else [] %}
 {% set content = content if content is defined else "" %}
 {% set active = active if active is defined else "" %}
@@ -30,3 +31,4 @@
   </div>
   <div id="{{ hx_target }}" role="tabpanel">{{ content }}</div>
 </div>
+{% endautoescape %}

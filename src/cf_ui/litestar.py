@@ -18,6 +18,13 @@ def install_cf_ui(
     ``engine_callback`` that registers the axis globals the ``assets.jinja``
     macros delegate to. Any callback the app already set still runs.
 
+    The callback never touches the environment's ``autoescape`` setting.
+    cf-ui's templates carry their own ``{% autoescape true %}`` blocks (#36) —
+    they escape their output whatever the app's engine is configured to do,
+    which matters here in particular: on this path cf-ui's ``.jinja`` files are
+    loaded as ordinary Jinja2 templates, and Litestar's ``JinjaTemplateEngine``
+    does not enable autoescaping.
+
     .. warning::
         Litestar's ``TemplateConfig`` is frozen after construction. Call this
         function **before** passing the config to ``Litestar()``, or pass the

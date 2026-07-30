@@ -1,4 +1,5 @@
 {#def name, label, value="", error="", options=[], extra_class="", input_class="" #}
+{% autoescape true %}
 {% set value = value if value is defined else "" %}
 {% set error = error if error is defined else "" %}
 {% set options = options if options is defined else [] %}
@@ -20,3 +21,4 @@
   <span class="form-error is-visible" id="{{ name }}-error">{{ error }}</span>
   {% endif %}
 </div>
+{% endautoescape %}

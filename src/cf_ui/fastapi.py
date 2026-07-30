@@ -18,6 +18,13 @@ def install_cf_ui(
     so ``<html {{ cf_ui_root_attrs() }}>`` stamps all five attributes from
     this one call.
 
+    The installer never touches the environment's ``autoescape`` setting.
+    cf-ui's templates carry their own ``{% autoescape true %}`` blocks (#36),
+    so they escape their output whatever the catalog is configured to do —
+    including on a bare ``Catalog()``, whose environment does not autoescape,
+    and regardless of whether this function was ever called. The app's own
+    escaping policy, ``select_autoescape`` callables included, is the app's.
+
     Args:
         catalog: JinjaX ComponentCatalog instance.
         theme: CSS framework theme name. Defaults to "bulma".

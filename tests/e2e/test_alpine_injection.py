@@ -21,10 +21,10 @@ Two assertions, and both are load-bearing:
 from pathlib import Path
 
 import pytest
-from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
 
 from cf_ui import themes as cf_ui_themes
 from cf_ui.templatetags.cf_ui import _ALPINE_CDN, _DEFAULTS
+from tests.jinja_env import make_env
 
 PACKAGE_DIR = Path(__file__).parent.parent.parent / "src" / "cf_ui"
 JINJA_DIR = PACKAGE_DIR / "templates" / "jinja"
@@ -57,11 +57,7 @@ PAGE = """<!doctype html>
 
 
 def _build_page(theme: str, tmp_path: Path) -> Path:
-    env = Environment(
-        loader=FileSystemLoader(JINJA_DIR / theme),
-        autoescape=select_autoescape(["html", "jinja"]),
-        undefined=StrictUndefined,
-    )
+    env = make_env(JINJA_DIR / theme)
     component = env.get_template("Tabs.jinja").render(
         tabs=[{"id": HOSTILE_ID, "url": "/x/"}, {"id": "safe", "url": "/safe/"}],
         hx_target="tc",

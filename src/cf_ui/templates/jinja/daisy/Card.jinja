@@ -1,4 +1,5 @@
 {#def content="", header="", footer="", extra_class="" #}
+{% autoescape true %}
 {% set header = header if header is defined else "" %}
 {% set content = content if content is defined else "" %}
 {% set footer = footer if footer is defined else "" %}
@@ -12,3 +13,4 @@
     {% endif %}
   </div>
 </div>
+{% endautoescape %}

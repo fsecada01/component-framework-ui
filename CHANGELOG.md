@@ -2,6 +2,79 @@
 
 ## [Unreleased]
 
+### Security — BREAKING: cf-ui's Jinja templates now escape their own output (#36)
+
+- **Every `{{ … }}` in a cf-ui template emitted raw output on the FastAPI and
+  Litestar paths.** A request-controlled value carrying a double quote closed
+  the attribute it was rendered into and could open one of its own, event
+  handlers included. `jinjax.Catalog` builds
+  `Environment(undefined=StrictUndefined)` — autoescape defaults to `False` —
+  and adopts the setting only from a caller-supplied `jinja_env`; Litestar's
+  `JinjaTemplateEngine` does not enable it either. Django/cotton consumers
+  were never affected; Django autoescapes by default.
+
+  This is the other half of #32. That ticket stopped `tab.id` being *evaluated*
+  as JavaScript by routing it through `data-cf-tab`, which was the right fix and
+  stands — but it moved the value from an expression into an attribute value,
+  and attribute-value safety is this one. It was never specific to tabs:
+  `hx-get="{{ tab.url }}"`, `id="{{ id }}"` and the text nodes were all exposed
+  the same way.
+
+  **The mechanism is in-template, on purpose.** Every component template wraps
+  its body in `{% autoescape true %}`, so the guarantee is a property of the
+  files cf-ui ships rather than of any environment: it holds on a bare
+  `Catalog()`, on Litestar's plain-Jinja path, and for a consumer who registers
+  the templates with `add_folder` and never calls `install_cf_ui`. The
+  installers do not touch the environment's `autoescape` at all — the app's
+  policy, `select_autoescape` callables included, stays the app's. An
+  environment-level fix was tried first and rejected on evidence: setting the
+  flag unconditionally destroyed caller policies; setting it only-when-off
+  reopened the hole for `select_autoescape(["html"])`, which answers `False`
+  for `.jinja` files; and either way it was order-dependent, because
+  `autoescape` is read at compile time and JinjaX caches compiled components —
+  a component rendered before install stayed unescaped for the process
+  lifetime while the flag read `True`. In-template blocks have none of those
+  failure modes. The `assets.jinja` macros carry the same blocks inside each
+  macro body (a file-scope block would stop the macros exporting).
+  `tests/unit/test_autoescape.py` guards presence and placement in all 70
+  templates so a new theme cannot ship without them.
+
+  **Migration.** Output that was previously interpolated raw through a cf-ui
+  component now renders as entities. The realistic surface is small —
+  components take structured props, and JinjaX hands slot content over as
+  `Markup` — but it is a behaviour change, not a patch. A prop that
+  deliberately carries real markup must be wrapped in `markupsafe.Markup`;
+  cf-ui's own E2E gallery needed exactly one such change (a `footer=` prop
+  carrying a button). There is no opt-out flag: escaping travels with the
+  templates.
+
+- **The axis globals are marked safe at the Jinja boundary.**
+  `cf_ui_axis_attrs()` and `cf_ui_axis_style()` render markup — five attributes
+  and a `<style>` element — so `build_axis_globals` now wraps them in `Markup`.
+  `assets.jinja` did pipe both through `|safe`, but a value that is only safe
+  when every caller remembers a filter is not a guarantee, and the Django side
+  has always marked safe at the templatetag for the same reason. `markupsafe` is
+  imported inside the function rather than at module scope: it arrives with
+  `jinja2`, which is a `fastapi`/`litestar` extra, while `cf_ui.templatetags`
+  imports `cf_ui.axes` on the Django-only path where neither is installed.
+
+- **Two test fixtures were asserting escaping they never enabled.**
+  `select_autoescape(["html"])` keys off the file *extension*, and cf-ui's Jinja
+  templates are `.jinja`, so it resolved to `False` in
+  `tests/unit/jinja/conftest.py` and `tests/unit/test_axis_jinja.py` — a fixture
+  that reads as though it escapes and does not, which is worse than one that
+  plainly does not. The three fixtures added by #32 listed
+  `["html", "jinja"]` and did escape, so the suite disagreed with itself about
+  what shipped.
+
+  All five now build their environment through `tests/jinja_env.py`, which
+  sets `autoescape=False` deliberately: cf-ui's templates escape their own
+  output, so any escaping a test observes can only have come from the template
+  under test — a harness that autoescaped would mask a template that lost its
+  block. `tests/integration/test_jinja_autoescape.py` is the tier that was
+  missing entirely, and asserts the injection cases against a bare `Catalog`
+  for the same reason.
+
 ### Added — Fomantic UI theme (#24)
 
 All 14 components in both template sets, replacing the `PLANNED.md` stub.
@@ -82,11 +155,10 @@ verified to still resolve.
   put the active class on.
 
   This closes the *execution* path, not every use of a hostile id. Attribute
-  escaping is a separate guarantee, and `install_cf_ui` still leaves JinjaX's
-  `autoescape` off, so a double quote in `tab.id` can break out of
-  `data-cf-tab` itself under FastAPI/Litestar. Django/cotton is unaffected.
-  Tracked as #36, and called out in `docs/accessibility.md` with a workaround
-  in the meantime.
+  escaping is a separate guarantee, which `install_cf_ui` did not make when
+  this landed — a double quote in `tab.id` could still break out of
+  `data-cf-tab` itself under FastAPI/Litestar. Closed by #36, below, in the
+  same release; Django/cotton was never affected.
 
   `cf_ui_alpine.js` already stated this rule in `initTabs()` and already
   followed it for `data-cf-active`; it simply was not carried one level down.
