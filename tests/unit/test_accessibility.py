@@ -20,7 +20,8 @@ from collections.abc import Callable
 from pathlib import Path
 
 import pytest
-from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
+
+from tests.jinja_env import make_env
 
 TEMPLATES_DIR = Path(__file__).parent.parent.parent / "src" / "cf_ui" / "templates"
 JINJA_DIR = TEMPLATES_DIR / "jinja"
@@ -55,11 +56,7 @@ def jinja_render(theme: str) -> Callable[..., str]:
     harsher environment. ``{#def}`` defaults do not apply here, so every
     template has to carry its own ``is defined`` guards to pass.
     """
-    env = Environment(
-        loader=FileSystemLoader(JINJA_DIR / theme),
-        autoescape=select_autoescape(["html", "jinja"]),
-        undefined=StrictUndefined,
-    )
+    env = make_env(JINJA_DIR / theme)
 
     def _render(template_name: str, **ctx: object) -> str:
         return env.get_template(template_name).render(**ctx)

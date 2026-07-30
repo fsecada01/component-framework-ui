@@ -177,14 +177,20 @@ and runs, on page load, with no user interaction — which is exactly what #32
 was. A `data-` attribute has no such seam: its value is never parsed as source,
 so the worst a hostile value can do there is be a wrong string.
 
-> **Attribute escaping is a separate guarantee, and one cf-ui does not yet make
-> on the JinjaX path.** `jinjax.Catalog()` builds its environment with
-> `autoescape` off and adopts it only from a caller-supplied `jinja_env`;
-> `install_cf_ui` does not change that. So under FastAPI/Litestar a `tab.id`
-> containing a double quote can still break out of `data-cf-tab` itself and add
-> attributes of its own. Django/cotton is unaffected — Django autoescapes by
-> default. Until #36 lands, pass a `jinja_env` with `autoescape` enabled to
-> `Catalog(...)`, or escape ids before they reach a component.
+Attribute escaping is a separate guarantee, and cf-ui now makes it on both
+paths. Django/cotton always had it — Django autoescapes by default. On the
+JinjaX path it had to be turned on: `jinjax.Catalog()` builds its environment
+with `autoescape` off and adopts it only from a caller-supplied `jinja_env`, so
+until #36 a `tab.id` containing a double quote could break out of `data-cf-tab`
+itself and add attributes of its own. Both `install_cf_ui` functions now set
+`autoescape` on the environment they install into, and
+`tests/integration/test_jinja_autoescape.py` asserts it against a real catalog
+rather than a test-built environment.
+
+Pass `cf_ui_autoescape=False` to opt out, if an app depends on unescaped
+interpolation through a cf-ui component. It is an escape hatch, not a supported
+configuration: with it set, a request-controlled value reaching any component
+prop is an attribute-injection vector.
 
 If a binding needs a value the server knows, the answer is always another
 `data-` attribute on the element carrying the binding — never a wider

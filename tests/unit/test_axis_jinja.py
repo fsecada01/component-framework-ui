@@ -8,7 +8,9 @@ Litestar installers register, so cf_ui.axes stays the single source of truth.
 from pathlib import Path
 
 import pytest
-from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
+from jinja2 import Environment
+
+from tests.jinja_env import make_env
 
 TEMPLATES_DIR = Path(__file__).parent.parent.parent / "src" / "cf_ui" / "templates"
 
@@ -32,11 +34,8 @@ CUSTOM_ACCENT = {
 
 @pytest.fixture
 def env() -> Environment:
-    return Environment(
-        loader=FileSystemLoader(TEMPLATES_DIR),
-        autoescape=select_autoescape(["html"]),
-        undefined=StrictUndefined,
-    )
+    """Matches the shipped configuration — see ``tests/jinja_env`` (#36)."""
+    return make_env(TEMPLATES_DIR)
 
 
 def _render(env: Environment, body: str) -> str:

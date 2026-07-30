@@ -11,6 +11,7 @@ def install_cf_ui(
     composition: str | Mapping[str, str] | None = None,
     value_sets: Mapping[str, Mapping[str, Any]] | None = None,
     value_sets_mode: str = "extend",
+    cf_ui_autoescape: bool = True,
 ) -> None:
     """Register cf-ui Jinja2 templates with a Litestar TemplateConfig.
 
@@ -32,6 +33,13 @@ def install_cf_ui(
             or ``None`` for the default composition.
         value_sets: The app's own axis value sets, if any.
         value_sets_mode: ``"extend"`` (default) or ``"replace"``.
+        cf_ui_autoescape: Turn Jinja2 autoescaping on for the engine's
+            environment. Defaults to ``True``. Litestar's ``JinjaTemplateEngine``
+            does not enable it, so without this every ``{{ … }}`` in a cf-ui
+            template emits raw output and a request-controlled value carrying a
+            double quote can close its attribute and open one of its own (#36).
+            Applied in the same ``engine_callback`` as the axis globals, because
+            that is the only point at which this installer sees the environment.
 
     Raises:
         AxisConfigError: if the composition or value sets are invalid. This is
@@ -52,6 +60,8 @@ def install_cf_ui(
             previous(engine)
         # JinjaTemplateEngine exposes the Jinja2 Environment as .engine
         environment = getattr(engine, "engine", engine)
+        if cf_ui_autoescape:
+            environment.autoescape = True
         environment.globals.update(axis_globals)
 
     config.engine_callback = _register_axis_globals

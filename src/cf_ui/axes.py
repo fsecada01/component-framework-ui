@@ -485,10 +485,26 @@ def build_axis_globals(
 
     The composition is validated eagerly, so a misconfigured app fails at
     startup rather than at first render.
+
+    Both globals render markup — five attributes and a ``<style>`` element —
+    so they are wrapped in ``Markup`` here, at the Jinja boundary. The
+    installers now leave autoescape on (#36), and without this the attributes
+    would arrive as escaped text. ``assets.jinja`` does pipe them through
+    ``|safe``, but a value that is only safe when every caller remembers a
+    filter is not a guarantee; the Django side marks safe at the templatetag
+    for the same reason. :func:`style_element` is the sink the token-value gate
+    in #20 exists to protect, which is what makes marking it safe defensible
+    rather than merely convenient.
     """
+    # Imported here, not at module scope: jinja2 (and so markupsafe) is a
+    # fastapi/litestar extra, while cf_ui.templatetags imports this module on
+    # the Django-only path, where neither is installed. This function is only
+    # ever reached from the two Jinja installers.
+    from markupsafe import Markup
+
     sets = merge_value_sets(value_sets, mode=value_sets_mode) if value_sets else DEFAULT_VALUE_SETS
-    attrs = root_attrs(composition, value_sets=sets)
-    style = style_element(sets)
+    attrs = Markup(root_attrs(composition, value_sets=sets))
+    style = Markup(style_element(sets))
     return {"cf_ui_axis_attrs": lambda: attrs, "cf_ui_axis_style": lambda: style}
 
 
