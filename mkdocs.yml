@@ -57,6 +57,9 @@ markdown_extensions:
   - admonition
   - attr_list
   - def_list
+  # Required for Material's `<div class="grid cards" markdown>` — without it
+  # the list inside the div ships as literal markdown source.
+  - md_in_html
   - tables
   - toc:
       permalink: true
