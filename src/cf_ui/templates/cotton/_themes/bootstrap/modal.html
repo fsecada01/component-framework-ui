@@ -1,0 +1,30 @@
+{# `.modal` is display:none and `.show` only sets opacity — Bootstrap's own JS
+   is what writes `style.display = "block"`. cf-ui loads none, so the reveal
+   rides on `d-block`, a real Bootstrap utility Alpine can toggle. #}
+<div id="{{ id }}"
+     class="modal {{ class }}"
+     tabindex="-1"
+     role="dialog"
+     aria-modal="true"
+     {% if header %}aria-labelledby="{{ id }}-title"{% else %}aria-label="{{ label|default:'Dialog' }}"{% endif %}
+     x-data="cfModal"
+     x-init="initModal()"
+     :class="{ 'show': open, 'd-block': open }">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="{{ id }}-title">{{ header }}</h5>
+        <button type="button" class="btn-close" aria-label="close" @click="close()"></button>
+      </div>
+      <div class="modal-body">{{ slot }}</div>
+      {% if footer %}
+      <div class="modal-footer">{{ footer }}</div>
+      {% endif %}
+    </div>
+  </div>
+  {# Bootstrap puts the backdrop on <body> at z-index 1050, under the modal's
+     1055. Without its JS the backdrop has to live inside the modal, where 1050
+     would paint it *over* the dialog — `.modal` opens a stacking context. A
+     negative z-index puts it back underneath without inventing a class. #}
+  <div class="modal-backdrop show" style="z-index:-1" @click="close()"></div>
+</div>

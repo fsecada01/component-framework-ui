@@ -1,0 +1,10 @@
+{
+  "name": "cf-ui-tailwind-build-check",
+  "private": true,
+  "type": "module",
+  "description": "Builds the vendored cf-ui Tailwind plugin against real Tailwind. Not published; not part of the wheel.",
+  "devDependencies": {
+    "@tailwindcss/cli": "4.3.3",
+    "tailwindcss": "4.3.3"
+  }
+}

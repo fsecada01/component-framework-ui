@@ -253,7 +253,9 @@ def test_breadcrumb_uses_foundation_breadcrumbs_class(foundation_render):
 def test_tabs_keeps_the_alpine_contract(foundation_render):
     html = foundation_render("cf/tabs.html", tabs=[{"id": "one", "url": "/one"}], slot="C")
     assert 'x-data="cfTabs"' in html
-    assert "setActive('one')" in html
+    # The id reaches Alpine as data, never as expression text (#32).
+    assert 'data-cf-tab="one"' in html
+    assert "setActive($el.dataset.cfTab)" in html
     assert "tabs-title" in html
 
 

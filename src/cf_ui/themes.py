@@ -26,7 +26,7 @@ _HERE = Path(__file__).parent
 
 #: Themes with a real component set. The other directories under
 #: ``templates/`` hold a ``PLANNED.md`` stub and are not selectable.
-THEMES = ("bulma", "daisy", "foundation")
+THEMES = ("bulma", "daisy", "bootstrap", "foundation")
 
 DEFAULT_THEME = "bulma"
 

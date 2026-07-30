@@ -1,0 +1,16 @@
+{#def name, label, value="", error="", type="text", required=false, extra_class="", input_class="" #}
+{% set value = value if value is defined else "" %}
+{% set error = error if error is defined else "" %}
+{% set type = type if type is defined else "text" %}
+{% set required = required if required is defined else false %}
+{% set extra_class = extra_class if extra_class is defined else "" %}
+{% set input_class = input_class if input_class is defined else "" %}
+<div class="mb-3 {{ extra_class }}">
+  <label class="form-label" for="{{ name }}">{{ label }}</label>
+  <input class="form-control{% if error %} is-invalid{% endif %}{% if input_class %} {{ input_class }}{% endif %}"
+         id="{{ name }}"
+         type="{{ type }}"
+         name="{{ name }}"
+         value="{{ value }}"{% if required %} required{% endif %}>
+  {% if error %}<div class="invalid-feedback d-block">{{ error }}</div>{% endif %}
+</div>

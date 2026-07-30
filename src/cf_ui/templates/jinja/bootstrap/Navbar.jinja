@@ -1,0 +1,26 @@
+{#def brand="", start="", end="", extra_class="" #}
+{% set brand = brand if brand is defined else "" %}
+{% set start = start if start is defined else "" %}
+{% set end = end if end is defined else "" %}
+{% set extra_class = extra_class if extra_class is defined else "" %}
+{# `.collapse:not(.show) { display: none }` and
+   `.navbar-expand-lg .navbar-collapse { display: flex !important }` are both
+   plain CSS, so the menu collapses on mobile and stays open on desktop with
+   Alpine off. Only the toggle needs JS. #}
+<nav class="navbar navbar-expand-lg {{ extra_class }}" role="navigation" aria-label="main navigation"
+     x-data="cfNavbar">
+  <div class="container-fluid">
+    <span class="navbar-brand">{{ brand }}</span>
+    <button type="button"
+            class="navbar-toggler"
+            aria-label="menu"
+            :aria-expanded="menuOpen"
+            @click="toggle()">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" :class="{ 'show': menuOpen }">
+      <div class="navbar-nav me-auto">{{ start }}</div>
+      <div class="navbar-nav">{{ end }}</div>
+    </div>
+  </div>
+</nav>
