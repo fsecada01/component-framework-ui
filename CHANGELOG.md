@@ -2,6 +2,65 @@
 
 ## [Unreleased]
 
+### Added — Fomantic UI theme (#24)
+
+All 14 components in both template sets, replacing the `PLANNED.md` stub.
+`CF_UI_THEME = "fomantic"` (Django) or `theme="fomantic"` (FastAPI/Litestar)
+now resolves; it was rejected at startup before. The CDN entry and pinned
+version (`fomantic-ui@2.9.3`, `dist/semantic.min.css`) already existed and were
+verified to still resolve.
+
+- **CSS only — no jQuery, and no Fomantic JS.** Fomantic's Modal, Tab,
+  Accordion and Dropdown are jQuery plugins, which makes this the most
+  JS-dependent of the five themes. Loading them would mean a *styling* choice
+  silently changed a consuming app's dependency graph, so the theme uses
+  Fomantic's classes and markup structure only and Alpine drives every
+  behaviour, exactly as it does for Bulma and DaisyUI. A unit test scans all 28
+  templates and an E2E test checks the delivered page and the live `window`.
+
+- Consequences of that, where they are not obvious from the markup:
+  - **Modal** renders its own `.ui.dimmer`. Fomantic normally injects it from
+    `$('.ui.modal').modal('show')`; here the dimmer and the modal each take
+    `active` from the same Alpine `open`, since both are `display:none` without
+    it.
+  - **Panel** binds `active` as a class rather than relying on `x-show` alone.
+    `.ui.accordion .title ~ .content:not(.active)` is `display:none`, so Alpine
+    merely dropping its inline style would leave the panel hidden.
+  - **Select** is a plain `<select class="ui fluid selection dropdown">`.
+    Fomantic's `ui dropdown` is a JS-built widget over a hidden select;
+    reproducing its DOM by hand would be a combobox nobody could drive.
+  - **Tabs** puts its panel in a `ui bottom attached segment`, not `.ui.tab` —
+    `.ui.tab` is `display:none` until Fomantic's Tab module adds `active`.
+  - **Navbar** uses `ui stackable menu`, Fomantic's CSS-only responsive
+    collapse. Its burger reports state through `aria-expanded` and the `active`
+    class but hides nothing, because Fomantic's collapse is a Sidebar/Dropdown
+    JS module that cf-ui does not load.
+  - **Field errors** use `ui basic red pointing prompt label`, not
+    `ui error message` — the latter is `display:none` until the *form* itself
+    carries `.error`.
+  - **Progress** is a div, so `role="progressbar"` and `aria-valuenow` /
+    `aria-valuemin` / `aria-valuemax` are written out, and the bar width and
+    `data-percent` are rendered server-side. The percentage is also clamped to
+    `0..100`: Bulma and DaisyUI render a real `<progress>`, which the browser
+    clamps for both painting and the accessibility tree, whereas a div would
+    take `width: 150%` and report `aria-valuenow="150"` against a max of 100.
+    The ARIA is stated in percent so it agrees with the visible label.
+
+- Accessibility is at parity with every other theme, not a reduced subset: the
+  parametrized cases in `tests/unit/test_accessibility.py` now run against five
+  themes rather than four, with no assertion weakened.
+
+- Tab ids reach Alpine through `$el.dataset.cfTab`, never as interpolated
+  expression source (#32). The tree-wide guard that shipped with that fix reads
+  its theme list from `THEMES`, so it covered this theme the moment the registry
+  entry landed — and did not pass until the templates were corrected.
+
+- **The last `PLANNED.md` stub is gone.** Every directory under `templates/` is
+  now a real theme, which retires the "a directory exists but is not selectable"
+  test that has existed in some form since #6. What it protected is stated
+  directly instead: `resolve_theme` and `CfUiConfig.ready()` answer from
+  `THEMES`, not from the filesystem.
+
 ### Security — tab ids no longer reach Alpine as expression source (#32)
 
 - **A request-controlled `tab.id` executed as JavaScript on page load.** Each

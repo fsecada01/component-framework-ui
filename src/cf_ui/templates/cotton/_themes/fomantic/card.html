@@ -1,0 +1,9 @@
+<div class="ui card {{ class }}">
+  <div class="content">
+    {% if header %}<div class="header">{{ header }}</div>{% endif %}
+    <div class="description">{{ slot }}</div>
+  </div>
+  {% if footer %}
+  <div class="extra content">{{ footer }}</div>
+  {% endif %}
+</div>

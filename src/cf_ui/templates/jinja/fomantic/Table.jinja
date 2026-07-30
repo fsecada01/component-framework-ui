@@ -1,0 +1,24 @@
+{#def columns=[], rows=[], hx_target="", hx_url="", extra_class="" #}
+{% set columns = columns if columns is defined else [] %}
+{% set rows = rows if rows is defined else [] %}
+{% set extra_class = extra_class if extra_class is defined else "" %}
+<div class="{{ extra_class }}">
+  <table class="ui celled striped table">
+    <thead>
+      <tr>
+        {% for col in columns %}
+        <th>{{ col.label }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>
+        {% for col in columns %}
+        <td>{{ row[col.key] }}</td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

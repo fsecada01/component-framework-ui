@@ -1,0 +1,9 @@
+<div class="ui form {{ class }}">
+  <div class="field{% if error %} error{% endif %}">
+    <label for="{{ name }}">{{ label }}</label>
+    <textarea id="{{ name }}"
+              name="{{ name }}"
+              rows="{{ rows }}"{% if input_class %} class="{{ input_class }}"{% endif %}>{{ value }}</textarea>
+    {% if error %}<div class="ui basic red pointing prompt label">{{ error }}</div>{% endif %}
+  </div>
+</div>

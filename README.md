@@ -26,7 +26,16 @@ pip install "cf-ui[bulma]"
 # Tailwind + DaisyUI
 pip install "cf-ui[daisy]"
 
-# All themes (Foundation and Fomantic are still stubs)
+# Bootstrap 5
+pip install "cf-ui[bootstrap]"
+
+# Foundation 6
+pip install "cf-ui[foundation]"
+
+# Fomantic UI
+pip install "cf-ui[fomantic]"
+
+# All themes
 pip install "cf-ui[all]"
 ```
 
@@ -291,8 +300,8 @@ from cf_ui import JINJA_TEMPLATES_DIR, COTTON_TEMPLATES_DIR
 | Bulma | ✅ v0.1.0 |
 | Tailwind + DaisyUI | ✅ — see [docs/daisyui.md](docs/daisyui.md) |
 | Bootstrap 5 | ✅ — CSS only, no `bootstrap.bundle.js`; see [docs/bootstrap.md](docs/bootstrap.md) |
-| Foundation | 📋 Planned |
-| Fomantic UI | 📋 Planned |
+| Foundation 6 | ✅ — CSS only, no jQuery |
+| Fomantic UI | ✅ — CSS only, no jQuery |
 
 Switching is one line — `CF_UI_THEME = "daisy"` on Django, `theme="daisy"` on
 FastAPI/Litestar — and needs no template edits in the consuming app. An

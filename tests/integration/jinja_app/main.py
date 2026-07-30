@@ -15,6 +15,7 @@ _THEME_CSS = {
     "foundation": (
         "https://cdn.jsdelivr.net/npm/foundation-sites@6.7.5/dist/css/foundation.min.css"
     ),
+    "fomantic": "https://cdn.jsdelivr.net/npm/fomantic-ui@2.9.3/dist/semantic.min.css",
 }
 
 # DaisyUI ships component classes but no Tailwind utilities. The components use
@@ -25,11 +26,14 @@ _THEME_CSS = {
 _THEME_EXTRA_HEAD = {
     "bulma": "",
     "daisy": '<script src="https://cdn.tailwindcss.com"></script>',
-    # Bootstrap and Foundation both ship prebuilt CSS, and cf-ui deliberately
-    # loads neither one's JavaScript — Alpine owns modal, tab and panel state in
-    # every theme, so no bootstrap.bundle.js and no foundation.js.
+    # Bootstrap, Foundation and Fomantic all ship prebuilt CSS, and cf-ui
+    # deliberately loads none of their JavaScript — Alpine owns modal, tab and
+    # panel state in every theme, so no bootstrap.bundle.js, no foundation.js,
+    # and none of Fomantic's jQuery Modal/Tab/Accordion/Dropdown modules. The
+    # point of each theme is that the pages work without them.
     "bootstrap": "",
     "foundation": "",
+    "fomantic": "",
 }
 
 

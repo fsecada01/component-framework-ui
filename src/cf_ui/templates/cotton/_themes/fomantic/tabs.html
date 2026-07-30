@@ -1,0 +1,25 @@
+{% comment %} The panel is a plain attached segment, not `.ui.tab`: `.ui.tab` is
+   `display:none` until Fomantic's Tab module adds `.active`, and this one panel
+   is always the visible one — HTMX swaps its contents. {% endcomment %}
+<div class="{{ class }}"
+     x-data="cfTabs"
+     x-init="initTabs()"
+     data-cf-active="{{ active }}">
+  <div role="tablist" class="ui top attached tabular menu" @keydown="onKeydown($event)">
+    {% for tab in tabs %}
+    <a role="tab"
+       data-cf-tab="{{ tab.id }}"
+       class="{% if tab.id == active %}active {% endif %}item"
+       aria-controls="{{ hx_target }}"
+       aria-selected="{% if tab.id == active %}true{% else %}false{% endif %}"
+       tabindex="{% if tab.id == active or not active and forloop.first %}0{% else %}-1{% endif %}"
+       :class="{ 'active': active === $el.dataset.cfTab }"
+       :aria-selected="active === $el.dataset.cfTab"
+       :tabindex="tabIndexFor($el.dataset.cfTab)"
+       @click.prevent="setActive($el.dataset.cfTab)"
+       hx-get="{{ tab.url }}"
+       hx-target="#{{ hx_target }}">{{ tab.id }}</a>
+    {% endfor %}
+  </div>
+  <div id="{{ hx_target }}" role="tabpanel" class="ui bottom attached segment">{{ slot }}</div>
+</div>
