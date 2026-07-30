@@ -27,11 +27,15 @@ from pathlib import Path
 import pytest
 from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
 
+from cf_ui import themes as cf_ui_themes
+
 TEMPLATES_DIR = Path(__file__).parent.parent.parent / "src" / "cf_ui" / "templates"
 JINJA_DIR = TEMPLATES_DIR / "jinja"
 COTTON_DIR = TEMPLATES_DIR / "cotton"
 
-THEMES = ["bulma", "daisy"]
+#: From the registry, not a literal, so the per-theme cases below start
+#: covering a new theme the moment `resolve_theme` starts accepting it.
+THEMES = list(cf_ui_themes.THEMES)
 
 #: A tab id that closes the string literal it would be spliced into, runs, and
 #: reopens it so the surrounding expression still parses. An expression that
@@ -48,22 +52,69 @@ TABS = [{"id": "one", "url": "/one/"}, {"id": "two", "url": "/two/"}]
 # fix from being a one-time cleanup: it fails on the next template that gets
 # the pattern wrong, wherever it lands.
 
-#: Attributes Alpine evaluates. The lookbehind matters — without it, `x-`
-#: matches inside `hx-get`, and HTMX attributes are values (a URL, a selector),
-#: not source text, so interpolating into them is correct and expected.
+#: Attributes Alpine evaluates. Two details carry weight:
+#:
+#: * The lookbehind — without it, `x-` matches inside `hx-get`, and HTMX
+#:   attributes are values (a URL, a selector), not source text, so
+#:   interpolating into them is correct and expected.
+#: * All three quoting forms. Single-quoted delimiters are not hypothetical:
+#:   they are what an author reaches for when the expression itself needs a
+#:   double quote (`:class='{ "is-active": … }'`). This guard is the only thing
+#:   standing between a new theme and reintroducing #32, so a form it cannot
+#:   see is a form that gets reported clean forever.
 ALPINE_ATTR = re.compile(
-    r"""(?<![\w-])            # not the tail of hx-get / data-x-thing
+    r"""(?<![\w-])             # not the tail of hx-get / data-x-thing
         (?: : [a-zA-Z][\w:-]*  # :class, :aria-selected, :tabindex
           | @ [a-zA-Z][\w.:-]* # @click.prevent, @keydown
           | x- [a-zA-Z][\w.:-]*# x-data, x-init, x-show, x-on:click
         )
-        \s*=\s*"([^"]*)"      # its value
+        \s*=\s*
+        (?: "([^"]*)"          # double-quoted
+          | '([^']*)'          # single-quoted
+          | ([^\s>'"]+)        # bare
+        )
     """,
     re.VERBOSE,
 )
 
 #: What a template engine's output looks like, in either engine.
 INTERPOLATION = re.compile(r"\{\{|\{%")
+
+
+def _value(match: re.Match) -> str:
+    """The matched attribute's value, whichever quoting form it used."""
+    return next(group for group in match.groups() if group is not None)
+
+
+# The guard's own tests. A lint that silently stops matching reports clean
+# forever, which is worse than not having it — so what it does and does not
+# catch is pinned here rather than left to the regex being read correctly.
+GUARD_CASES = [
+    (True, ':tabindex="tabIndexFor({{ tab.id }})"'),
+    (True, ":tabindex='tabIndexFor({{ tab.id }})'"),
+    (True, ":tabindex={{ tab.id }}"),
+    (True, 'x-on:click="go({{ id }})"'),
+    (True, "x-data=\"cfTabs('{{ active }}')\""),
+    (True, "@click.prevent=\"setActive('{{ tab.id }}')\""),
+    (True, ':class="{% if x %}a{% endif %}"'),
+    # HTMX values are a URL and a selector, not source. Interpolating is right.
+    (False, 'hx-get="{{ tab.url }}"'),
+    (False, 'hx-target="#{{ hx_target }}"'),
+    # data-* is the sanctioned route, however hostile the value.
+    (False, 'data-cf-tab="{{ tab.id }}"'),
+    (False, 'data-x-thing="{{ v }}"'),
+    # An Alpine expression with no interpolation at all.
+    (False, ":class=\"{ 'is-active': active === $el.dataset.cfTab }\""),
+    (False, '@keydown="onKeydown($event)"'),
+]
+
+
+@pytest.mark.parametrize(("flagged", "attribute"), GUARD_CASES, ids=lambda v: str(v)[:48])
+def test_the_guard_flags_what_it_claims_to(flagged: bool, attribute: str):
+    hits = [m for m in ALPINE_ATTR.finditer(attribute) if INTERPOLATION.search(_value(m))]
+    assert bool(hits) is flagged, (
+        f"guard {'missed' if flagged else 'false-positived on'}: {attribute}"
+    )
 
 
 def _all_templates() -> list[Path]:
@@ -80,7 +131,7 @@ def test_no_alpine_expression_attribute_interpolates_template_output(template: P
     offenders = [
         match.group(0)
         for match in ALPINE_ATTR.finditer(source)
-        if INTERPOLATION.search(match.group(1))
+        if INTERPOLATION.search(_value(match))
     ]
     assert not offenders, (
         f"{_rel(template)} splices template output into an Alpine expression:\n"
@@ -126,7 +177,7 @@ def cotton_render(settings, theme: str) -> Callable[..., str]:
 
 
 def _alpine_values(html: str) -> list[str]:
-    return [match.group(1) for match in ALPINE_ATTR.finditer(html)]
+    return [_value(match) for match in ALPINE_ATTR.finditer(html)]
 
 
 def test_jinja_tab_bindings_read_the_tab_id_from_a_data_attribute(jinja_render):

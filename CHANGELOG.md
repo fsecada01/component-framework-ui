@@ -20,6 +20,13 @@
   tabindex, so the fix adds plumbing only for the wrapper element some themes
   put the active class on.
 
+  This closes the *execution* path, not every use of a hostile id. Attribute
+  escaping is a separate guarantee, and `install_cf_ui` still leaves JinjaX's
+  `autoescape` off, so a double quote in `tab.id` can break out of
+  `data-cf-tab` itself under FastAPI/Litestar. Django/cotton is unaffected.
+  Tracked as #36, and called out in `docs/accessibility.md` with a workaround
+  in the meantime.
+
   `cf_ui_alpine.js` already stated this rule in `initTabs()` and already
   followed it for `data-cf-active`; it simply was not carried one level down.
   `tests/unit/test_alpine_expression_safety.py` now enforces it over every

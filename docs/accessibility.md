@@ -168,13 +168,23 @@ not:
 :tabindex="tabIndexFor('{{ tab.id }}')"   <!-- #32 -->
 ```
 
-**Escaping is not the fix, and cannot be.** The template engine escapes an
-*attribute* correctly, but it has no idea it is writing JavaScript source, and
-the escaping is gone before Alpine ever sees the value: the HTML parser decodes
-`&#x27;` back to `'` while building the DOM, and Alpine reads the decoded
-attribute. A quote-bearing `tab.id` therefore closes its string literal and
-runs, on page load, with no user interaction — which is exactly what #32 was. A
-`data-` attribute has no such seam because its value is never parsed as source.
+**Escaping cannot fix an interpolated expression.** The template engine escapes
+an *attribute* correctly, but it has no idea it is writing JavaScript source,
+and the escaping is gone before Alpine ever sees the value: the HTML parser
+decodes `&#x27;` back to `'` while building the DOM, and Alpine reads the
+decoded attribute. A quote-bearing `tab.id` therefore closes its string literal
+and runs, on page load, with no user interaction — which is exactly what #32
+was. A `data-` attribute has no such seam: its value is never parsed as source,
+so the worst a hostile value can do there is be a wrong string.
+
+> **Attribute escaping is a separate guarantee, and one cf-ui does not yet make
+> on the JinjaX path.** `jinjax.Catalog()` builds its environment with
+> `autoescape` off and adopts it only from a caller-supplied `jinja_env`;
+> `install_cf_ui` does not change that. So under FastAPI/Litestar a `tab.id`
+> containing a double quote can still break out of `data-cf-tab` itself and add
+> attributes of its own. Django/cotton is unaffected — Django autoescapes by
+> default. Until #36 lands, pass a `jinja_env` with `autoescape` enabled to
+> `Catalog(...)`, or escape ids before they reach a component.
 
 If a binding needs a value the server knows, the answer is always another
 `data-` attribute on the element carrying the binding — never a wider

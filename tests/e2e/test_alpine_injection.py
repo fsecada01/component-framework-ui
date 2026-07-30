@@ -23,16 +23,20 @@ from pathlib import Path
 import pytest
 from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
 
+from cf_ui import themes as cf_ui_themes
+from cf_ui.templatetags.cf_ui import _ALPINE_CDN, _DEFAULTS
+
 PACKAGE_DIR = Path(__file__).parent.parent.parent / "src" / "cf_ui"
 JINJA_DIR = PACKAGE_DIR / "templates" / "jinja"
 ALPINE_LOCAL = PACKAGE_DIR / "static" / "cf_ui" / "cf_ui_alpine.js"
 
-#: Kept in step with `_DEFAULTS["alpinejs"]` in templatetags/cf_ui.py and the
-#: `cf_ui_body` macro — testing against a different Alpine than the package
-#: ships would be testing the wrong evaluator.
-ALPINE_CDN = "https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"
+#: Resolved from the package's own pin rather than repeated here — testing
+#: against a different Alpine than cf-ui ships would be testing the wrong
+#: evaluator, and a hardcoded copy is a pin that drifts silently.
+ALPINE_CDN = _ALPINE_CDN.format(v=_DEFAULTS["alpinejs"])
 
-THEMES = ["bulma", "daisy"]
+#: From the registry, so a new theme is covered the moment it is accepted.
+THEMES = list(cf_ui_themes.THEMES)
 
 #: Closes the string literal, runs, and reopens it, so the surrounding
 #: expression still parses and Alpine reports no error. See the same constant
