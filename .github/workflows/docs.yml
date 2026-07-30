@@ -19,12 +19,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: astral-sh/setup-uv@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
         with:
-          enable-cache: true
+          python-version: "3.12"
 
+      # Same shape as ci.yml: `--system` fails on the runner's
+      # externally-managed interpreter, so build a venv and put it on PATH.
       - name: Install docs dependencies
-        run: uv pip install --system -e ".[docs]"
+        run: |
+          uv venv
+          uv pip install -e ".[docs]"
+          echo "$GITHUB_WORKSPACE/.venv/bin" >> $GITHUB_PATH
 
       # --strict turns a dead internal link or a page missing from nav into a
       # build failure, so a PR that breaks navigation cannot reach master.
