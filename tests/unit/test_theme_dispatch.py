@@ -37,7 +37,7 @@ COMPONENT_STEMS = [
     "textarea",
 ]
 
-IMPLEMENTED_THEMES = ["bulma", "daisy", "fomantic"]
+IMPLEMENTED_THEMES = ["bulma", "daisy", "bootstrap", "foundation", "fomantic"]
 
 
 # --- The theme registry ----------------------------------------------------
@@ -68,12 +68,39 @@ def test_resolve_theme_accepts_an_implemented_theme():
     assert resolve_theme("daisy") == "daisy"
 
 
-def test_resolve_theme_rejects_a_stub_theme_by_name():
-    """bootstrap and foundation are PLANNED.md stubs, not usable themes."""
+def test_resolve_theme_accepts_bootstrap():
+    from cf_ui.themes import resolve_theme
+
+    assert resolve_theme("bootstrap") == "bootstrap"
+
+
+def test_resolve_theme_accepts_foundation():
+    from cf_ui.themes import resolve_theme
+
+    assert resolve_theme("foundation") == "foundation"
+
+
+def test_resolve_theme_accepts_fomantic():
+    from cf_ui.themes import resolve_theme
+
+    assert resolve_theme("fomantic") == "fomantic"
+
+
+def test_resolve_theme_answers_from_the_registry_not_the_filesystem():
+    """The last ``PLANNED.md`` stub is gone, so this states the rule directly.
+
+    Every earlier version of this test named whichever theme was still a stub —
+    a directory that existed under ``templates/`` but was not selectable. With
+    #24 there is no such directory left, so pointing it at a theme name is no
+    longer possible. The invariant it was really protecting survives: a name is
+    selectable because ``THEMES`` lists it, never because a directory happens to
+    exist. ``fomantic-ui`` is the package's own upstream name and a plausible
+    typo, so it is the useful thing to reject.
+    """
     from cf_ui.themes import ThemeError, resolve_theme
 
-    with pytest.raises(ThemeError, match="bootstrap"):
-        resolve_theme("bootstrap")
+    with pytest.raises(ThemeError, match="fomantic-ui"):
+        resolve_theme("fomantic-ui")
 
 
 def test_resolve_theme_error_names_the_available_themes():
@@ -162,19 +189,27 @@ def test_theme_path_tag_supports_the_as_syntax(settings):
 # --- Startup validation ----------------------------------------------------
 
 
-def test_appconfig_rejects_an_unimplemented_theme(settings):
+def test_appconfig_rejects_an_unregistered_theme(settings):
+    """Startup validation reads the same registry ``resolve_theme`` does.
+
+    Renamed from ``..._rejects_an_unimplemented_theme``: with #24 every shipped
+    theme is implemented, so "unimplemented" no longer describes anything. The
+    check is, and always was, that an unregistered name fails at startup rather
+    than later as ``TemplateDoesNotExist``.
+    """
     from django.apps import apps
     from django.core.exceptions import ImproperlyConfigured
 
-    settings.CF_UI_THEME = "bootstrap"
-    with pytest.raises(ImproperlyConfigured, match="bootstrap"):
+    settings.CF_UI_THEME = "fomantic-ui"
+    with pytest.raises(ImproperlyConfigured, match="fomantic-ui"):
         apps.get_app_config("cf_ui").ready()
 
 
-def test_appconfig_accepts_daisy(settings):
+@pytest.mark.parametrize("theme", IMPLEMENTED_THEMES)
+def test_appconfig_accepts_every_implemented_theme(settings, theme):
     from django.apps import apps
 
-    settings.CF_UI_THEME = "daisy"
+    settings.CF_UI_THEME = theme
     apps.get_app_config("cf_ui").ready()
 
 
@@ -197,17 +232,23 @@ def test_switching_the_setting_switches_the_rendered_markup(settings, stem):
         "choices": [{"value": "c", "label": "C"}],
         "options": [{"value": "o", "label": "O"}],
         "tabs": [{"id": "one", "url": "/one"}],
+        # `render_to_string` bypasses the cotton compiler, so <c-vars>
+        # defaults never apply. Restating this one matters: Bootstrap and
+        # DaisyUI both spell a plain info alert `alert alert-info`, and the
+        # themes only diverge once the dismiss control is rendered.
+        "dismissible": "true",
     }
 
-    settings.CF_UI_THEME = "bulma"
-    bulma = render_to_string(f"cotton/cf/{stem}.html", props)
+    rendered = {}
+    for theme in IMPLEMENTED_THEMES:
+        settings.CF_UI_THEME = theme
+        html = render_to_string(f"cotton/cf/{stem}.html", props)
+        assert html.strip(), f"{theme} render produced nothing"
+        rendered[theme] = html
 
-    settings.CF_UI_THEME = "daisy"
-    daisy = render_to_string(f"cotton/cf/{stem}.html", props)
-
-    assert bulma.strip(), "bulma render produced nothing"
-    assert daisy.strip(), "daisy render produced nothing"
-    assert bulma != daisy, f"{stem} rendered identically under both themes"
+    assert len(set(rendered.values())) == len(IMPLEMENTED_THEMES), (
+        f"{stem} rendered identically under two themes: {sorted(rendered)}"
+    )
 
 
 def test_dispatch_passes_the_slot_through_to_the_partial(settings):

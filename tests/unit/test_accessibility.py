@@ -10,9 +10,9 @@ Scope split, deliberately:
   test asserting ``role="dialog"`` is present proves nothing about focus, so
   no test in this module pretends otherwise.
 
-Every case runs against all four template sets (2 engines x 2 themes). The
-point of the phase is a pattern the three themes in the expansion epic copy;
-a fix that landed in one set and not the others would be worse than none.
+Every case runs against every template set (2 engines x every implemented
+theme). The point of the phase is a pattern the themes in the expansion epic
+copy; a fix that landed in one set and not the others would be worse than none.
 """
 
 import re
@@ -25,13 +25,20 @@ from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoes
 TEMPLATES_DIR = Path(__file__).parent.parent.parent / "src" / "cf_ui" / "templates"
 JINJA_DIR = TEMPLATES_DIR / "jinja"
 
-THEMES = ["bulma", "daisy", "fomantic"]
+THEMES = ["bulma", "daisy", "bootstrap", "foundation", "fomantic"]
 
 #: The class each theme puts on the *selected* tab, and the element it sits on.
-#: Bulma marks the ``<li>``; DaisyUI and Fomantic mark the ``<a role="tab">``
-#: itself. Fomantic's marker is the bare word ``active``, which is why every
-#: assertion below matches on whole class *tokens* rather than substrings.
-ACTIVE_TAB_CLASS = {"bulma": "is-active", "daisy": "tab-active", "fomantic": "active"}
+#: Bulma marks the ``<li>``; DaisyUI, Bootstrap and Fomantic mark the
+#: ``<a role="tab">`` itself; Foundation marks the ``<li class="tabs-title">``,
+#: reusing Bulma's token. Matched as a whole class token, so the bare ``active``
+#: that Bootstrap and Fomantic share does not collide with Bulma's ``is-active``.
+ACTIVE_TAB_CLASS = {
+    "bulma": "is-active",
+    "daisy": "tab-active",
+    "bootstrap": "active",
+    "foundation": "is-active",
+    "fomantic": "active",
+}
 
 
 @pytest.fixture(params=THEMES)

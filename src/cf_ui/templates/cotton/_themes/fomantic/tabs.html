@@ -13,10 +13,10 @@
        aria-controls="{{ hx_target }}"
        aria-selected="{% if tab.id == active %}true{% else %}false{% endif %}"
        tabindex="{% if tab.id == active or not active and forloop.first %}0{% else %}-1{% endif %}"
-       :class="{ 'active': active === '{{ tab.id }}' }"
-       :aria-selected="active === '{{ tab.id }}'"
-       :tabindex="tabIndexFor('{{ tab.id }}')"
-       @click.prevent="setActive('{{ tab.id }}')"
+       :class="{ 'active': active === $el.dataset.cfTab }"
+       :aria-selected="active === $el.dataset.cfTab"
+       :tabindex="tabIndexFor($el.dataset.cfTab)"
+       @click.prevent="setActive($el.dataset.cfTab)"
        hx-get="{{ tab.url }}"
        hx-target="#{{ hx_target }}">{{ tab.id }}</a>
     {% endfor %}

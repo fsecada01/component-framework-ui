@@ -46,9 +46,177 @@ verified to still resolve.
     take `width: 150%` and report `aria-valuenow="150"` against a max of 100.
     The ARIA is stated in percent so it agrees with the visible label.
 
-- Accessibility is at parity with Bulma and DaisyUI, not a reduced subset: the
-  parametrized cases in `tests/unit/test_accessibility.py` now run against
-  three themes rather than two, with no assertion weakened.
+- Accessibility is at parity with every other theme, not a reduced subset: the
+  parametrized cases in `tests/unit/test_accessibility.py` now run against five
+  themes rather than four, with no assertion weakened.
+
+- Tab ids reach Alpine through `$el.dataset.cfTab`, never as interpolated
+  expression source (#32). The tree-wide guard that shipped with that fix reads
+  its theme list from `THEMES`, so it covered this theme the moment the registry
+  entry landed — and did not pass until the templates were corrected.
+
+- **The last `PLANNED.md` stub is gone.** Every directory under `templates/` is
+  now a real theme, which retires the "a directory exists but is not selectable"
+  test that has existed in some form since #6. What it protected is stated
+  directly instead: `resolve_theme` and `CfUiConfig.ready()` answer from
+  `THEMES`, not from the filesystem.
+
+### Security — tab ids no longer reach Alpine as expression source (#32)
+
+- **A request-controlled `tab.id` executed as JavaScript on page load.** Each
+  tabs template spliced it into four attributes Alpine evaluates as source
+  (`:class`, `:aria-selected`, `:tabindex`, `@click.prevent`), so an id
+  containing an apostrophe closed its string literal, ran, and reopened it —
+  no user interaction, and the surrounding expression still parsed, so Alpine
+  logged nothing. Sixteen sites across bulma and daisy, plus eight more each in
+  bootstrap and foundation, which carried the same fix in on their own branches
+  (#29, #30) rather than merging with a known injection. Fomantic follows the
+  same way. Fixing it in two themes now instead of five later is the whole
+  reason this went ahead of the expansion epic.
+
+  HTML escaping does not mitigate it and could not: the parser decodes `&#x27;`
+  back to `'` while building the DOM, and Alpine reads the decoded attribute.
+  The value has to stop being source. Every binding now reads
+  `$el.dataset.cfTab` — `data-cf-tab` was already on each tab for the roving
+  tabindex, so the fix adds plumbing only for the wrapper element some themes
+  put the active class on.
+
+  This closes the *execution* path, not every use of a hostile id. Attribute
+  escaping is a separate guarantee, and `install_cf_ui` still leaves JinjaX's
+  `autoescape` off, so a double quote in `tab.id` can break out of
+  `data-cf-tab` itself under FastAPI/Litestar. Django/cotton is unaffected.
+  Tracked as #36, and called out in `docs/accessibility.md` with a workaround
+  in the meantime.
+
+  `cf_ui_alpine.js` already stated this rule in `initTabs()` and already
+  followed it for `data-cf-active`; it simply was not carried one level down.
+  `tests/unit/test_alpine_expression_safety.py` now enforces it over every
+  template in the package, so a sixth theme cannot reintroduce it by copying a
+  fifth, and `tests/e2e/test_alpine_injection.py` proves the payload is inert in
+  a real browser — asserting both that it did not run and that the bindings did
+  evaluate, since a fix that made Alpine throw would satisfy the first alone.
+
+### Added — Foundation 6 theme (#23)
+
+All 14 components in both template sets, replacing the `PLANNED.md` stub at
+`templates/jinja/foundation/` and creating `templates/cotton/_themes/foundation/`.
+`foundation` is now accepted by `CF_UI_THEME` and by `install_cf_ui(theme=…)`;
+`_CDN_CSS` and `_DEFAULTS` already carried it at `6.7.5`.
+
+- **CSS only, and no jQuery.** Foundation's interactive components — Reveal,
+  Tabs, Accordion, Dropdown Menu — are jQuery plugins. Loading them would make a
+  theme choice change a consuming app's dependency graph, and would put a second
+  owner on state `cf_ui_alpine.js` already holds. The templates use Foundation's
+  classes and markup structure; every piece of state is wired through the
+  existing Alpine components. Asserted per component rather than left to prose.
+
+- **Three places where Foundation's CSS assumes its JS is present**, and what
+  each does instead:
+  - `.reveal` has no open-state class — Foundation's Reveal writes
+    `style.display` directly — so the modal toggles inline display rather than a
+    class, and the E2E tier asserts visibility instead of a class list.
+  - `.accordion-content` is `display: none` with no un-hiding rule in the
+    stylesheet, so the panel stays off the accordion entirely and `x-show` owns
+    display, seeded from `data-cf-open`. Same shape as the bug #21 fixed.
+  - The navbar collapse uses `hide-for-small-only`, not `hide`: `hide` would
+    collapse the desktop menu too, and with Alpine off no class is emitted at
+    all, so the menu is simply visible.
+
+- **`aria-selected` on a tab is load-bearing for appearance here.**
+  `.tabs-title > a[aria-selected=true]` is the rule that restyles the selected
+  tab; `.is-active` on the `<li>` alone changes nothing visually. Both are
+  rendered server-side and both keep their Alpine binding. The tab panel is
+  `.tabs-content` rather than `.tabs-panel`, because this widget has one
+  always-shown HTMX-swapped panel, and `.tabs-panel` is hidden until
+  `.is-active` picks one of several siblings.
+
+- **Variant vocabulary maps inside the partial**, as designed: Foundation's
+  callout uses bare `alert` / `success` / `warning` with no `is-` prefix, and has
+  no `info` variant — `type="info"` maps to `primary`. Public prop values are
+  unchanged. `progress` needs a `.progress-meter` child because 6.7.5 does not
+  style a native `<progress>`; a zero `max` yields 0% rather than a
+  `ZeroDivisionError` on an empty result set.
+
+- Tab ids reach Alpine through `$el.dataset.cfTab`, never as interpolated
+  expression source (#32) — applied here so the theme does not land with the bug
+  and need patching twice.
+
+### Added — Bootstrap JS decision record and a version tripwire (#33)
+
+- **`docs/bootstrap.md`.** The CSS-only, Alpine-driven stance was a decision
+  taken during #22 and recorded nowhere a consumer or maintainer would look.
+  This states it, gives the three reasons in the order they mattered, and — the
+  part that was actually missing — answers "may I use a Bootstrap component
+  cf-ui does not ship?". Bootstrap 5.3.3 ships 12 JS-driven components; cf-ui
+  replaces four of those plugins across five of its own components, so eight are
+  uncovered. The page names them and gives three ways forward, with the one hard
+  rule: never put a `data-bs-*` attribute on a cf-ui component, because
+  Bootstrap's JS and `cf_ui_alpine.js` would then own the same state and the
+  failure is load-order dependent and intermittent.
+
+  It also records the per-theme behaviour driver as considered-and-deferred, so
+  the option is not relitigated from scratch, and states why: an abstraction for
+  a problem no consumer has reported, whose strongest motivation has an API that
+  does not exist yet.
+
+- **`tests/unit/test_bootstrap_version_pin.py`.** "Monitor for Bootstrap 6" is
+  not a commitment that survives; a red test is. `_DEFAULTS["bootstrap"]` is the
+  single place the major version is stated, and this fails the moment it leaves
+  the `5.x` line, with a failure message that *is* the checklist of what to
+  re-evaluate. Same pattern #17 established for Tailwind.
+
+  What it points at, verified against `v6-dev` rather than release notes:
+  `_modal.scss` is replaced by `_dialog.scss` with no `.modal*` selector left,
+  `modal.js` by `dialog.ts` on `HTMLDialogElement.showModal()`, and the JS
+  surface is growing rather than shrinking. cf-ui's bootstrap modal templates
+  carry eight `modal-*` references each, so the markup breaks at v6 on the CSS
+  alone — which is the useful part, because it means the JS question gets
+  re-asked for free at the moment it is cheapest to answer.
+
+### Added — Bootstrap 5 theme (#22)
+
+All 14 components in both template sets, replacing the `PLANNED.md` stubs at
+`templates/jinja/bootstrap/` and `templates/cotton/bootstrap/`. `bootstrap` is
+now accepted by `CF_UI_THEME` and by `install_cf_ui(theme=…)`; `_CDN_CSS`,
+`_DEFAULTS` and `assets.jinja` already carried it at 5.3.3.
+
+- **CSS only — do not load `bootstrap.bundle.js`.** Bootstrap's `data-bs-*`
+  API is a second state owner for the modal, the tabs and the accordion, and
+  `cf_ui_alpine.js` is already the first. Loading both would make
+  `Alpine.store('cf').modal.open(id)` behave differently under this theme than
+  under every other one, which is precisely the cross-theme guarantee the theme
+  work exists to protect. The templates use Bootstrap's classes and markup
+  structure and wire every piece of state through the existing Alpine
+  components; the absence of `data-bs-` is asserted per component rather than
+  left to prose.
+
+- **The modal reveal rides on `d-block`, not on `.show` alone.** `.modal` is
+  `display: none` and Bootstrap's `.show` only sets opacity — its own JS is
+  what writes `style.display = "block"`. A theme that toggled just `.show`
+  would change the class list and never become visible, so the E2E tier asserts
+  visibility rather than classes. The backdrop is likewise a special case:
+  Bootstrap appends one to `<body>` at z-index 1050, below the modal's 1055,
+  and cf-ui has no JS to do that. It lives inside the modal with a negative
+  z-index instead, which keeps it under the dialog rather than swallowing every
+  click. Both halves — the dialog still takes clicks, the backdrop still closes
+  — are covered by an E2E test.
+
+- **The panel body carries no `.collapse`.** That class is `display: none`
+  without `.show`, which would hide a server-open panel permanently once Alpine
+  is off — exactly the bug #21 fixed. `x-show` owns display, seeded from
+  `data-cf-open`. The navbar *does* use `.collapse`, where the pure-CSS
+  `.collapse:not(.show)` / `.navbar-expand-lg .navbar-collapse` pair is the
+  correct behavior with or without JS.
+
+- Accessibility parity with Bulma and DaisyUI is enforced by the existing
+  `tests/unit/test_accessibility.py`, which now parametrizes over three themes
+  rather than two: dialog semantics and the `label` fallback, the tabs'
+  server-rendered active state with roving `tabindex`, and the panel's
+  `aria-expanded` / `aria-controls` toggle.
+
+- Prop vocabulary is unchanged and still theme-agnostic. `type="danger"` maps to
+  `alert-danger` / `bg-danger`, and `type="error"` maps there too, so a value
+  written for DaisyUI keeps working.
 
 ### Added — real Tailwind build in CI (#17)
 

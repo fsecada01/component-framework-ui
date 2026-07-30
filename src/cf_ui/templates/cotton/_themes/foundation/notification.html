@@ -1,0 +1,17 @@
+{% comment %} Foundation's callout variants carry no `is-` prefix, and there is no `info`
+   — `primary` is the stand-in. The public prop vocabulary does not change.
+
+   `.close-button` is CSS-only styling; `data-closable` needs the Toggler
+   plugin, so the dismiss is Alpine's. `.callout` is `position: relative`
+   precisely so the absolutely-positioned close button anchors to it. {% endcomment %}
+<div role="alert"
+     class="callout {% if type == 'danger' or type == 'error' %}alert{% elif type == 'success' %}success{% elif type == 'warning' %}warning{% elif type == 'secondary' %}secondary{% else %}primary{% endif %} {{ class }}"
+     x-data="{ visible: true }"
+     x-show="visible">
+  <p>{{ message }}</p>
+  {% if dismissible == "true" %}
+  <button type="button" class="close-button" aria-label="dismiss" @click="visible = false">
+    <span aria-hidden="true">&times;</span>
+  </button>
+  {% endif %}
+</div>

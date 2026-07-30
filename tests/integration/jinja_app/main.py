@@ -11,6 +11,10 @@ _CF_UI_STATIC_DIR = JINJA_TEMPLATES_DIR.parent.parent / "static" / "cf_ui"
 _THEME_CSS = {
     "bulma": "https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css",
     "daisy": "https://cdn.jsdelivr.net/npm/daisyui@4.7.2/dist/full.min.css",
+    "bootstrap": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css",
+    "foundation": (
+        "https://cdn.jsdelivr.net/npm/foundation-sites@6.7.5/dist/css/foundation.min.css"
+    ),
     "fomantic": "https://cdn.jsdelivr.net/npm/fomantic-ui@2.9.3/dist/semantic.min.css",
 }
 
@@ -22,9 +26,13 @@ _THEME_CSS = {
 _THEME_EXTRA_HEAD = {
     "bulma": "",
     "daisy": '<script src="https://cdn.tailwindcss.com"></script>',
-    # Fomantic ships prebuilt CSS and needs no build step. Deliberately nothing
-    # here: its Modal/Tab/Accordion/Dropdown modules are jQuery plugins, and the
-    # point of the theme is that the pages work without them.
+    # Bootstrap, Foundation and Fomantic all ship prebuilt CSS, and cf-ui
+    # deliberately loads none of their JavaScript — Alpine owns modal, tab and
+    # panel state in every theme, so no bootstrap.bundle.js, no foundation.js,
+    # and none of Fomantic's jQuery Modal/Tab/Accordion/Dropdown modules. The
+    # point of each theme is that the pages work without them.
+    "bootstrap": "",
+    "foundation": "",
     "fomantic": "",
 }
 

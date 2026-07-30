@@ -26,10 +26,16 @@ pip install "cf-ui[bulma]"
 # Tailwind + DaisyUI
 pip install "cf-ui[daisy]"
 
+# Bootstrap 5
+pip install "cf-ui[bootstrap]"
+
+# Foundation 6
+pip install "cf-ui[foundation]"
+
 # Fomantic UI
 pip install "cf-ui[fomantic]"
 
-# All themes (Bootstrap and Foundation are still stubs)
+# All themes
 pip install "cf-ui[all]"
 ```
 
@@ -293,13 +299,23 @@ from cf_ui import JINJA_TEMPLATES_DIR, COTTON_TEMPLATES_DIR
 |---|---|
 | Bulma | ✅ v0.1.0 |
 | Tailwind + DaisyUI | ✅ — see [docs/daisyui.md](docs/daisyui.md) |
+| Bootstrap 5 | ✅ — CSS only, no `bootstrap.bundle.js`; see [docs/bootstrap.md](docs/bootstrap.md) |
+| Foundation 6 | ✅ — CSS only, no jQuery |
 | Fomantic UI | ✅ — CSS only, no jQuery |
-| Bootstrap | 📋 Planned |
-| Foundation | 📋 Planned |
 
 Switching is one line — `CF_UI_THEME = "daisy"` on Django, `theme="daisy"` on
 FastAPI/Litestar — and needs no template edits in the consuming app. An
 unimplemented theme name is rejected at startup rather than at first render.
+
+**Bootstrap ships CSS only, on purpose.** Do not load `bootstrap.bundle.js`.
+Bootstrap's `data-bs-*` API is a second state owner for the modal, the tabs and
+the accordion, and `cf_ui_alpine.js` is already the first — loading both makes
+`Alpine.store('cf').modal.open(id)` mean something different under this theme
+than under every other one. The templates use Bootstrap's classes and markup
+structure and wire state through Alpine, so the CDN stylesheet is all a
+consuming app needs. [docs/bootstrap.md](docs/bootstrap.md) is the decision
+record: which of Bootstrap's 12 JS components cf-ui replaces, what to do about
+the eight it does not, and what changes at Bootstrap 6.
 
 **DaisyUI takes one extra step.** It compiles through Tailwind, so Tailwind's
 content scanner has to reach cf-ui's templates in site-packages or every class

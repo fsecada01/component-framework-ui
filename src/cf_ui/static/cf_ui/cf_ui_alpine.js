@@ -163,6 +163,10 @@ document.addEventListener('alpine:init', () => {
             // `x-data="cfTabs('{{ active }}')"`. The value is request-controlled,
             // and a template engine escapes an attribute correctly but has no
             // way to escape JavaScript source text.
+            //
+            // The same rule governs every id these methods receive: the
+            // templates pass `$el.dataset.cfTab`, never `'{{ tab.id }}'`. #32
+            // was that rule being applied here and not one level down.
             this.active = this.$el.dataset.cfActive || null;
         },
 
