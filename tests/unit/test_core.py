@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 
@@ -88,4 +89,35 @@ def test_version_exported():
     from cf_ui import __version__
 
     assert isinstance(__version__, str)
-    assert __version__ == "0.1.1"
+    # Shape only — the value is asserted against pyproject.toml below rather
+    # than restated here. A literal in this file is a third place to edit and
+    # the one most likely to be missed, since it fails loudly enough to be
+    # "fixed" by updating the number without checking the other two.
+    assert re.fullmatch(r"\d+\.\d+\.\d+(?:[-.]?(?:a|b|rc|dev)\d*)?", __version__), __version__
+
+
+def test_the_two_version_sources_agree():
+    """``pyproject.toml`` and ``_version.py`` both state the version (#38).
+
+    Nothing connected them. A bump that lands in one ships a wheel whose
+    metadata disagrees with ``cf_ui.__version__`` — installed consumers see one
+    number, ``pip show`` another — and no test could tell, because the only
+    assertion on the version was a literal that matched whichever file the
+    editor happened to open.
+
+    Read from source rather than from installed metadata: the package is
+    installed editable in dev and in CI, so ``importlib.metadata`` can serve a
+    version cached at install time and report agreement that a fresh build
+    would not have.
+    """
+    import tomllib
+
+    from cf_ui import __version__
+
+    pyproject = Path(__file__).parent.parent.parent / "pyproject.toml"
+    declared = tomllib.loads(pyproject.read_text(encoding="utf-8"))["project"]["version"]
+
+    assert __version__ == declared, (
+        f"cf_ui.__version__ is {__version__!r} but pyproject.toml declares "
+        f"{declared!r} — bump both, or the wheel's metadata lies about itself."
+    )
