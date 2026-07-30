@@ -2,6 +2,41 @@
 
 ## [Unreleased]
 
+### Security — tab ids no longer reach Alpine as expression source (#32)
+
+- **A request-controlled `tab.id` executed as JavaScript on page load.** Each
+  tabs template spliced it into four attributes Alpine evaluates as source
+  (`:class`, `:aria-selected`, `:tabindex`, `@click.prevent`), so an id
+  containing an apostrophe closed its string literal, ran, and reopened it —
+  no user interaction, and the surrounding expression still parsed, so Alpine
+  logged nothing. Sixteen sites across bulma and daisy, plus eight more each in
+  bootstrap and foundation, which carried the same fix in on their own branches
+  (#29, #30) rather than merging with a known injection. Fomantic follows the
+  same way. Fixing it in two themes now instead of five later is the whole
+  reason this went ahead of the expansion epic.
+
+  HTML escaping does not mitigate it and could not: the parser decodes `&#x27;`
+  back to `'` while building the DOM, and Alpine reads the decoded attribute.
+  The value has to stop being source. Every binding now reads
+  `$el.dataset.cfTab` — `data-cf-tab` was already on each tab for the roving
+  tabindex, so the fix adds plumbing only for the wrapper element some themes
+  put the active class on.
+
+  This closes the *execution* path, not every use of a hostile id. Attribute
+  escaping is a separate guarantee, and `install_cf_ui` still leaves JinjaX's
+  `autoescape` off, so a double quote in `tab.id` can break out of
+  `data-cf-tab` itself under FastAPI/Litestar. Django/cotton is unaffected.
+  Tracked as #36, and called out in `docs/accessibility.md` with a workaround
+  in the meantime.
+
+  `cf_ui_alpine.js` already stated this rule in `initTabs()` and already
+  followed it for `data-cf-active`; it simply was not carried one level down.
+  `tests/unit/test_alpine_expression_safety.py` now enforces it over every
+  template in the package, so a sixth theme cannot reintroduce it by copying a
+  fifth, and `tests/e2e/test_alpine_injection.py` proves the payload is inert in
+  a real browser — asserting both that it did not run and that the bindings did
+  evaluate, since a fix that made Alpine throw would satisfy the first alone.
+
 ### Added — Foundation 6 theme (#23)
 
 All 14 components in both template sets, replacing the `PLANNED.md` stub at
@@ -78,13 +113,6 @@ All 14 components in both template sets, replacing the `PLANNED.md` stub at
   carry eight `modal-*` references each, so the markup breaks at v6 on the CSS
   alone — which is the useful part, because it means the JS question gets
   re-asked for free at the moment it is cheapest to answer.
-
-### Fixed — tab ids no longer reach Alpine as expression source (#32)
-
-- The four Alpine bindings on each tab now read `$el.dataset.cfTab` instead of
-  an interpolated `'{{ tab.id }}'`. Same fix as the two shipped themes get in
-  #32; applied here so this theme does not land with the bug and need patching
-  twice. See that ticket for why HTML escaping cannot address it.
 
 ### Added — Bootstrap 5 theme (#22)
 
