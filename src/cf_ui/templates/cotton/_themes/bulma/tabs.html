@@ -7,15 +7,16 @@
       {% for tab in tabs %}
       <li role="presentation"
           class="{% if tab.id == active %}is-active{% endif %}"
-          :class="{ 'is-active': active === '{{ tab.id }}' }">
+          data-cf-tab="{{ tab.id }}"
+          :class="{ 'is-active': active === $el.dataset.cfTab }">
         <a role="tab"
            data-cf-tab="{{ tab.id }}"
            aria-controls="{{ hx_target }}"
            aria-selected="{% if tab.id == active %}true{% else %}false{% endif %}"
            tabindex="{% if tab.id == active or not active and forloop.first %}0{% else %}-1{% endif %}"
-           :aria-selected="active === '{{ tab.id }}'"
-           :tabindex="tabIndexFor('{{ tab.id }}')"
-           @click.prevent="setActive('{{ tab.id }}')"
+           :aria-selected="active === $el.dataset.cfTab"
+           :tabindex="tabIndexFor($el.dataset.cfTab)"
+           @click.prevent="setActive($el.dataset.cfTab)"
            hx-get="{{ tab.url }}"
            hx-target="#{{ hx_target }}">{{ tab.id }}</a>
       </li>

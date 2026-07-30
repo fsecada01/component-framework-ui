@@ -180,5 +180,7 @@ def test_breadcrumb_uses_daisy_breadcrumbs_class(daisy_render):
 def test_tabs_keeps_the_alpine_contract(daisy_render):
     html = daisy_render("cf/tabs.html", tabs=[{"id": "one", "url": "/one"}], slot="C")
     assert 'x-data="cfTabs"' in html
-    assert "setActive('one')" in html
+    # The id reaches Alpine as data, never as expression text (#32).
+    assert 'data-cf-tab="one"' in html
+    assert "setActive($el.dataset.cfTab)" in html
     assert "tab-active" in html

@@ -144,14 +144,44 @@ separately rather than smuggled in here.
 
 ## Passing state into Alpine
 
-New state crosses into Alpine through `data-` attributes, read in an `x-init`
-hook — `data-cf-active` → `initTabs()`, `data-cf-open` → `initPanel()` — rather
-than through an interpolated `x-data="cfTabs('{{ active }}')"`.
+**No template interpolation inside an attribute Alpine evaluates.** Not in
+`x-data`, not in `x-init`, not in a `:binding`, not in an `@handler`. That is
+the whole rule, and `tests/unit/test_alpine_expression_safety.py` enforces it
+over every template in the package.
 
-The value is request-controlled. A template engine escapes an *attribute*
-correctly; it has no idea it is writing JavaScript source, so a single
-apostrophe in `active` breaks out of the expression. The data-attribute route
-has no such seam.
+Initial state crosses in through `data-` attributes read in an `x-init` hook —
+`data-cf-active` → `initTabs()`, `data-cf-open` → `initPanel()` — rather than
+through an interpolated `x-data="cfTabs('{{ active }}')"`.
+
+Per-item values do the same thing, one level down. Each tab carries
+`data-cf-tab="{{ tab.id }}"`, and every binding on it reads that back:
+
+```html
+:aria-selected="active === $el.dataset.cfTab"
+:tabindex="tabIndexFor($el.dataset.cfTab)"
+@click.prevent="setActive($el.dataset.cfTab)"
+```
+
+not:
+
+```html
+:tabindex="tabIndexFor('{{ tab.id }}')"   <!-- #32 -->
+```
+
+**Escaping is not the fix, and cannot be.** The template engine escapes an
+*attribute* correctly, but it has no idea it is writing JavaScript source, and
+the escaping is gone before Alpine ever sees the value: the HTML parser decodes
+`&#x27;` back to `'` while building the DOM, and Alpine reads the decoded
+attribute. A quote-bearing `tab.id` therefore closes its string literal and
+runs, on page load, with no user interaction — which is exactly what #32 was. A
+`data-` attribute has no such seam because its value is never parsed as source.
+
+If a binding needs a value the server knows, the answer is always another
+`data-` attribute on the element carrying the binding — never a wider
+expression. `$el.dataset.*` resolves against the element the directive sits on,
+so an element that reads `$el.dataset.cfTab` has to carry `data-cf-tab` itself;
+reaching into a child or parent instead would put theme-specific DOM structure
+back into `cf_ui_alpine.js`, which is the split this package exists to keep.
 
 ---
 
@@ -162,9 +192,19 @@ tests could not have caught what they claimed to:
 
 * `tests/unit/test_accessibility.py` — claims that *are* markup: a role, an
   `aria-*` value, a server-rendered class. All four template sets, every case.
+* `tests/unit/test_alpine_expression_safety.py` — the rule above, as a guard
+  over the whole template tree rather than a per-theme check, so the next theme
+  cannot reintroduce an interpolated expression by copying the last one.
 * `tests/e2e/` — claims that are behavior: where focus lands after open, where
   it lands after close, that `Tab` cannot leave the dialog. Parameterized over
   `js_on` / `js_off`.
+
+`tests/e2e/test_alpine_injection.py` is in that last group for a reason worth
+naming: the unit tier can assert a rendered attribute holds no splice point, but
+only a browser can show what happens when it does — the decode-then-evaluate
+sequence that makes the bug possible needs a real HTML parser and a real Alpine.
+It asserts the payload did not run **and** that the bindings did evaluate; a fix
+that made Alpine throw would pass the first half while leaving tabs dead.
 
 `expect(role_is_dialog)` proves nothing about focus, and
 `expect(tab).to_be_attached()` passes against markup nobody can use. Assert the

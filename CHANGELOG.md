@@ -2,6 +2,32 @@
 
 ## [Unreleased]
 
+### Security — tab ids no longer reach Alpine as expression source (#32)
+
+- **A request-controlled `tab.id` executed as JavaScript on page load.** Each
+  tabs template spliced it into four attributes Alpine evaluates as source
+  (`:class`, `:aria-selected`, `:tabindex`, `@click.prevent`), so an id
+  containing an apostrophe closed its string literal, ran, and reopened it —
+  no user interaction, and the surrounding expression still parsed, so Alpine
+  logged nothing. Sixteen sites across the two shipped themes; the three open
+  theme branches had each copied the pattern, which is why this landed before
+  them rather than after.
+
+  HTML escaping does not mitigate it and could not: the parser decodes `&#x27;`
+  back to `'` while building the DOM, and Alpine reads the decoded attribute.
+  The value has to stop being source. Every binding now reads
+  `$el.dataset.cfTab` — `data-cf-tab` was already on each tab for the roving
+  tabindex, so the fix adds plumbing only for the wrapper element some themes
+  put the active class on.
+
+  `cf_ui_alpine.js` already stated this rule in `initTabs()` and already
+  followed it for `data-cf-active`; it simply was not carried one level down.
+  `tests/unit/test_alpine_expression_safety.py` now enforces it over every
+  template in the package, so a sixth theme cannot reintroduce it by copying a
+  fifth, and `tests/e2e/test_alpine_injection.py` proves the payload is inert in
+  a real browser — asserting both that it did not run and that the bindings did
+  evaluate, since a fix that made Alpine throw would satisfy the first alone.
+
 ### Added — real Tailwind build in CI (#17)
 
 - **A CI job that builds the vendored plugin through the actual Tailwind CLI.**
