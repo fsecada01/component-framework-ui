@@ -1,0 +1,81 @@
+site_name: cf-ui
+site_description: >-
+  CSS framework UI kit for component-framework — Bulma, Bootstrap, Foundation,
+  Fomantic UI, DaisyUI.
+site_url: https://fsecada01.github.io/component-framework-ui/
+repo_url: https://github.com/fsecada01/component-framework-ui
+repo_name: fsecada01/component-framework-ui
+edit_uri: edit/master/docs/
+copyright: MIT licensed.
+
+# docs_dir defaults to docs/, which is where the five pre-existing guides
+# already live — so README's docs/<page>.md links keep resolving on GitHub
+# while the same files serve as site pages here.
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.tracking
+    - content.code.copy
+    - content.code.annotate
+    - toc.follow
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - Quickstart: quickstart.md
+  - Getting started: getting-started.md
+  - Use cases: use-cases.md
+  - Guides:
+      - Theming: theming.md
+      - Tailwind plugin: tailwind-plugin.md
+      - Accessibility: accessibility.md
+      - Bootstrap: bootstrap.md
+      - DaisyUI: daisyui.md
+  - Reference:
+      - Components: components.md
+      - Escaping: escaping.md
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+
+# With strict: true these warnings become build failures, so a dead internal
+# link — including a dead *anchor*, which MkDocs reports only at INFO by
+# default — fails CI rather than shipping.
+validation:
+  omitted_files: warn
+  absolute_links: warn
+  unrecognized_links: warn
+  anchors: warn
+
+strict: true

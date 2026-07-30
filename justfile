@@ -46,6 +46,15 @@ test-all:
 
 check: lint test
 
+# Serve the docs site with live reload at http://127.0.0.1:8000
+docs:
+    mkdocs serve
+
+# Build the site exactly as CI does — --strict fails on a dead internal link
+# or a page missing from nav, which is the whole point of running it locally.
+docs-build:
+    mkdocs build --strict
+
 pre-commit-install:
     pre-commit install
 

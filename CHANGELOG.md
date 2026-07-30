@@ -2,6 +2,51 @@
 
 ## [Unreleased]
 
+### Documentation — a published site, and three broken README samples fixed (#39)
+
+- **A MkDocs + Material site now builds from `docs/` and deploys to GitHub
+  Pages** on every push to `master`; pull requests build without deploying, so
+  a fork PR can never publish. The build runs with `--strict` plus
+  `validation.anchors: warn`, which makes a dead internal link *or* a dead
+  anchor fail CI — MkDocs reports missing anchors at INFO by default, which
+  would have let them through. New pages: Installation, Quickstart, Getting
+  started, Use cases, Components, Escaping. The five pre-existing guides
+  (theming, tailwind-plugin, accessibility, bootstrap, daisyui) are now nav
+  entries and needed no rewriting, because MkDocs' default `docs_dir` is
+  already where they live — README's `docs/<page>.md` links keep resolving on
+  GitHub.
+
+- **`from jinjax import ComponentCatalog` never worked.** jinjax exports
+  `Catalog`; that import raised `ImportError` on the first line of the
+  README's FastAPI quickstart. Fixed.
+
+- **`<CfCard>` never worked either.** `Cf` is a JinjaX *prefix* and the prefix
+  separator is `:`, so the tag is `<Cf:Card>` and the render name is
+  `"Cf:Card"`. Both `<CfCard>` and `<Cf.Card>` raise `ComponentNotFound`. The
+  wrong form was in README and in the CLAUDE.md naming table; both are fixed,
+  and `tests/unit/test_docs_samples.py` now renders all three forms so the
+  claim is executable rather than asserted.
+
+- **The README's Django settings sample did not parse** — an elided
+  `INSTALLED_APPS = [ ... "cf_ui.django.CfUiConfig" ]` is `Ellipsis` followed
+  by a string with no comma. Rewritten.
+
+- **`tests/unit/test_docs_samples.py` is the guard against all of the above
+  recurring.** It extracts every fenced block from `README.md` and `docs/*.md`
+  (including the indented ones inside `=== "Tab"` containers), requires each
+  `python` block to parse, resolves every `from … import …` against the real
+  installed module, and checks every `Cf:Name` / `<c-cf.name>` reference
+  against the shipped component set. Two non-vacuity pins keep it honest: one
+  asserts the import check did not degenerate into all-skips, another that
+  both component regexes still match something.
+
+- The Litestar quickstart imports `JinjaTemplateEngine` from
+  `litestar.plugins.jinja`; the `litestar.contrib.jinja` path has warned since
+  Litestar 2.22 and goes away in 3.0.
+
+- `just docs` serves the site locally, `just docs-build` runs the exact
+  `--strict` build CI does. New `[docs]` extra; `[dev]` includes it.
+
 ### Security — BREAKING: cf-ui's Jinja templates now escape their own output (#36)
 
 - **Every `{{ … }}` in a cf-ui template emitted raw output on the FastAPI and

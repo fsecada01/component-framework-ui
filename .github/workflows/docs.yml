@@ -1,0 +1,54 @@
+name: Docs
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install docs dependencies
+        run: uv pip install --system -e ".[docs]"
+
+      # --strict turns a dead internal link or a page missing from nav into a
+      # build failure, so a PR that breaks navigation cannot reach master.
+      - name: Build site
+        run: mkdocs build --strict
+
+      - name: Upload Pages artifact
+        if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  # Deploy only from master. Pull requests run the build above and stop there,
+  # so a fork PR can never publish.
+  deploy:
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
