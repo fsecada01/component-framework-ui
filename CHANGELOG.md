@@ -2,6 +2,19 @@
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-07-30
+
+Five themes instead of two, an axis layer that enforces what it claimed, and
+two security fixes on the Jinja path. **Two breaking changes** — both listed
+first below, because a 0.x version number carries no semver promise to read
+them off:
+
+- Cf-ui's Jinja templates escape their own output (#36). Anything previously
+  interpolated raw through a component now renders as entities; a prop
+  deliberately carrying markup must be `markupsafe.Markup`.
+- The axis layer validates token *values*, drops the `--spacing` alias, and
+  validates by default in every exported generator (#20).
+
 ### Security — BREAKING: cf-ui's Jinja templates now escape their own output (#36)
 
 - **Every `{{ … }}` in a cf-ui template emitted raw output on the FastAPI and
