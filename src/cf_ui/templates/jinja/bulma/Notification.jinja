@@ -1,4 +1,5 @@
 {#def message, type="info", dismissible=true, extra_class="" #}
+{% autoescape true %}
 <div class="notification is-{{ type }} {{ extra_class }}"
      x-data="{ visible: true }"
      x-show="visible">
@@ -7,3 +8,4 @@
   {% endif %}
   {{ message }}
 </div>
+{% endautoescape %}

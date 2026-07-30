@@ -179,27 +179,29 @@ so the worst a hostile value can do there is be a wrong string.
 
 Attribute escaping is a separate guarantee, and cf-ui now makes it on both
 paths. Django/cotton always had it — Django autoescapes by default. On the
-JinjaX path it had to be turned on: `jinjax.Catalog()` builds its environment
-with `autoescape` off and adopts it only from a caller-supplied `jinja_env`, so
-until #36 a `tab.id` containing a double quote could break out of `data-cf-tab`
-itself and add attributes of its own. Both `install_cf_ui` functions now turn
-`autoescape` on **when the environment they install into has it off**, and
-`tests/integration/test_jinja_autoescape.py` asserts it against a real catalog
-rather than a test-built environment.
+Jinja side the guarantee lives **in the template files themselves**: every
+cf-ui component wraps its body in `{% autoescape true %}`, so a `tab.id`
+carrying a double quote is escaped whatever the surrounding environment is
+configured to do — on a bare `jinjax.Catalog()` (whose environment does not
+autoescape), on Litestar's plain-Jinja path, and for a consumer who registers
+the templates with `add_folder` and never calls `install_cf_ui` at all. Until
+#36 that value could break out of `data-cf-tab` itself and add attributes of
+its own.
 
-"When it is off" is load-bearing in both directions. Jinja accepts a callable
-for `autoescape`, and `select_autoescape` is how an app expresses a
-per-template policy; replacing it with a blanket `True` would change how the
-app's *own* templates render. And because `autoescape` is read at **compile**
-time — with JinjaX caching compiled components — a component rendered before
-the installer ran would otherwise stay compiled unescaped for the life of the
-process, while the flag reads `True`. The installer drops the component cache
-so the change is retroactive rather than order-dependent.
-
-Pass `cf_ui_autoescape=False` to opt out, if an app depends on unescaped
-interpolation through a cf-ui component. It is an escape hatch, not a supported
-configuration: with it set, a request-controlled value reaching any component
-prop is an attribute-injection vector.
+The installers never touch the environment's `autoescape` — the app's policy,
+`select_autoescape` callables included, is the app's. That is not incidental:
+an environment-level fix was tried first and failed three ways. It trampled
+caller policies; it was order-dependent, because `autoescape` is read at
+compile time and JinjaX caches compiled components; and respecting a truthy
+policy instead reopened the hole for `select_autoescape(["html"])`, which
+answers `False` for `.jinja` files. In-template blocks have no ordering, no
+policy to fight, and cover consumers the installers never see.
+`tests/unit/test_autoescape.py` guards the block's presence and placement in
+every template so a new theme cannot ship without it, and
+`tests/integration/test_jinja_autoescape.py` proves the behaviour against a
+bare catalog. A prop that deliberately carries real markup must be passed as
+`markupsafe.Markup`; slot content is unaffected (JinjaX hands it over as
+`Markup` already).
 
 If a binding needs a value the server knows, the answer is always another
 `data-` attribute on the element carrying the binding — never a wider

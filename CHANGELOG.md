@@ -2,16 +2,16 @@
 
 ## [Unreleased]
 
-### Security — BREAKING: the Jinja installers now autoescape (#36)
+### Security — BREAKING: cf-ui's Jinja templates now escape their own output (#36)
 
-- **`install_cf_ui` left JinjaX's `autoescape` off, so every `{{ … }}` in a
-  cf-ui template emitted raw output on the FastAPI and Litestar paths.** A
-  request-controlled value carrying a double quote closed the attribute it was
-  rendered into and could open one of its own, event handlers included.
-  `jinjax.Catalog` builds `Environment(undefined=StrictUndefined)` — autoescape
-  defaults to `False` — and adopts the setting only from a caller-supplied
-  `jinja_env`, which the installer never touched. Django/cotton consumers were
-  never affected; Django autoescapes by default.
+- **Every `{{ … }}` in a cf-ui template emitted raw output on the FastAPI and
+  Litestar paths.** A request-controlled value carrying a double quote closed
+  the attribute it was rendered into and could open one of its own, event
+  handlers included. `jinjax.Catalog` builds
+  `Environment(undefined=StrictUndefined)` — autoescape defaults to `False` —
+  and adopts the setting only from a caller-supplied `jinja_env`; Litestar's
+  `JinjaTemplateEngine` does not enable it either. Django/cotton consumers
+  were never affected; Django autoescapes by default.
 
   This is the other half of #32. That ticket stopped `tab.id` being *evaluated*
   as JavaScript by routing it through `data-cf-tab`, which was the right fix and
@@ -20,32 +20,33 @@
   `hx-get="{{ tab.url }}"`, `id="{{ id }}"` and the text nodes were all exposed
   the same way.
 
+  **The mechanism is in-template, on purpose.** Every component template wraps
+  its body in `{% autoescape true %}`, so the guarantee is a property of the
+  files cf-ui ships rather than of any environment: it holds on a bare
+  `Catalog()`, on Litestar's plain-Jinja path, and for a consumer who registers
+  the templates with `add_folder` and never calls `install_cf_ui`. The
+  installers do not touch the environment's `autoescape` at all — the app's
+  policy, `select_autoescape` callables included, stays the app's. An
+  environment-level fix was tried first and rejected on evidence: setting the
+  flag unconditionally destroyed caller policies; setting it only-when-off
+  reopened the hole for `select_autoescape(["html"])`, which answers `False`
+  for `.jinja` files; and either way it was order-dependent, because
+  `autoescape` is read at compile time and JinjaX caches compiled components —
+  a component rendered before install stayed unescaped for the process
+  lifetime while the flag read `True`. In-template blocks have none of those
+  failure modes. The `assets.jinja` macros carry the same blocks inside each
+  macro body (a file-scope block would stop the macros exporting).
+  `tests/unit/test_autoescape.py` guards presence and placement in all 70
+  templates so a new theme cannot ship without them.
+
   **Migration.** Output that was previously interpolated raw through a cf-ui
-  component now renders as entities. The realistic surface is small — components
-  take structured props, and JinjaX hands slot content over as `Markup` — but it
-  is a behaviour change, not a patch. `install_cf_ui(..., cf_ui_autoescape=False)`
-  restores the old rendering on both installers. It is an escape hatch, not a
-  supported configuration: with it set, any request-controlled prop is an
-  injection vector again.
-
-  **The installers only act when autoescape is off, and the change is
-  retroactive.** Two details that are easy to get wrong and were:
-
-  Jinja accepts a *callable* for `autoescape`, and `select_autoescape` is how an
-  app expresses a per-template policy. Setting `True` unconditionally replaced
-  that callable, silently changing how the app's *own* templates render — a
-  `.txt` or `.md` template deliberately left unescaped would start emitting
-  entities. Any truthy setting is now the caller's and is left untouched; only a
-  falsy one is turned on. This applies to both installers — the same line
-  existed on each.
-
-  And `autoescape` is read at **compile** time, while JinjaX caches compiled
-  components. A component rendered before `install_cf_ui` therefore stayed
-  compiled *without* escaping for the life of the process — silently, with
-  `catalog.jinja_env.autoescape` reading `True` throughout. An app that renders
-  during import or startup warm-up, or installs a second theme after serving
-  begins, landed here. The installer now drops the component cache, so the flip
-  applies to everything rather than to whatever had not been compiled yet.
+  component now renders as entities. The realistic surface is small —
+  components take structured props, and JinjaX hands slot content over as
+  `Markup` — but it is a behaviour change, not a patch. A prop that
+  deliberately carries real markup must be wrapped in `markupsafe.Markup`;
+  cf-ui's own E2E gallery needed exactly one such change (a `footer=` prop
+  carrying a button). There is no opt-out flag: escaping travels with the
+  templates.
 
 - **The axis globals are marked safe at the Jinja boundary.**
   `cf_ui_axis_attrs()` and `cf_ui_axis_style()` render markup — five attributes
@@ -67,11 +68,12 @@
   what shipped.
 
   All five now build their environment through `tests/jinja_env.py`, which
-  derives `autoescape` from a real installed catalog. The unit tier can no
-  longer be friendlier than the shipped default, and a change to the installer
-  moves every tier with it. `tests/integration/test_jinja_autoescape.py` is the
-  tier that was missing entirely: a real `Catalog`, built the way the docstring
-  tells a consumer to build one.
+  sets `autoescape=False` deliberately: cf-ui's templates escape their own
+  output, so any escaping a test observes can only have come from the template
+  under test — a harness that autoescaped would mask a template that lost its
+  block. `tests/integration/test_jinja_autoescape.py` is the tier that was
+  missing entirely, and asserts the injection cases against a bare `Catalog`
+  for the same reason.
 
 ### Added — Fomantic UI theme (#24)
 

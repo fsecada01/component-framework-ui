@@ -62,6 +62,7 @@ Templates live **inside** the Python package so hatchling includes them automati
 - API is `catalog.add_folder(path, prefix="Cf")` — NOT `add_path()`
 - `class` is a Python reserved word in `{#def}` headers — use `extra_class` instead
 - `content` kwarg is reserved by JinjaX (becomes the slot `CallerWrapper`) — call `catalog.render("CfCard", _content="body text")` for slot content; never use `content=` as a prop name
+- Every cf-ui Jinja template escapes its own output via `{% autoescape true %}` (#36) — the block opens right after the `{#def}` header and closes at EOF; the installers never touch the environment's `autoescape`. A prop carrying real markup must be `markupsafe.Markup`. In `assets.jinja` the blocks live *inside* the macro bodies — a file-scope block stops the macros exporting
 - `{#def}` defaults only work under JinjaX; plain Jinja2 treats `{#def}` as a comment — templates add `{% set x = x if x is defined else "" %}` guards for `StrictUndefined` compatibility
 
 **django-cotton (2.x):**
@@ -116,7 +117,11 @@ The `Cf` prefix / `cf.` namespace prevents collision with consumer app component
    `src/cf_ui/templates/cotton/_themes/{theme}/`
 2. Copy and adapt all 14 component templates, replacing Bulma-specific classes.
    The cotton partials carry **no** `<c-vars>` — that lives on the wrapper in
-   `cotton/cf/`, which needs no edit for a new theme
+   `cotton/cf/`, which needs no edit for a new theme. Every Jinja template
+   keeps its `{% autoescape true %}` block: it opens immediately **after** the
+   `{#def}` header (wrapping the header breaks JinjaX prop detection) and
+   closes at end of file. The drift guard in `tests/unit/test_autoescape.py`
+   fails the build on a missing or misplaced block
 3. Add `{theme}` to `THEMES` in `themes.py` — until then `resolve_theme` rejects
    it at startup
 4. Add the theme's CDN URL to `_CDN_CSS` in `templatetags/cf_ui.py` and to

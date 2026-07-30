@@ -100,13 +100,13 @@ def make_app(theme: str = "bulma") -> FastAPI:
             "Cf:Modal",
             id="e2e-modal",
             header="E2E Dialog",
-            # Wrapped since #36: the installers autoescape now, so a prop
-            # carrying real markup has to say so. Without this the button
-            # renders as text and the focus-trap and backdrop E2E tests lose
-            # the control they reach for — which is the migration this release
-            # asks of consumers, demonstrated on cf-ui's own gallery. The
-            # cotton gallery never needed it: Django has always autoescaped,
-            # so it passes plain text here.
+            # Wrapped since #36: cf-ui templates escape their own output now,
+            # so a prop carrying real markup has to say so. Without this the
+            # button renders as text and the focus-trap and backdrop E2E tests
+            # lose the control they reach for — which is the migration this
+            # release asks of consumers, demonstrated on cf-ui's own gallery.
+            # The cotton gallery never needed it: Django has always
+            # autoescaped, so it passes plain text here.
             footer=Markup('<button type="button" id="modal-ok">OK</button>'),
             extra_class="",
         )

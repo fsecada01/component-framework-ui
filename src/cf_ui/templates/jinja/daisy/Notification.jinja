@@ -1,4 +1,5 @@
 {#def message, type="info", dismissible=true, extra_class="" #}
+{% autoescape true %}
 {% set type = type if type is defined else "info" %}
 {% set dismissible = dismissible if dismissible is defined else true %}
 {% set extra_class = extra_class if extra_class is defined else "" %}
@@ -14,3 +15,4 @@
           @click="visible = false">&times;</button>
   {% endif %}
 </div>
+{% endautoescape %}

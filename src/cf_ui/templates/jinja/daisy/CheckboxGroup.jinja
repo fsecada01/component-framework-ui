@@ -1,4 +1,5 @@
 {#def name, label, choices=[], selected=[], error="", extra_class="", control_class="" #}
+{% autoescape true %}
 {% set choices = choices if choices is defined else [] %}
 {% set selected = selected if selected is defined else [] %}
 {% set error = error if error is defined else "" %}
@@ -20,3 +21,4 @@
   </div>
   {% if error %}<span class="label-text-alt text-error">{{ error }}</span>{% endif %}
 </div>
+{% endautoescape %}

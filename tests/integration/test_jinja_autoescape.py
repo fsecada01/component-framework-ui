@@ -1,22 +1,20 @@
 """Attribute escaping on the JinjaX path, against a real catalog (#36).
 
-Every other Jinja test in the suite builds its own ``Environment``, so what it
-asserts is a property of the harness. This file builds the catalog the way
-``install_cf_ui``'s own docstring tells a consumer to and asserts against that,
-which is the only place the shipped configuration is actually under test.
+The escaping under test lives in the templates themselves — every cf-ui
+component wraps its body in ``{% autoescape true %}`` — so the main fixture
+here is deliberately a **bare** ``Catalog()``: environment escaping off,
+``install_cf_ui`` never called. Anything these tests observe escaped can only
+have come from the template files, which is the shipped guarantee. Two earlier
+mechanisms failed the harder cases: leaving it to the consumer's environment
+missed both installers' defaults, and having the installer set the flag was
+order-dependent (the flag is read at compile time, and JinjaX caches), trampled
+``select_autoescape`` policies, and covered only consumers who called the
+installer.
 
-The gap this closes is narrow and was invisible for exactly that reason.
-``jinjax.Catalog`` builds ``Environment(undefined=StrictUndefined)`` and
-autoescape defaults to ``False``; ``install_cf_ui`` never touched it. So on
-FastAPI and Litestar every ``{{ … }}`` in a cf-ui template emitted raw output,
-and a request-controlled value carrying a double quote could close the
-attribute it landed in and open one of its own.
-
-#35 stopped tab ids being *evaluated* as JavaScript by routing them through
-``data-cf-tab``. That fix stands, but it moves the value from an expression
-into an attribute value, and attribute-value safety is what this file is for.
-Without it, #35 closed the execution path and left the injection path open on
-one of the two supported engines.
+The gap all of this closes is #35's other half: that ticket stopped tab ids
+being *evaluated* as JavaScript by routing them through ``data-cf-tab``. That
+fix stands, but it moves the value from an expression into an attribute value,
+and attribute-value safety is what this file is for.
 """
 
 import pytest
@@ -33,35 +31,35 @@ HOSTILE = '" onmouseover="window.cfPwned=true" x="'
 
 @pytest.fixture
 def catalog() -> Catalog:
-    """A catalog built exactly as a consuming app builds one."""
+    """A bare catalog: autoescape off, installer never called.
+
+    The unfriendliest configuration a consumer can hand cf-ui's templates —
+    and a supported one: ``add_folder`` directly is how ``install_cf_ui``
+    itself registers the templates.
+    """
     cat = Catalog()
-    install_cf_ui(cat, theme="bulma")
+    cat.add_folder(JINJA_TEMPLATES_DIR / "bulma", prefix="Cf")
     return cat
 
 
-# --- The installed configuration -------------------------------------------
+# --- The premise -------------------------------------------------------------
 
 
-def test_install_cf_ui_leaves_the_catalog_autoescaping(catalog: Catalog) -> None:
-    """The property every other assertion in this file rests on."""
-    assert catalog.jinja_env.autoescape is True
+def test_a_bare_catalog_is_not_autoescaping(catalog: Catalog) -> None:
+    """Pins that the escaping asserted below cannot be the environment's.
 
-
-def test_a_bare_catalog_is_not_autoescaping() -> None:
-    """Pins *why* the installer has to act: JinjaX's own default is off.
-
-    If a future JinjaX release flips this, the installer becomes a no-op and
-    this test is the thing that says so, rather than the guarantee quietly
-    coming from somewhere else.
+    ``jinjax.Catalog`` builds ``Environment(undefined=StrictUndefined)`` and
+    autoescape defaults to ``False``. If a future JinjaX release flips this,
+    the templates' own blocks become redundant rather than wrong — but this
+    file would start proving the wrong thing, and this test is what says so.
     """
-    assert not Catalog().jinja_env.autoescape
+    assert not catalog.jinja_env.autoescape
 
 
-# --- The injection itself ---------------------------------------------------
+# --- The injection itself ----------------------------------------------------
 
 
 def test_a_hostile_tab_id_cannot_open_a_new_attribute(catalog: Catalog) -> None:
-    """The test that was missing. #35 moved this value; it did not escape it."""
     html = catalog.render(
         "Cf:Tabs",
         tabs=[{"id": HOSTILE, "url": "/x/"}],
@@ -107,7 +105,28 @@ def test_text_nodes_are_escaped_too(catalog: Catalog) -> None:
     assert "&lt;script&gt;" in html
 
 
-# --- What must NOT change ---------------------------------------------------
+def test_escaping_holds_before_and_after_the_installer_runs(catalog: Catalog) -> None:
+    """The ordering hazard that killed the environment-level mechanism.
+
+    ``autoescape`` is read at *compile* time and JinjaX caches compiled
+    components, so under the installer-sets-a-flag design a component rendered
+    before ``install_cf_ui`` stayed compiled unescaped for the process
+    lifetime — silently, with the flag reading ``True``. With the block in the
+    template there is no ordering to get wrong; both renders here compile from
+    the same source and the second exercises the cached component.
+    """
+    tabs = {"tabs": [{"id": HOSTILE, "url": "/x/"}], "active": "", "hx_target": "tc"}
+
+    before = catalog.render("Cf:Tabs", extra_class="", **tabs)
+    assert 'onmouseover="window.cfPwned=true"' not in before
+
+    install_cf_ui(catalog, theme="bulma")
+
+    after = catalog.render("Cf:Tabs", extra_class="", **tabs)
+    assert 'onmouseover="window.cfPwned=true"' not in after
+
+
+# --- What must NOT change ----------------------------------------------------
 
 
 def test_slot_content_still_renders_as_markup(catalog: Catalog) -> None:
@@ -128,14 +147,34 @@ def test_slot_content_still_renders_as_markup(catalog: Catalog) -> None:
     assert "&lt;b&gt;" not in html
 
 
+def test_a_nested_component_is_not_double_escaped(catalog: Catalog) -> None:
+    """Each component autoescapes its own body; composition must not compound.
+
+    ``Catalog.render`` returns ``Markup``, so a component passed into another
+    component's slot arrives already marked safe — the inner block escaped its
+    interpolations once, and the outer block must not escape the result again.
+    """
+    inner = catalog.render(
+        "Cf:Tabs",
+        tabs=[{"id": "one", "url": "/one/"}],
+        active="one",
+        hx_target="tc",
+        extra_class="",
+    )
+    outer = catalog.render("Cf:Card", _content=inner, header="H", footer="", extra_class="")
+
+    assert 'role="tablist"' in outer
+    assert "&lt;" not in outer.split('role="tablist"')[0]
+
+
 def test_a_markup_prop_is_the_documented_way_to_pass_real_markup(catalog: Catalog) -> None:
     """The migration path, pinned — a prop is escaped unless it says otherwise.
 
     Not hypothetical: cf-ui's own E2E gallery passed a raw ``<button>`` string
-    as ``footer=``, and turning autoescape on rendered it as text, taking the
-    focus-trap and backdrop tests' control with it. Wrapping in ``Markup`` is
-    the fix a consumer makes, so both halves are asserted here rather than left
-    to the release note.
+    as ``footer=``, and escaping rendered it as text, taking the focus-trap
+    and backdrop tests' control with it. Wrapping in ``Markup`` is the fix a
+    consumer makes, so both halves are asserted here rather than left to the
+    release note.
     """
     escaped = catalog.render(
         "Cf:Modal",
@@ -158,20 +197,25 @@ def test_a_markup_prop_is_the_documented_way_to_pass_real_markup(catalog: Catalo
     assert '<button id="ok">' in live
 
 
-def test_axis_globals_still_emit_live_attributes(catalog: Catalog) -> None:
-    """``cf_ui_axis_attrs`` renders attributes, so it must survive autoescape.
+def test_axis_globals_still_emit_live_attributes() -> None:
+    """``cf_ui_axis_attrs`` renders attributes, so it must survive escaping.
 
-    ``assets.jinja`` pipes it through ``|safe``, but a global that is only safe
-    when every caller remembers a filter is not a guarantee. Asserted here
-    without the filter.
+    ``build_axis_globals`` wraps both globals in ``Markup``; ``assets.jinja``
+    additionally pipes them through ``|safe``. Asserted through the macro that
+    consumers actually call, on an installed catalog, since the globals only
+    exist after install.
     """
-    out = catalog.jinja_env.from_string("<html {{ cf_ui_axis_attrs() }}>").render()
+    cat = Catalog()
+    install_cf_ui(cat, theme="bulma")
+    out = cat.jinja_env.from_string(
+        "{% autoescape true %}<html {{ cf_ui_axis_attrs() }}>{% endautoescape %}"
+    ).render()
 
     assert 'data-accent="' in out
     assert "&#34;" not in out and "&quot;" not in out
 
 
-def test_axis_style_global_still_emits_a_live_style_element(catalog: Catalog) -> None:
+def test_axis_style_global_still_emits_a_live_style_element() -> None:
     cat = Catalog()
     install_cf_ui(
         cat,
@@ -193,103 +237,9 @@ def test_axis_style_global_still_emits_a_live_style_element(catalog: Catalog) ->
             }
         },
     )
-    out = cat.jinja_env.from_string("{{ cf_ui_axis_style() }}").render()
+    out = cat.jinja_env.from_string(
+        "{% autoescape true %}{{ cf_ui_axis_style() }}{% endautoescape %}"
+    ).render()
 
     assert "<style>" in out
     assert "&lt;style&gt;" not in out
-
-
-# --- The escape hatch -------------------------------------------------------
-
-
-def test_cf_ui_autoescape_false_leaves_the_environment_alone() -> None:
-    """The opt-out for anyone whose templates depend on the old behaviour.
-
-    Deliberately not a no-op wrapper around the same result: this is the
-    documented way to keep 0.1.x rendering after upgrading, so it is asserted
-    to actually leave autoescape off rather than merely to be accepted.
-    """
-    cat = Catalog()
-    install_cf_ui(cat, theme="bulma", cf_ui_autoescape=False)
-
-    assert not cat.jinja_env.autoescape
-
-    html = cat.render(
-        "Cf:Tabs",
-        tabs=[{"id": HOSTILE, "url": "/x/"}],
-        active="",
-        hx_target="tc",
-        extra_class="",
-    )
-    assert 'onmouseover="window.cfPwned=true"' in html
-
-
-# --- What the installer must not trample ------------------------------------
-
-
-def test_a_caller_supplied_autoescape_selector_survives_the_installer() -> None:
-    """Replaces a test that could not fail, and pins why it could not.
-
-    The previous version supplied ``autoescape=True`` and asserted ``True``
-    afterwards. ``install_cf_ui`` only ever *sets* ``True``, so that assertion
-    held whether the installer ran, no-opped, or was deleted outright — it had
-    no mutation to observe, while its name claimed coverage of the one risk the
-    review flagged as real.
-
-    The value that can actually be trampled is a **callable**.
-    ``select_autoescape`` is how a consumer expresses a per-template policy, and
-    replacing it with a blanket ``True`` changes how *their* templates render,
-    not just cf-ui's — a `.txt` or `.md` template that was deliberately left
-    unescaped starts emitting entities.
-    """
-    from jinja2 import Environment, select_autoescape
-
-    selector = select_autoescape(["html", "jinja"])
-    cat = Catalog(jinja_env=Environment(autoescape=selector))
-    install_cf_ui(cat, theme="bulma")
-
-    assert cat.jinja_env.autoescape is selector, (
-        "the installer replaced the caller's per-template policy with a blanket True"
-    )
-
-
-def test_the_installer_still_turns_autoescape_on_when_it_is_off() -> None:
-    """The other half of the guard — it must not become a way to skip #36.
-
-    Asserted alongside the selector case deliberately: a guard written as
-    ``if not env.autoescape`` is only correct if *both* directions hold, and a
-    test for either one alone would pass against a broken version of the other.
-    """
-    from jinja2 import Environment
-
-    cat = Catalog(jinja_env=Environment(autoescape=False))
-    install_cf_ui(cat, theme="bulma")
-
-    assert cat.jinja_env.autoescape is True
-
-
-def test_escaping_does_not_depend_on_when_the_installer_ran() -> None:
-    """``autoescape`` is read at *compile* time, and JinjaX caches components.
-
-    So a component rendered before ``install_cf_ui`` stays compiled without
-    escaping for the life of the process — silently, while
-    ``catalog.jinja_env.autoescape`` reads ``True`` the whole time. Every other
-    assertion in this file installs first and therefore cannot see it.
-
-    Not a hypothetical ordering: an app that renders during import or startup
-    warm-up, or that installs a second theme after serving has begun, lands
-    here. The installer drops the component cache so the flip is retroactive.
-    """
-    cat = Catalog()
-    cat.add_folder(JINJA_TEMPLATES_DIR / "bulma", prefix="Cf")
-
-    tabs = {"tabs": [{"id": HOSTILE, "url": "/x/"}], "active": "", "hx_target": "tc"}
-    before = cat.render("Cf:Tabs", extra_class="", **tabs)
-    assert 'onmouseover="window.cfPwned=true"' in before, (
-        "the pre-install render was already escaped — this test proves nothing"
-    )
-
-    install_cf_ui(cat, theme="bulma")
-
-    after = cat.render("Cf:Tabs", extra_class="", **tabs)
-    assert 'onmouseover="window.cfPwned=true"' not in after

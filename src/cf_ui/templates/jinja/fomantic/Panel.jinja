@@ -1,4 +1,5 @@
 {#def title, id="panel", content="", open=false, extra_class="" #}
+{% autoescape true %}
 {% set content = content if content is defined else "" %}
 {% set id = id if id is defined else "panel" %}
 {% set open = open if open is defined else false %}
@@ -28,3 +29,4 @@
     {{ content }}
   </div>
 </div>
+{% endautoescape %}

@@ -1,4 +1,5 @@
 {#def items=[], extra_class="" #}
+{% autoescape true %}
 {% set items = items if items is defined else [] %}
 {% set extra_class = extra_class if extra_class is defined else "" %}
 <nav class="ui breadcrumb {{ extra_class }}" aria-label="breadcrumbs">
@@ -11,3 +12,4 @@
   {% endif %}
   {% endfor %}
 </nav>
+{% endautoescape %}

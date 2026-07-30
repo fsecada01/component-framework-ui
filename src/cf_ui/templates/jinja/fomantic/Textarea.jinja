@@ -1,4 +1,5 @@
 {#def name, label, value="", error="", rows=4, extra_class="", input_class="" #}
+{% autoescape true %}
 {% set value = value if value is defined else "" %}
 {% set error = error if error is defined else "" %}
 {% set rows = rows if rows is defined else 4 %}
@@ -13,3 +14,4 @@
     {% if error %}<div class="ui basic red pointing prompt label">{{ error }}</div>{% endif %}
   </div>
 </div>
+{% endautoescape %}
