@@ -11,6 +11,7 @@ _CF_UI_STATIC_DIR = JINJA_TEMPLATES_DIR.parent.parent / "static" / "cf_ui"
 _THEME_CSS = {
     "bulma": "https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css",
     "daisy": "https://cdn.jsdelivr.net/npm/daisyui@4.7.2/dist/full.min.css",
+    "bootstrap": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css",
 }
 
 # DaisyUI ships component classes but no Tailwind utilities. The components use
@@ -21,6 +22,9 @@ _THEME_CSS = {
 _THEME_EXTRA_HEAD = {
     "bulma": "",
     "daisy": '<script src="https://cdn.tailwindcss.com"></script>',
+    # Bootstrap ships prebuilt CSS and cf-ui deliberately loads none of its
+    # JavaScript — Alpine owns modal, tab and panel state in every theme.
+    "bootstrap": "",
 }
 
 
