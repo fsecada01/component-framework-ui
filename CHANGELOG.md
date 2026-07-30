@@ -2,6 +2,45 @@
 
 ## [Unreleased]
 
+### Added — Bootstrap JS decision record and a version tripwire (#33)
+
+- **`docs/bootstrap.md`.** The CSS-only, Alpine-driven stance was a decision
+  taken during #22 and recorded nowhere a consumer or maintainer would look.
+  This states it, gives the three reasons in the order they mattered, and — the
+  part that was actually missing — answers "may I use a Bootstrap component
+  cf-ui does not ship?". Bootstrap 5.3.3 ships 12 JS-driven components; cf-ui
+  replaces four of those plugins across five of its own components, so eight are
+  uncovered. The page names them and gives three ways forward, with the one hard
+  rule: never put a `data-bs-*` attribute on a cf-ui component, because
+  Bootstrap's JS and `cf_ui_alpine.js` would then own the same state and the
+  failure is load-order dependent and intermittent.
+
+  It also records the per-theme behaviour driver as considered-and-deferred, so
+  the option is not relitigated from scratch, and states why: an abstraction for
+  a problem no consumer has reported, whose strongest motivation has an API that
+  does not exist yet.
+
+- **`tests/unit/test_bootstrap_version_pin.py`.** "Monitor for Bootstrap 6" is
+  not a commitment that survives; a red test is. `_DEFAULTS["bootstrap"]` is the
+  single place the major version is stated, and this fails the moment it leaves
+  the `5.x` line, with a failure message that *is* the checklist of what to
+  re-evaluate. Same pattern #17 established for Tailwind.
+
+  What it points at, verified against `v6-dev` rather than release notes:
+  `_modal.scss` is replaced by `_dialog.scss` with no `.modal*` selector left,
+  `modal.js` by `dialog.ts` on `HTMLDialogElement.showModal()`, and the JS
+  surface is growing rather than shrinking. cf-ui's bootstrap modal templates
+  carry eight `modal-*` references each, so the markup breaks at v6 on the CSS
+  alone — which is the useful part, because it means the JS question gets
+  re-asked for free at the moment it is cheapest to answer.
+
+### Fixed — tab ids no longer reach Alpine as expression source (#32)
+
+- The four Alpine bindings on each tab now read `$el.dataset.cfTab` instead of
+  an interpolated `'{{ tab.id }}'`. Same fix as the two shipped themes get in
+  #32; applied here so this theme does not land with the bug and need patching
+  twice. See that ticket for why HTML escaping cannot address it.
+
 ### Added — Bootstrap 5 theme (#22)
 
 All 14 components in both template sets, replacing the `PLANNED.md` stubs at
