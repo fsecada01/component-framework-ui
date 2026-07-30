@@ -28,6 +28,25 @@
   supported configuration: with it set, any request-controlled prop is an
   injection vector again.
 
+  **The installers only act when autoescape is off, and the change is
+  retroactive.** Two details that are easy to get wrong and were:
+
+  Jinja accepts a *callable* for `autoescape`, and `select_autoescape` is how an
+  app expresses a per-template policy. Setting `True` unconditionally replaced
+  that callable, silently changing how the app's *own* templates render — a
+  `.txt` or `.md` template deliberately left unescaped would start emitting
+  entities. Any truthy setting is now the caller's and is left untouched; only a
+  falsy one is turned on. This applies to both installers — the same line
+  existed on each.
+
+  And `autoescape` is read at **compile** time, while JinjaX caches compiled
+  components. A component rendered before `install_cf_ui` therefore stayed
+  compiled *without* escaping for the life of the process — silently, with
+  `catalog.jinja_env.autoescape` reading `True` throughout. An app that renders
+  during import or startup warm-up, or installs a second theme after serving
+  begins, landed here. The installer now drops the component cache, so the flip
+  applies to everything rather than to whatever had not been compiled yet.
+
 - **The axis globals are marked safe at the Jinja boundary.**
   `cf_ui_axis_attrs()` and `cf_ui_axis_style()` render markup — five attributes
   and a `<style>` element — so `build_axis_globals` now wraps them in `Markup`.

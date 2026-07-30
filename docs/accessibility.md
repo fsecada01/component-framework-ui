@@ -182,10 +182,19 @@ paths. Django/cotton always had it — Django autoescapes by default. On the
 JinjaX path it had to be turned on: `jinjax.Catalog()` builds its environment
 with `autoescape` off and adopts it only from a caller-supplied `jinja_env`, so
 until #36 a `tab.id` containing a double quote could break out of `data-cf-tab`
-itself and add attributes of its own. Both `install_cf_ui` functions now set
-`autoescape` on the environment they install into, and
+itself and add attributes of its own. Both `install_cf_ui` functions now turn
+`autoescape` on **when the environment they install into has it off**, and
 `tests/integration/test_jinja_autoescape.py` asserts it against a real catalog
 rather than a test-built environment.
+
+"When it is off" is load-bearing in both directions. Jinja accepts a callable
+for `autoescape`, and `select_autoescape` is how an app expresses a
+per-template policy; replacing it with a blanket `True` would change how the
+app's *own* templates render. And because `autoescape` is read at **compile**
+time — with JinjaX caching compiled components — a component rendered before
+the installer ran would otherwise stay compiled unescaped for the life of the
+process, while the flag reads `True`. The installer drops the component cache
+so the change is retroactive rather than order-dependent.
 
 Pass `cf_ui_autoescape=False` to opt out, if an app depends on unescaped
 interpolation through a cf-ui component. It is an escape hatch, not a supported

@@ -22,6 +22,7 @@ one of the two supported engines.
 import pytest
 from jinjax import Catalog
 
+from cf_ui import JINJA_TEMPLATES_DIR
 from cf_ui.fastapi import install_cf_ui
 
 #: A double quote, a live event handler, and a dangling attribute to swallow
@@ -223,11 +224,72 @@ def test_cf_ui_autoescape_false_leaves_the_environment_alone() -> None:
     assert 'onmouseover="window.cfPwned=true"' in html
 
 
-def test_a_caller_supplied_autoescaping_env_is_not_disturbed() -> None:
-    """Someone who already did the right thing keeps their configuration."""
+# --- What the installer must not trample ------------------------------------
+
+
+def test_a_caller_supplied_autoescape_selector_survives_the_installer() -> None:
+    """Replaces a test that could not fail, and pins why it could not.
+
+    The previous version supplied ``autoescape=True`` and asserted ``True``
+    afterwards. ``install_cf_ui`` only ever *sets* ``True``, so that assertion
+    held whether the installer ran, no-opped, or was deleted outright — it had
+    no mutation to observe, while its name claimed coverage of the one risk the
+    review flagged as real.
+
+    The value that can actually be trampled is a **callable**.
+    ``select_autoescape`` is how a consumer expresses a per-template policy, and
+    replacing it with a blanket ``True`` changes how *their* templates render,
+    not just cf-ui's — a `.txt` or `.md` template that was deliberately left
+    unescaped starts emitting entities.
+    """
+    from jinja2 import Environment, select_autoescape
+
+    selector = select_autoescape(["html", "jinja"])
+    cat = Catalog(jinja_env=Environment(autoescape=selector))
+    install_cf_ui(cat, theme="bulma")
+
+    assert cat.jinja_env.autoescape is selector, (
+        "the installer replaced the caller's per-template policy with a blanket True"
+    )
+
+
+def test_the_installer_still_turns_autoescape_on_when_it_is_off() -> None:
+    """The other half of the guard — it must not become a way to skip #36.
+
+    Asserted alongside the selector case deliberately: a guard written as
+    ``if not env.autoescape`` is only correct if *both* directions hold, and a
+    test for either one alone would pass against a broken version of the other.
+    """
     from jinja2 import Environment
 
-    cat = Catalog(jinja_env=Environment(autoescape=True))
+    cat = Catalog(jinja_env=Environment(autoescape=False))
     install_cf_ui(cat, theme="bulma")
 
     assert cat.jinja_env.autoescape is True
+
+
+def test_escaping_does_not_depend_on_when_the_installer_ran() -> None:
+    """``autoescape`` is read at *compile* time, and JinjaX caches components.
+
+    So a component rendered before ``install_cf_ui`` stays compiled without
+    escaping for the life of the process — silently, while
+    ``catalog.jinja_env.autoescape`` reads ``True`` the whole time. Every other
+    assertion in this file installs first and therefore cannot see it.
+
+    Not a hypothetical ordering: an app that renders during import or startup
+    warm-up, or that installs a second theme after serving has begun, lands
+    here. The installer drops the component cache so the flip is retroactive.
+    """
+    cat = Catalog()
+    cat.add_folder(JINJA_TEMPLATES_DIR / "bulma", prefix="Cf")
+
+    tabs = {"tabs": [{"id": HOSTILE, "url": "/x/"}], "active": "", "hx_target": "tc"}
+    before = cat.render("Cf:Tabs", extra_class="", **tabs)
+    assert 'onmouseover="window.cfPwned=true"' in before, (
+        "the pre-install render was already escaped — this test proves nothing"
+    )
+
+    install_cf_ui(cat, theme="bulma")
+
+    after = cat.render("Cf:Tabs", extra_class="", **tabs)
+    assert 'onmouseover="window.cfPwned=true"' not in after

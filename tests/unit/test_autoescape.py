@@ -110,6 +110,40 @@ def test_litestar_installer_still_chains_a_previous_callback() -> None:
     assert engine.engine.autoescape is True
 
 
+def test_litestar_installer_leaves_a_caller_supplied_selector_alone() -> None:
+    """The clobber is not specific to one installer.
+
+    The review flagged this on the Litestar path; the same line exists on the
+    FastAPI path and is asserted in the integration tier. Both are here because
+    a guard added to one and forgotten on the other reads as fixed.
+    """
+    from jinja2 import select_autoescape
+
+    from cf_ui.litestar import install_cf_ui
+
+    selector = select_autoescape(["html", "jinja"])
+    config = _fresh_config()
+    install_cf_ui(config, theme="bulma")
+
+    env = Environment(autoescape=selector)
+    config.engine_callback(SimpleNamespace(engine=env))
+
+    assert env.autoescape is selector
+
+
+def test_litestar_installer_still_turns_autoescape_on_when_it_is_off() -> None:
+    """Both directions of the guard, for the same reason as the FastAPI pair."""
+    from cf_ui.litestar import install_cf_ui
+
+    config = _fresh_config()
+    install_cf_ui(config, theme="bulma")
+
+    env = Environment(autoescape=False)
+    config.engine_callback(SimpleNamespace(engine=env))
+
+    assert env.autoescape is True
+
+
 def test_litestar_installer_still_registers_the_axis_globals() -> None:
     from cf_ui.litestar import install_cf_ui
 
