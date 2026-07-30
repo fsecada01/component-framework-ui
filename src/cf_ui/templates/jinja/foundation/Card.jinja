@@ -1,0 +1,18 @@
+{#def content="", header="", footer="", extra_class="" #}
+{% set header = header if header is defined else "" %}
+{% set content = content if content is defined else "" %}
+{% set footer = footer if footer is defined else "" %}
+{% set extra_class = extra_class if extra_class is defined else "" %}
+{# Foundation has no `.card-footer`; a trailing `.card-divider` is the
+   documented footer convention. #}
+<div class="card {{ extra_class }}">
+  {% if header %}
+  <div class="card-divider">
+    <h3>{{ header }}</h3>
+  </div>
+  {% endif %}
+  <div class="card-section">{{ content }}</div>
+  {% if footer %}
+  <div class="card-divider">{{ footer }}</div>
+  {% endif %}
+</div>

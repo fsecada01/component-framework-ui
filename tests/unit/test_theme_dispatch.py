@@ -37,7 +37,7 @@ COMPONENT_STEMS = [
     "textarea",
 ]
 
-IMPLEMENTED_THEMES = ["bulma", "daisy", "bootstrap"]
+IMPLEMENTED_THEMES = ["bulma", "daisy", "bootstrap", "foundation"]
 
 
 # --- The theme registry ----------------------------------------------------
@@ -74,12 +74,18 @@ def test_resolve_theme_accepts_bootstrap():
     assert resolve_theme("bootstrap") == "bootstrap"
 
 
+def test_resolve_theme_accepts_foundation():
+    from cf_ui.themes import resolve_theme
+
+    assert resolve_theme("foundation") == "foundation"
+
+
 def test_resolve_theme_rejects_a_stub_theme_by_name():
-    """foundation/fomantic are PLANNED.md stubs, not usable themes."""
+    """fomantic is still a PLANNED.md stub, not a usable theme."""
     from cf_ui.themes import ThemeError, resolve_theme
 
-    with pytest.raises(ThemeError, match="foundation"):
-        resolve_theme("foundation")
+    with pytest.raises(ThemeError, match="fomantic"):
+        resolve_theme("fomantic")
 
 
 def test_resolve_theme_error_names_the_available_themes():

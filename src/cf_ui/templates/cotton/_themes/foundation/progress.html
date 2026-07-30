@@ -1,0 +1,21 @@
+{% comment %} Not a native `<progress>`. Foundation 6.7.5's compiled CSS gives the bare
+   element only `vertical-align: baseline`; every colour rule is
+   `.progress.<variant> .progress-meter`, which needs a child the native
+   control cannot have. So the ARIA the native element would have supplied is
+   written out by hand, and the meter width is an inline style because
+   Foundation ships no width utility for it. `widthratio` returns "0" on a
+   zero max rather than raising. `tabindex` is deliberately omitted — a
+   progress bar is not an interactive stop. {% endcomment %}
+<div class="{{ class }}">
+  {% if label %}<p class="text-center">{{ label }}</p>{% endif %}
+  <div class="progress {% if type == 'danger' or type == 'error' %}alert{% elif type == 'success' %}success{% elif type == 'warning' %}warning{% elif type == 'secondary' %}secondary{% else %}primary{% endif %}"
+       role="progressbar"
+       aria-valuenow="{{ value }}"
+       aria-valuemin="0"
+       aria-valuemax="{{ max }}"
+       {% if label %}aria-label="{{ label }}"{% endif %}>
+    <span class="progress-meter" style="width: {% widthratio value max 100 %}%">
+      <span class="progress-meter-text">{% widthratio value max 100 %}%</span>
+    </span>
+  </div>
+</div>

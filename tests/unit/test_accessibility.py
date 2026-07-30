@@ -25,13 +25,19 @@ from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoes
 TEMPLATES_DIR = Path(__file__).parent.parent.parent / "src" / "cf_ui" / "templates"
 JINJA_DIR = TEMPLATES_DIR / "jinja"
 
-THEMES = ["bulma", "daisy", "bootstrap"]
+THEMES = ["bulma", "daisy", "bootstrap", "foundation"]
 
 #: The class each theme puts on the *selected* tab, and the element it sits on.
 #: Bulma marks the ``<li>``; DaisyUI and Bootstrap mark the ``<a role="tab">``
-#: itself. Matched as a whole class token, so Bootstrap's bare ``active`` does
+#: itself; Foundation marks the ``<li class="tabs-title">``, reusing Bulma's
+#: token. Matched as a whole class token, so Bootstrap's bare ``active`` does
 #: not collide with Bulma's ``is-active``.
-ACTIVE_TAB_CLASS = {"bulma": "is-active", "daisy": "tab-active", "bootstrap": "active"}
+ACTIVE_TAB_CLASS = {
+    "bulma": "is-active",
+    "daisy": "tab-active",
+    "bootstrap": "active",
+    "foundation": "is-active",
+}
 
 
 @pytest.fixture(params=THEMES)

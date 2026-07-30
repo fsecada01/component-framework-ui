@@ -1,0 +1,23 @@
+{#def name, label, choices=[], selected=[], error="", extra_class="", control_class="" #}
+{% set choices = choices if choices is defined else [] %}
+{% set selected = selected if selected is defined else [] %}
+{% set error = error if error is defined else "" %}
+{% set extra_class = extra_class if extra_class is defined else "" %}
+{% set control_class = control_class if control_class is defined else "" %}
+{# Foundation groups checkboxes in a fieldset/legend and pairs a *sibling*
+   `label[for]` with each input rather than wrapping it, so every box needs an
+   id of its own — a shared one would point every label at the first input. #}
+<fieldset class="fieldset {{ extra_class }}">
+  <legend>{{ label }}</legend>
+  <div class="{{ control_class }}">
+    {% for choice in choices %}
+    <input type="checkbox"
+           id="{{ name }}-{{ loop.index }}"
+           name="{{ name }}"
+           value="{{ choice.value }}"
+           {% if choice.value in selected %}checked{% endif %}>
+    <label for="{{ name }}-{{ loop.index }}">{{ choice.label }}</label>
+    {% endfor %}
+  </div>
+  {% if error %}<span class="form-error is-visible">{{ error }}</span>{% endif %}
+</fieldset>
