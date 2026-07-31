@@ -54,6 +54,24 @@
   License, Python 3.11–3.14, Framework and Topic entries. There were none at
   all, which is what the PyPI page is built from.
 
+### Release automation (#45)
+
+- **Added `.github/workflows/release.yml`.** A `v*` tag builds, validates, and
+  publishes to PyPI via **trusted publishing** — the job mints a short-lived
+  OIDC token that PyPI exchanges for an upload token scoped to this project.
+  No API token is created, stored, or rotated, so there is no repo secret to
+  leak. The upload is a separate job behind a `pypi` environment, so
+  protection rules can require a review before anything reaches PyPI.
+- **The build job refuses to hand off a wheel that is missing its templates.**
+  cf-ui is templates; they live inside the package so hatchling picks them up
+  with no explicit include, which is exactly what would make a regression here
+  quiet — a packaging change that dropped them would produce a wheel that
+  installs cleanly, imports cleanly, and renders nothing. The job counts the
+  JinjaX templates, the cotton wrappers and theme partials, and asserts
+  `assets.jinja` and the generated axis assets are present. It also checks the
+  tag against `pyproject.toml`'s version and runs `twine check`, because a bad
+  upload can only be yanked, never replaced.
+
 ### Documentation — a published site, and three broken README samples fixed (#39)
 
 - **A MkDocs + Material site now builds from `docs/` and deploys to GitHub
