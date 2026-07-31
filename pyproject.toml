@@ -23,7 +23,10 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
-    "component-framework>=0.4",
+    # >=0.6: 0.6.0 is the only final release on PyPI. 0.4.x and 0.5.x exist
+    # only as `b0` pre-release tags, so `>=0.4` claimed a compatibility range
+    # that was never published and never tested (#50).
+    "component-framework>=0.6",
     "pydantic>=2.0",
 ]
 
@@ -99,9 +102,6 @@ include = [
 testpaths = ["tests"]
 pythonpath = ["src"]
 asyncio_mode = "auto"
-
-[tool.uv.sources]
-component-framework = { git = "https://github.com/fsecada01/component-framework.git" }
 
 [tool.ruff]
 line-length = 100
