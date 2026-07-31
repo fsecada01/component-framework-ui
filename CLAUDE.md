@@ -60,6 +60,8 @@ Templates live **inside** the Python package so hatchling includes them automati
 
 **JinjaX (`jinjax>=0.41`):**
 - API is `catalog.add_folder(path, prefix="Cf")` — NOT `add_path()`
+- Attributes do **not** interpolate: `header="{{ title }}"` reaches the component as literal braces, silently. Computed values need the colon binding, `:header="title"`. django-cotton is the opposite — `{{ }}` there is ordinary Django syntax. `tests/unit/test_docs_samples.py` fails the build on a braced `Cf:` attribute
+- `Catalog(jinja_env=env)` does **not** convert `env` — it builds its own environment, copying extensions/globals across, and only writes `catalog` back into the one passed. To make a foreign environment (Litestar's) render component tags you must `env.add_extension(JinjaX)`, build the catalog over it, *and* bind `__prefix` as a global, or every tag raises `'__prefix' is undefined`. See `cf_ui/litestar.py`
 - jinjax exports `Catalog`, **not** `ComponentCatalog` — the latter name does not exist and README documented it for two releases
 - `Cf` is a JinjaX *prefix* and the prefix separator is `:` (jinjax's `PREFIX_SEP`; `DELIMITER` is `.` and is for subfolders) — so the tag is `<Cf:Card>` and the render name is `"Cf:Card"`. `<CfCard>` and `<Cf.Card>` both raise `ComponentNotFound`. `tests/unit/test_docs_samples.py` renders all three forms so the docs cannot drift back
 - `class` is a Python reserved word in `{#def}` headers — use `extra_class` instead

@@ -44,22 +44,26 @@ there is no separate "invalid" flag to keep in sync.
     ```jinja
     {#def form_values={}, errors={} #}
     <form method="post">
-      <Cf:FormField name="email" label="Email" type="email" required="{{ True }}"
-                    value="{{ form_values.get('email', '') }}"
-                    error="{{ errors.get('email', '') }}" />
+      <Cf:FormField name="email" label="Email" type="email" :required="True"
+                    :value="form_values.get('email', '')"
+                    :error="errors.get('email', '')" />
 
       <Cf:Select name="plan" label="Plan"
-                 value="{{ form_values.get('plan', '') }}"
-                 error="{{ errors.get('plan', '') }}"
+                 :value="form_values.get('plan', '')"
+                 :error="errors.get('plan', '')"
                  :options="plan_options" />
 
-      <Cf:Textarea name="notes" label="Notes" rows="{{ 6 }}"
-                   value="{{ form_values.get('notes', '') }}"
-                   error="{{ errors.get('notes', '') }}" />
+      <Cf:Textarea name="notes" label="Notes" :rows="6"
+                   :value="form_values.get('notes', '')"
+                   :error="errors.get('notes', '')" />
 
       <button type="submit" class="button is-primary">Save</button>
     </form>
     ```
+
+    Every computed value uses the `:prop=` binding. JinjaX does **not**
+    interpolate `{{ … }}` inside an attribute — the braces would reach the
+    component as literal text, silently.
 
 The option and choice shapes:
 
@@ -145,7 +149,7 @@ Declare the modal once, then open it from anywhere by id.
     {#def job_id=0 #}
     <Cf:Modal id="confirm-delete" header="Delete this record?"
               label="Confirm deletion"
-              footer="{{ footer_markup }}">
+              :footer="footer_markup">
       This cannot be undone.
     </Cf:Modal>
 

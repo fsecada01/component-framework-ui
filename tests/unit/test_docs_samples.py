@@ -227,6 +227,41 @@ def test_no_code_sample_uses_the_tag_form_that_does_not_resolve(path: Path):
         )
 
 
+#: A `<Cf:Tag ...>` up to its closing `>`, so its attributes can be inspected.
+JINJA_TAG = re.compile(r"<Cf:[A-Z]\w*[^>]*>", re.S)
+
+
+@pytest.mark.parametrize("path", MARKDOWN_FILES, ids=_rel)
+def test_no_jinjax_sample_interpolates_with_braces_in_an_attribute(path: Path):
+    """``header="{{ title }}"`` does not interpolate in JinjaX — silently.
+
+    The braces arrive at the component as literal text, with no exception and
+    a 200 response. Computed values need the colon binding, ``:header="title"``.
+    Four published samples had the brace form before #42.
+
+    django-cotton is the opposite — ``<c-cf.card header="{{ title }}">`` is
+    ordinary Django template syntax and correct — so this checks only ``Cf:``
+    tags.
+    """
+    for lang, source in _blocks(path):
+        for tag in JINJA_TAG.findall(source):
+            assert "{{" not in tag, (
+                f"{_rel(path)}: a {lang or 'plain'} sample has a JinjaX tag with a "
+                f"braced attribute: {' '.join(tag.split())[:90]!r}\n"
+                "JinjaX does not interpolate {{ }} inside attributes — use "
+                '`:prop="expr"` instead.'
+            )
+
+
+def test_the_braced_attribute_guard_matches_the_shape_it_targets():
+    """Pin the guard: it must flag the brace form and pass the colon form."""
+    assert JINJA_TAG.findall('<Cf:Card header="{{ t }}">x</Cf:Card>')
+    assert "{{" in JINJA_TAG.findall('<Cf:Card header="{{ t }}">')[0]
+    assert "{{" not in JINJA_TAG.findall('<Cf:Card :header="t">')[0]
+    # A cotton tag must not be picked up at all.
+    assert not JINJA_TAG.findall('<c-cf.card header="{{ t }}">')
+
+
 # ── The two tag forms really do behave as documented ──────────────────────
 
 

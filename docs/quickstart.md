@@ -137,12 +137,18 @@ catalog.add_folder(Path("templates"))
 
 ```jinja
 {#def title="" #}
-<Cf:Card header="{{ title }}">
+<Cf:Card :header="title">
   Card body content.
 </Cf:Card>
 
 <Cf:FormField name="email" label="Email" value="" extra_class="mb-4" />
 ```
+
+!!! danger "Use `:prop=` to pass a value, not `prop="{{ }}"`"
+    JinjaX does **not** interpolate `{{ … }}` inside an attribute — the braces
+    arrive at the component as literal text, with no error. A plain
+    `prop="text"` is a literal string; anything computed needs the colon
+    binding: `:header="title"`, `:rows="6"`, `:options="plan_options"`.
 
 !!! danger "The prefix separator is a colon"
     `<Cf:Card>`. Not `<CfCard>` and not `<Cf.Card>` — both raise
@@ -201,8 +207,9 @@ app = Litestar(route_handlers=[home], template_config=config)
     `litestar.contrib.jinja` path still works but warns, and goes away in
     Litestar 3.0.
 
-Litestar renders through plain Jinja2 rather than JinjaX, so use the asset
-macros and Jinja `include`/`import` rather than component tags:
+Component tags work here exactly as they do on FastAPI. `install_cf_ui`
+installs a JinjaX catalog onto Litestar's own Jinja2 environment, so ordinary
+Litestar templates can use `<Cf:…>` directly:
 
 ```jinja
 {# templates/home.html #}
@@ -211,11 +218,23 @@ macros and Jinja `include`/`import` rather than component tags:
 <html lang="en">
 <head>{{ cf_ui_head(theme="bulma") }}</head>
 <body>
-  <h1>{{ title }}</h1>
+  <Cf:Card :header="title">
+    Card body content.
+  </Cf:Card>
+
+  <Cf:Notification message="Saved." type="success" />
+
   {{ cf_ui_body(theme="bulma") }}
 </body>
 </html>
 ```
+
+!!! note "Litestar gained component rendering in 0.2.0"
+    Before that, `<Cf:Card>` reached the browser as literal text and
+    `{% from "cf_ui/assets.jinja" %}` raised `TemplateNotFound` — the
+    installer registered neither a catalog nor the directory the macros live
+    in. Both are fixed, and a live Litestar app now renders components in the
+    integration suite.
 
 ## Next
 
