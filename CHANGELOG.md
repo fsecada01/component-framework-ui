@@ -2,6 +2,34 @@
 
 ## [Unreleased]
 
+### Changed — dependencies resolve from PyPI, not from git (#50)
+
+- **Dropped the `[tool.uv.sources]` git pin for `component-framework`.** It
+  never travelled into wheel metadata, so no consumer was affected — but CI
+  runs `uv pip install -e ".[dev]"`, which *does* honour the sources table, so
+  every test run resolved the dependency from git master rather than from a
+  release. Concretely: the dev environment was serving **0.6.0b0 from commit
+  2833311** while 0.6.0 was live on PyPI. The suite was not exercising what
+  users install. The pin was correct while nothing was published; the failure
+  mode was forgetting to remove it afterwards.
+
+- **Raised the floor to `component-framework>=0.6`.** 0.6.0 is the only final
+  release; 0.4.x and 0.5.x exist only as `b0` tags, so `>=0.4` named a
+  compatibility range that was never published and never tested. It also
+  invited exactly the pre-release fallback that produced the `0.6.0b0` above —
+  a specifier without a pre-release marker resolves to one only when no final
+  exists.
+
+- **`tests/unit/test_dependency_sources.py` is the guard**, on both halves.
+  It fails if any dependency is resolved from a git, URL, or path source
+  (`workspace` and `index` entries are allowed — those are layout, not a
+  substitute for a release), if the floor slips below the first published
+  final, and — reading `direct_url.json` per PEP 610 — if the *installed*
+  distribution came from a VCS. That last one matters because a clean
+  `pyproject.toml` says nothing about a stale venv still serving whatever the
+  pin last resolved; it was red against this repo's own environment until the
+  reinstall.
+
 ## [0.2.0] — 2026-07-31
 
 First release published to PyPI. Five themes instead of two, an axis layer
