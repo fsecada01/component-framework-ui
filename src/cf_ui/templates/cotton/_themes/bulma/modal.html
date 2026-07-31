@@ -1,11 +1,13 @@
-<div id="{{ id }}"
-     class="modal {{ class }}"
-     role="dialog"
-     aria-modal="true"
-     {% if header %}aria-labelledby="{{ id }}-title"{% else %}aria-label="{{ label|default:'Dialog' }}"{% endif %}
-     x-data="cfModal"
-     x-init="initModal()"
-     :class="{ 'is-active': open }">
+<div
+  id="{{ id }}"
+  class="modal {{ class }}"
+  role="dialog"
+  aria-modal="true"
+  {% if header %}aria-labelledby="{{ id }}-title"{% else %}aria-label="{{ label|default:'Dialog' }}"{% endif %}
+  x-data="cfModal"
+  x-init="initModal()"
+  :class="{ 'is-active': open }"
+>
   <div class="modal-background" @click="close()"></div>
   <div class="modal-card">
     <header class="modal-card-head">

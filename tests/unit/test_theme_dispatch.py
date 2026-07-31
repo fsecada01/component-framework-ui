@@ -252,8 +252,13 @@ def test_switching_the_setting_switches_the_rendered_markup(settings, stem):
         "state": "loading",
         "variant": "danger",
         "size": "large",
-        "level": "3",
         "emphasis": "subtle",
+        # These two are not merely restated defaults: `level` becomes the tag
+        # name and `type` an attribute value, so an empty one is malformed
+        # rather than unstyled and the guard rejects it (#52 review, F1/F2).
+        # Without the compiler to apply <c-vars>, they have to come from here.
+        "level": "3",
+        "type": "submit",
     }
 
     rendered = {}

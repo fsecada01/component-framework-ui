@@ -23,7 +23,9 @@ just test-all                     # full suite
 just lint                         # ruff check
 just lint-fix                     # ruff check --fix
 just format                       # ruff format
-just check                        # lint + unit tests
+just format-templates             # djlint --reformat, both template trees
+just lint-templates               # djlint check, both template trees
+just check                        # lint + lint-templates + unit tests
 just build                        # hatch build wheel
 
 pytest tests/unit/ -v                          # unit tests
@@ -80,6 +82,15 @@ Templates live **inside** the Python package so hatchling includes them automati
 
 **Django AppConfig:**
 - Register as `"cf_ui.django.CfUiConfig"` (full class path), NOT `"cf_ui.django"` — `default_app_config` is removed in Django 4.2+
+
+**Primitives (`primitives.py`):**
+- `AXIS_KINDS` says what an axis's value *becomes* — `"class"`, `"tag"` or `"attribute"` — and that one fact decides both whether the axis needs a per-theme class map and whether an empty value is benign. Django resolves a missing variable to `""` and the wrappers forward props unconditionally, so an empty class-valued axis **must** pass (unstyled is the correct outcome); an empty tag/attribute one raises, because it renders malformed markup. `CLASS_VALUED` is derived from it — never hand-maintain the two
+- `ALIASES` holds props whose HTML spelling cf-ui cannot use (`for` → `for_id`). The wrapper forwards the HTML spelling into the guard *purely to reject it*, because django-cotton silently discards attributes a component does not declare. It catches declared confusions only — a plain typo is still dropped without a word
+- A `test_*_calls_the_guard` test that only asserts the string `cf_ui_validate` appears is vacuous. Assert every declared axis is *passed* in the call — two guards silently lost an axis before that check existed
+
+**djLint:**
+- `prek` reformats both template trees with `single_attribute_per_line`. It is layout inside the opening tag only — never let it near a `class="…"` value, where added whitespace changes the rendered bytes and breaks substring assertions
+- Because of it, no test may assume attribute ordering or adjacency. `"required>" in html` was such an assertion; anchor to the element (`<input\b[^>]*\brequired\b`) instead
 
 **Theme axes / Tailwind plugin:**
 - `axes.py` is the single source of truth; `cf_ui_axes.css` **and** `cf_ui_axes.json`

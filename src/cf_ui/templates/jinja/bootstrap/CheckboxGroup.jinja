@@ -1,28 +1,30 @@
 {#def name, label, choices=[], selected=[], error="", extra_class="", control_class="" #}
 {% autoescape true %}
-{% set choices = choices if choices is defined else [] %}
-{% set selected = selected if selected is defined else [] %}
-{% set error = error if error is defined else "" %}
-{% set extra_class = extra_class if extra_class is defined else "" %}
-{% set control_class = control_class if control_class is defined else "" %}
-<div class="mb-3 {{ extra_class }}">
-  <label class="form-label">{{ label }}</label>
-  <div{% if control_class %} class="{{ control_class }}"{% endif %}>
-    {% for choice in choices %}
-    <div class="form-check form-check-inline">
-      <input class="form-check-input"
-             type="checkbox"
-             id="{{ name }}-{{ choice.value }}"
-             name="{{ name }}"
-             value="{{ choice.value }}"
-             {% if choice.value in selected %}checked{% endif %}>
-      <label class="form-check-label" for="{{ name }}-{{ choice.value }}">{{ choice.label }}</label>
+  {% set choices = choices if choices is defined else [] %}
+  {% set selected = selected if selected is defined else [] %}
+  {% set error = error if error is defined else "" %}
+  {% set extra_class = extra_class if extra_class is defined else "" %}
+  {% set control_class = control_class if control_class is defined else "" %}
+  <div class="mb-3 {{ extra_class }}">
+    <label class="form-label">{{ label }}</label>
+    <div{% if control_class %} class="{{ control_class }}"{% endif %}>
+      {% for choice in choices %}
+        <div class="form-check form-check-inline">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            id="{{ name }}-{{ choice.value }}"
+            name="{{ name }}"
+            value="{{ choice.value }}"
+            {% if choice.value in selected %}checked{% endif %}
+          >
+          <label class="form-check-label" for="{{ name }}-{{ choice.value }}">{{ choice.label }}</label>
+        </div>
+      {% endfor %}
     </div>
-    {% endfor %}
-  </div>
-  {# `.invalid-feedback` is display:none until an `.is-invalid` sibling precedes
+    {# `.invalid-feedback` is display:none until an `.is-invalid` sibling precedes
      it, and a checkbox group has none — `d-block` keeps the message from
      rendering invisibly. #}
-  {% if error %}<div class="invalid-feedback d-block">{{ error }}</div>{% endif %}
-</div>
+    {% if error %}<div class="invalid-feedback d-block">{{ error }}</div>{% endif %}
+  </div>
 {% endautoescape %}

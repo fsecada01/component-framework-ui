@@ -1,13 +1,13 @@
 {% comment %} Foundation has no `.card-footer`; a trailing `.card-divider` is the
-   documented footer convention. {% endcomment %}
+documented footer convention. {% endcomment %}
 <div class="card {{ class }}">
   {% if header %}
-  <div class="card-divider">
-    <h3>{{ header }}</h3>
-  </div>
+    <div class="card-divider">
+      <h3>{{ header }}</h3>
+    </div>
   {% endif %}
   <div class="card-section">{{ slot }}</div>
   {% if footer %}
-  <div class="card-divider">{{ footer }}</div>
+    <div class="card-divider">{{ footer }}</div>
   {% endif %}
 </div>

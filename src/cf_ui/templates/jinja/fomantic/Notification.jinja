@@ -1,18 +1,25 @@
 {#def message, type="info", dismissible=true, extra_class="" #}
 {% autoescape true %}
-{% set type = type if type is defined else "info" %}
-{% set dismissible = dismissible if dismissible is defined else true %}
-{% set extra_class = extra_class if extra_class is defined else "" %}
-<div role="alert"
-     class="ui {% if type == 'danger' or type == 'error' %}negative{% elif type == 'success' %}positive{% elif type == 'warning' %}warning{% else %}info{% endif %} message {{ extra_class }}"
-     x-data="{ visible: true }"
-     x-show="visible">
-  {% if dismissible %}
-  {# `.ui.message > .close.icon` positions this; the glyph rules are scoped to
+  {% set type = type if type is defined else "info" %}
+  {% set dismissible = dismissible if dismissible is defined else true %}
+  {% set extra_class = extra_class if extra_class is defined else "" %}
+  <div
+    role="alert"
+    class="ui {% if type == 'danger' or type == 'error' %}negative{% elif type == 'success' %}positive{% elif type == 'warning' %}warning{% else %}info{% endif %} message {{ extra_class }}"
+    x-data="{ visible: true }"
+    x-show="visible"
+  >
+    {% if dismissible %}
+      {# `.ui.message > .close.icon` positions this; the glyph rules are scoped to
      `i.icon`, so a `<button>` keeps the placement and renders its own text —
      which is what makes it a real, focusable control rather than an `<i>`. #}
-  <button type="button" class="close icon" aria-label="dismiss" @click="visible = false">&times;</button>
-  {% endif %}
-  <div class="content">{{ message }}</div>
-</div>
+      <button
+        type="button"
+        class="close icon"
+        aria-label="dismiss"
+        @click="visible = false"
+      >&times;</button>
+    {% endif %}
+    <div class="content">{{ message }}</div>
+  </div>
 {% endautoescape %}

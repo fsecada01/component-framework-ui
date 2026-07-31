@@ -1,18 +1,18 @@
 {#def content="", header="", footer="", extra_class="" #}
 {% autoescape true %}
-{% set header = header if header is defined else "" %}
-{% set content = content if content is defined else "" %}
-{% set footer = footer if footer is defined else "" %}
-{% set extra_class = extra_class if extra_class is defined else "" %}
-<div class="card {{ extra_class }}">
-  {% if header %}
-  <div class="card-header">
-    <h5 class="card-title mb-0">{{ header }}</h5>
+  {% set header = header if header is defined else "" %}
+  {% set content = content if content is defined else "" %}
+  {% set footer = footer if footer is defined else "" %}
+  {% set extra_class = extra_class if extra_class is defined else "" %}
+  <div class="card {{ extra_class }}">
+    {% if header %}
+      <div class="card-header">
+        <h5 class="card-title mb-0">{{ header }}</h5>
+      </div>
+    {% endif %}
+    <div class="card-body">{{ content }}</div>
+    {% if footer %}
+      <div class="card-footer">{{ footer }}</div>
+    {% endif %}
   </div>
-  {% endif %}
-  <div class="card-body">{{ content }}</div>
-  {% if footer %}
-  <div class="card-footer">{{ footer }}</div>
-  {% endif %}
-</div>
 {% endautoescape %}

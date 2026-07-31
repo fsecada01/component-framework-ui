@@ -1,26 +1,26 @@
 {#def columns=[], rows=[], hx_target="", hx_url="", extra_class="" #}
 {% autoescape true %}
-{% set columns = columns if columns is defined else [] %}
-{% set rows = rows if rows is defined else [] %}
-{% set extra_class = extra_class if extra_class is defined else "" %}
-<div class="table-responsive {{ extra_class }}">
-  <table class="table table-striped table-hover">
-    <thead>
-      <tr>
-        {% for col in columns %}
-        <th scope="col">{{ col.label }}</th>
+  {% set columns = columns if columns is defined else [] %}
+  {% set rows = rows if rows is defined else [] %}
+  {% set extra_class = extra_class if extra_class is defined else "" %}
+  <div class="table-responsive {{ extra_class }}">
+    <table class="table table-striped table-hover">
+      <thead>
+        <tr>
+          {% for col in columns %}
+            <th scope="col">{{ col.label }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+          <tr>
+            {% for col in columns %}
+              <td>{{ row[col.key] }}</td>
+            {% endfor %}
+          </tr>
         {% endfor %}
-      </tr>
-    </thead>
-    <tbody>
-      {% for row in rows %}
-      <tr>
-        {% for col in columns %}
-        <td>{{ row[col.key] }}</td>
-        {% endfor %}
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
+      </tbody>
+    </table>
+  </div>
 {% endautoescape %}

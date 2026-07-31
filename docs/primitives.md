@@ -13,18 +13,19 @@ worse API than either choice on its own.
 
 ## The shared vocabularies
 
-Four axes, each a **closed set**, declared in
+Six axes, each a **closed set**, declared in
 [`cf_ui/primitives.py`](https://github.com/fsecada01/component-framework-ui/blob/master/src/cf_ui/primitives.py).
 An unknown value raises `PrimitiveConfigError` naming the values that would
 have worked — it does not fall through to an unstyled element.
 
-| Axis | Values |
-|---|---|
-| `variant` | `primary` `secondary` `success` `warning` `danger` `info` `neutral` |
-| `size` | `small` `normal` `large` |
-| `state` | `normal` `loading` `disabled` |
-| `level` | `1`–`6` |
-| `emphasis` | `normal` `subtle` |
+| Axis | Values | Becomes |
+|---|---|---|
+| `variant` | `primary` `secondary` `success` `warning` `danger` `info` `neutral` | a class |
+| `size` | `small` `normal` `large` | a class |
+| `state` | `normal` `loading` `disabled` | a class |
+| `emphasis` | `normal` `subtle` | a class |
+| `level` | `1`–`6` | the **tag** |
+| `type` | `button` `submit` `reset` | an **attribute** |
 
 Seven variants, not "whatever the framework ships". All five frameworks can
 express all seven, though two collapse a pair onto one class — Foundation has
@@ -53,6 +54,46 @@ cannot express "small" and would be a wrong-direction lie. Switching
 `CF_UI_THEME` can therefore change whether `size` has any effect on a given
 primitive.
 
+## What an axis value becomes, and why it matters
+
+The third column of that table is not decoration. It is the one fact that
+decides two separate things.
+
+**Whether the axis has a per-theme class map.** Class-valued axes do. `level`
+and `type` do not, because there is nothing to map — the value *is* the tag
+name, or the attribute value.
+
+**Whether an empty value is allowed.** For a class-valued axis it is: the class
+is simply not emitted, and you get a valid element that is merely unstyled.
+That tolerance is load-bearing rather than lax — Django resolves a missing
+context variable to `""`, and every cotton wrapper forwards its props
+unconditionally, so a guard that rejected empty values would reject ordinary
+renders.
+
+For `level` and `type` an empty value is *not* benign, so it raises:
+
+```
+<c-cf.heading :level="section.depth">   # depth is None
+
+PrimitiveConfigError: heading needs a level — it becomes the element's tag,
+so an empty one renders malformed markup rather than unstyled markup.
+Pass one of: 1, 2, 3, 4, 5, 6
+```
+
+Without that check the render succeeds and emits `<h class="title">Section</h>`.
+`<h>` is not an element. Browsers parse it as an unknown inline, and it still
+picks up the `title` class — so it *looks* like a heading while being absent
+from the document outline and unreachable by screen-reader heading navigation.
+It is the exact silent failure the guard exists to convert into an exception,
+in the one axis where an empty value degrades to malformed rather than
+unstyled.
+
+`type` is the same shape with a sharper edge. HTML's missing-value default for
+an **invalid** `<button type>` is `submit` — so `type="sumbit"` does not render
+an inert button, it renders one that submits the enclosing form. cf-ui defaults
+to `button` precisely to avoid that, and an open set would have let a typo undo
+it silently.
+
 ## Colour is not a channel on its own
 
 A `danger` badge and a `success` badge differ only by hue. If the badge's own
@@ -73,13 +114,13 @@ caller's obligation.
 
 ## Which primitive takes which axis
 
-| Primitive | `variant` | `size` | `state` | `level` | `emphasis` |
-|---|:-:|:-:|:-:|:-:|:-:|
-| `button` | ● | ● | ● | | |
-| `badge` | ● | ● | | | |
-| `heading` | | ● | | ● | ● |
-| `label` | | ● | | | |
-| `icon` | | ● | | | |
+| Primitive | `variant` | `size` | `state` | `emphasis` | `level` | `type` |
+|---|:-:|:-:|:-:|:-:|:-:|:-:|
+| `button` | ● | ● | ● | | | ● |
+| `badge` | ● | ● | | | | |
+| `heading` | | ● | | ● | ● | |
+| `label` | | ● | | | | |
+| `icon` | | ● | | | | |
 
 `label` and `icon` take no `variant` on purpose. A label's colour belongs to
 the field it labels and an icon's to whatever contains it; giving either its
@@ -155,7 +196,7 @@ is built.
 | `size` | `"normal"` | |
 | `state` | `"normal"` | `loading` renders the framework's spinner; `disabled` is described below |
 | `href` | `""` | Non-empty renders an `<a>`; empty renders a `<button>` |
-| `type` | `"button"` | Only applies to the `<button>` form |
+| `type` | `"button"` | `button` `submit` `reset`. Only applies to the `<button>` form |
 | `full_width` | `false` | |
 | `extra_class` / `class` | `""` | `extra_class` in JinjaX, `class` in cotton — `class` is a Python reserved word |
 | slot | — | The label |
@@ -195,7 +236,7 @@ reach for `class="rounded-pill"` instead.
 
 | Prop | Default | Notes |
 |---|---|---|
-| `level` | `"2"` | Renders `<h1>`…`<h6>`. Semantics only |
+| `level` | `"2"` | `1`–`6`. Renders `<h1>`…`<h6>`. Semantics only; cannot be empty |
 | `size` | `"normal"` | Visual size, independent of `level` |
 | `emphasis` | `"normal"` | `subtle` for a de-emphasised heading |
 | `extra_class` / `class` | `""` | |
@@ -221,8 +262,31 @@ reach for `class="rounded-pill"` instead.
     `for` is a Python reserved word, so JinjaX cannot express it. django-cotton
     *can*, which is the hazard: `<c-cf.label for="email">` would render valid
     HTML with no `for` attribute at all and a silently broken label/control
-    association. The cotton wrapper routes any stray `for` through the guard,
-    so it raises `PrimitiveConfigError` instead of rendering wrong.
+    association.
+
+    `for` is therefore a **declared alias** — `primitives.ALIASES` maps it to
+    `for_id`, the wrapper forwards it into the guard, and it raises naming the
+    prop that works:
+
+    ```
+    PrimitiveConfigError: label takes no 'for' — use 'for_id'.
+    ```
+
+### What the alias table does and does not catch
+
+`ALIASES` covers props whose natural **HTML spelling** differs from cf-ui's —
+the name a caller will reach for first. Today that is one entry, and adding a
+theme or a primitive does not change it.
+
+It does **not** catch arbitrary misspellings. `<c-cf.icon labl="Delete item">`
+still renders a decorative icon with the accessible name silently dropped,
+because django-cotton discards any attribute a component does not declare —
+for every cotton component in every project, not just cf-ui's. That is a
+property of the template engine, not something a wrapper can close from the
+inside. Treat cf-ui's prop names as exact.
+
+The JinjaX side behaves the same way for a different reason: an undeclared
+attribute lands in `attrs`, which cf-ui's templates do not render.
 
 The required indicator is a single `<span role="img" aria-label="required">*</span>`
 rather than a hidden-glyph-plus-visually-hidden-text pair, because Fomantic

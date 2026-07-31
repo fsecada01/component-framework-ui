@@ -1,21 +1,25 @@
 <div class="ui form {{ class }}">
-  <div class="grouped fields{% if control_class %} {{ control_class }}{% endif %}{% if error %} error{% endif %}">
+  <div
+    class="grouped fields{% if control_class %} {{ control_class }}{% endif %}{% if error %} error{% endif %}"
+  >
     <label>{{ label }}</label>
     {% for choice in choices %}
-    <div class="field">
-      {% comment %} Fomantic's CSS-only checkbox works because the real input is stretched
+      <div class="field">
+        {% comment %} Fomantic's CSS-only checkbox works because the real input is stretched
          invisibly over the box, so a click anywhere hits it. That is a mouse
          affordance, not an accessible name — the label is wired up with
-         for/id so a screen reader announces it too. {% endcomment %}
-      <div class="ui checkbox">
-        <input type="checkbox"
-               id="{{ name }}-{{ forloop.counter }}"
-               name="{{ name }}"
-               value="{{ choice.value }}"
-               {% if choice.value in selected %}checked{% endif %}>
-        <label for="{{ name }}-{{ forloop.counter }}">{{ choice.label }}</label>
+        for/id so a screen reader announces it too. {% endcomment %}
+        <div class="ui checkbox">
+          <input
+            type="checkbox"
+            id="{{ name }}-{{ forloop.counter }}"
+            name="{{ name }}"
+            value="{{ choice.value }}"
+            {% if choice.value in selected %}checked{% endif %}
+          >
+          <label for="{{ name }}-{{ forloop.counter }}">{{ choice.label }}</label>
+        </div>
       </div>
-    </div>
     {% endfor %}
     {% if error %}<div class="ui basic red pointing prompt label">{{ error }}</div>{% endif %}
   </div>

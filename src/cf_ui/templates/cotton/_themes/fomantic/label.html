@@ -3,4 +3,6 @@ styling comes from the ancestry rather than a class — hence the two wrappers,
 exactly as `form-field.html` carries them. Size lands on the form
 (`.ui.small.form` / `.ui.large.form`) because `.field > label` is sized in
 `em`.{% endcomment %}
-<div class="ui{% if size == 'small' %} small{% elif size == 'large' %} large{% endif %} form"><div class="field"><label class="{{ class }}"{% if for_id %} for="{{ for_id }}"{% endif %}>{{ slot }}{% if required %} <span class="ui red text" role="img" aria-label="required">*</span>{% endif %}</label></div></div>
+<div
+  class="ui{% if size == 'small' %} small{% elif size == 'large' %} large{% endif %} form"
+><div class="field"><label class="{{ class }}"{% if for_id %} for="{{ for_id }}"{% endif %}>{{ slot }}{% if required %} <span class="ui red text" role="img" aria-label="required">*</span>{% endif %}</label></div></div>

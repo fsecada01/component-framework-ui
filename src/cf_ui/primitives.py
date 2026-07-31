@@ -49,13 +49,17 @@ from typing import Any
 from cf_ui.themes import THEMES
 
 __all__ = [
+    "ALIASES",
+    "AXIS_KINDS",
     "CLASSES",
+    "CLASS_VALUED",
     "EMPHASIS",
     "LEVELS",
     "PRIMITIVES",
     "PRIMITIVE_DEFINITION_PATH",
     "SIZES",
     "STATES",
+    "TYPES",
     "VARIANTS",
     "VOCABULARIES",
     "PrimitiveConfigError",
@@ -110,13 +114,17 @@ STATES: tuple[str, ...] = ("normal", "loading", "disabled")
 #: Heading levels, as strings — they land in a tag name, and ``{{ level }}``
 #: renders ``1`` for both ``1`` and ``"1"``. Kept as strings so the vocabulary
 #: and the rendered value are the same type.
-#:
-#: Unlike the other axes this one is *tag*-valued: every theme maps all six
-#: levels to an empty class, because the semantics live in ``<h1>``…``<h6>``
-#: rather than in a class. That is correct, but it does mean ``CLASSES``
-#: cannot express the distinction — worth knowing before a second tag-valued
-#: axis is added.
 LEVELS: tuple[str, ...] = ("1", "2", "3", "4", "5", "6")
+
+#: The three values HTML defines for ``<button type>``.
+#:
+#: Closed for the same reason every other axis is, but the failure it prevents
+#: is worse than an unstyled element: HTML's missing-value default for an
+#: *invalid* ``type`` is ``submit``, so ``type="sumbit"`` does not render an
+#: inert button — it renders one that submits the enclosing form. cf-ui
+#: defaults to ``button`` precisely to avoid that, and an unvalidated typo
+#: undoes it silently.
+TYPES: tuple[str, ...] = ("button", "submit", "reset")
 
 #: De-emphasis, as an axis rather than a boolean prop.
 #:
@@ -138,6 +146,67 @@ VOCABULARIES: dict[str, tuple[str, ...]] = {
     "state": STATES,
     "level": LEVELS,
     "emphasis": EMPHASIS,
+    "type": TYPES,
+}
+
+#: What an axis's value *becomes* in the rendered element.
+#:
+#: This is not bookkeeping. It answers the two questions the vocabularies on
+#: their own cannot, and it answers both from one fact:
+#:
+#: ``class``
+#:     The value is one class among several on an element. It needs a
+#:     per-theme entry in :data:`CLASSES`, and an **empty value is benign** —
+#:     the class is simply not emitted and the element stays valid, just
+#:     unstyled. That matters because Django resolves a missing context
+#:     variable to ``""``, so :func:`validate` has to tolerate it.
+#:
+#: ``tag`` / ``attribute``
+#:     The value is the element's name, or an attribute's. There is no class
+#:     to map, so :data:`CLASSES` carries no entry — and an **empty value is
+#:     not benign**. ``<h{{ level }}>`` with nothing in ``level`` renders
+#:     ``<h>``: an element that does not exist, which browsers parse as an
+#:     unknown inline. It still picks up the ``title`` class, so it looks
+#:     right while being absent from the document outline and unreachable by
+#:     screen-reader heading navigation. Silent, and exactly the failure this
+#:     module exists to prevent, so :func:`validate` raises instead.
+#:
+#: ``level`` used to carry a class map of thirty empty strings and a comment
+#: warning that a second tag-valued axis would need a real answer. ``type``
+#: is that second axis. This is the answer.
+AXIS_KINDS: dict[str, str] = {
+    "variant": "class",
+    "size": "class",
+    "state": "class",
+    "emphasis": "class",
+    "level": "tag",
+    "type": "attribute",
+}
+
+#: Axes whose value lands in a class — the ones :data:`CLASSES` must map.
+CLASS_VALUED: frozenset[str] = frozenset(
+    axis for axis, kind in AXIS_KINDS.items() if kind == "class"
+)
+
+#: Props whose natural HTML spelling is *not* the name cf-ui uses, mapped to
+#: the name that works.
+#:
+#: These are not typos — they are the spelling a caller will reach for first,
+#: and django-cotton accepts an undeclared attribute happily and drops it. The
+#: result is valid HTML missing the attribute that mattered:
+#: ``<c-cf.label for="email">`` renders a ``<label>`` with no ``for``, so the
+#: label is associated with nothing and no error says so.
+#:
+#: ``for`` is renamed because it is a Python reserved word and JinjaX cannot
+#: express it as a prop. Each wrapper forwards the HTML spelling into
+#: :func:`validate`, which raises here rather than letting it vanish.
+#:
+#: This traps *declared* aliases only. An arbitrary misspelling
+#: (``<c-cf.icon labl="…">``) is still dropped silently, by django-cotton, for
+#: every cotton component in every project — not something cf-ui can close
+#: from inside a wrapper. See ``docs/primitives.md``.
+ALIASES: dict[str, dict[str, str]] = {
+    "label": {"for": "for_id"},
 }
 
 #: Which axes each primitive accepts. This is the prop contract for all of
@@ -149,7 +218,7 @@ VOCABULARIES: dict[str, tuple[str, ...]] = {
 #: belongs to the field it labels, and an icon's belongs to whatever contains
 #: it. Giving them one invites two sources of truth for the same colour.
 PRIMITIVES: dict[str, tuple[str, ...]] = {
-    "button": ("variant", "size", "state"),
+    "button": ("variant", "size", "state", "type"),
     "badge": ("variant", "size"),
     "heading": ("level", "size", "emphasis"),
     "label": ("size",),
@@ -335,13 +404,11 @@ _HEADING_CLASSES: dict[str, dict[str, Any]] = {
         # additive — the emphasis axis carries the base class instead. This is
         # the case that forced `emphasis` to become an axis at all.
         "base": "",
-        "level": {"1": "", "2": "", "3": "", "4": "", "5": "", "6": ""},
         "size": {"small": "is-6", "normal": "is-4", "large": "is-2"},
         "emphasis": {"normal": "title", "subtle": "subtitle"},
     },
     "bootstrap": {
         "base": "",
-        "level": {"1": "", "2": "", "3": "", "4": "", "5": "", "6": ""},
         # `.h1`–`.h6` are real utilities that outrank the tag selector, which
         # is what lets level and size be set independently.
         "size": {"small": "h6", "normal": "h4", "large": "h1"},
@@ -349,13 +416,11 @@ _HEADING_CLASSES: dict[str, dict[str, Any]] = {
     },
     "foundation": {
         "base": "",
-        "level": {"1": "", "2": "", "3": "", "4": "", "5": "", "6": ""},
         "size": {"small": "h6", "normal": "h4", "large": "h2"},
         "emphasis": {"normal": "", "subtle": "subheader"},
     },
     "fomantic": {
         "base": "ui header",
-        "level": {"1": "", "2": "", "3": "", "4": "", "5": "", "6": ""},
         # Fomantic's ladder is mini/tiny/small/(nothing)/large/big/huge/massive
         # — there is no `.ui.medium.header`. `normal` therefore emits the
         # literal token `large`. It reads oddly, and it is the only way to keep
@@ -371,7 +436,6 @@ _HEADING_CLASSES: dict[str, dict[str, Any]] = {
         # Tailwind Preflight strips font-size and font-weight from h1–h6, so
         # without this a daisy heading renders as body text.
         "base": "font-bold",
-        "level": {"1": "", "2": "", "3": "", "4": "", "5": "", "6": ""},
         "size": {"small": "text-base", "normal": "text-2xl", "large": "text-4xl"},
         "emphasis": {"normal": "", "subtle": "opacity-60"},
     },
@@ -510,25 +574,53 @@ def validate(component: str, **axes: Any) -> str:
     they were given, and an omitted prop is filled by the component's default
     further down, so absence is not an error.
 
+    An **empty** value is where this gets subtle, and :data:`AXIS_KINDS` is
+    what decides it. Django resolves a missing context variable to ``""``, so
+    an empty class-valued axis has to pass — it drops a class and leaves a
+    valid element. An empty tag- or attribute-valued axis does not: it renders
+    ``<h>`` or ``type=""``, which is malformed rather than merely unstyled, so
+    it raises.
+
     Args:
         component: A key of :data:`PRIMITIVES`.
-        **axes: Axis values to check, e.g. ``variant="primary"``.
+        **axes: Axis values to check, e.g. ``variant="primary"``. May also
+            carry a declared alias from :data:`ALIASES` — a wrapper forwards
+            the HTML spelling so it can be rejected rather than dropped.
 
     Returns:
         The empty string, always.
 
     Raises:
         PrimitiveConfigError: On an unknown component, an axis the component
-            does not accept, or a value outside that axis's vocabulary.
+            does not accept, a value outside that axis's vocabulary, an empty
+            value for an axis that cannot take one, or a declared alias.
     """
     accepted = PRIMITIVES.get(component)
     if accepted is None:
         known = ", ".join(sorted(PRIMITIVES))
         raise PrimitiveConfigError(f"unknown primitive {component!r} — known primitives: {known}")
 
+    aliases = ALIASES.get(component, {})
+
     for axis, value in axes.items():
         if value is None or value == "":
+            # Benign for a class — the class is not emitted and the element
+            # stays valid. Not benign for a tag or an attribute.
+            kind = AXIS_KINDS.get(axis)
+            if axis in accepted and kind is not None and kind != "class":
+                raise PrimitiveConfigError(
+                    f"{component} needs a {axis} — it becomes the element's "
+                    f"{kind}, so an empty one renders malformed markup rather "
+                    f"than unstyled markup. Pass one of: "
+                    f"{', '.join(VOCABULARIES[axis])}"
+                )
             continue
+        if axis in aliases:
+            raise PrimitiveConfigError(
+                f"{component} takes no {axis!r} — use {aliases[axis]!r}. "
+                f"({axis!r} is a Python reserved word, so the prop is spelled "
+                f"differently; passing the HTML name would silently drop it.)"
+            )
         if axis not in accepted:
             raise PrimitiveConfigError(
                 f"{component} takes no {axis!r} — it accepts: {', '.join(accepted)}"
@@ -583,6 +675,8 @@ def classes_for(theme: str, component: str, **axes: Any) -> str:
 
     parts = [mapping["base"]]
     for axis in PRIMITIVES[component]:
+        if axis not in CLASS_VALUED:
+            continue  # tag- and attribute-valued axes carry no class
         value = axes.get(axis)
         if value:
             parts.append(mapping[axis][str(value)])
@@ -608,6 +702,7 @@ def primitive_definition() -> dict[str, Any]:
     """
     return {
         "vocabularies": {axis: list(values) for axis, values in VOCABULARIES.items()},
+        "axis_kinds": dict(AXIS_KINDS),
         "primitives": {name: list(axes) for name, axes in PRIMITIVES.items()},
         "classes": deepcopy(CLASSES),
     }

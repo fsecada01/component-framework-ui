@@ -1,10 +1,12 @@
 {#def content="", size="normal", label="", extra_class="" #}
 {% autoescape true %}
-{% set content = content if content is defined else "" %}
-{% set size = size if size is defined else "normal" %}
-{% set label = label if label is defined else "" %}
-{% set extra_class = extra_class if extra_class is defined else "" %}
-{{ cf_ui_validate("icon", size=size) }}
-<span class="icon{% if size == 'small' %} is-small{% elif size == 'large' %} is-large{% endif %}{% if extra_class %} {{ extra_class }}{% endif %}"
-{%- if label %} role="img" aria-label="{{ label }}"{% else %} aria-hidden="true"{% endif %}>{{ content }}</span>
+  {% set content = content if content is defined else "" %}
+  {% set size = size if size is defined else "normal" %}
+  {% set label = label if label is defined else "" %}
+  {% set extra_class = extra_class if extra_class is defined else "" %}
+  {{ cf_ui_validate("icon", size=size) }}
+  <span
+    class="icon{% if size == 'small' %} is-small{% elif size == 'large' %} is-large{% endif %}{% if extra_class %} {{ extra_class }}{% endif %}"
+    {%- if label %} role="img" aria-label="{{ label }}"{% else %} aria-hidden="true"{% endif %}
+  >{{ content }}</span>
 {% endautoescape %}

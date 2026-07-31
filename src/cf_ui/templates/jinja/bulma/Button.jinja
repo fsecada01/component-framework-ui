@@ -1,16 +1,16 @@
 {#def content="", variant="neutral", size="normal", state="normal", href="", type="button", full_width=false, extra_class="" #}
 {% autoescape true %}
-{% set content = content if content is defined else "" %}
-{% set variant = variant if variant is defined else "neutral" %}
-{% set size = size if size is defined else "normal" %}
-{% set state = state if state is defined else "normal" %}
-{% set href = href if href is defined else "" %}
-{% set type = type if type is defined else "button" %}
-{% set full_width = full_width if full_width is defined else false %}
-{% set extra_class = extra_class if extra_class is defined else "" %}
-{{ cf_ui_validate("button", variant=variant, size=size, state=state) }}
-{%- set cf_tag = "a" if href else "button" -%}
-<{{ cf_tag }} class="button{% if variant == 'primary' %} is-primary{% elif variant == 'secondary' %} is-link{% elif variant == 'success' %} is-success{% elif variant == 'warning' %} is-warning{% elif variant == 'danger' %} is-danger{% elif variant == 'info' %} is-info{% endif %}{% if size == 'small' %} is-small{% elif size == 'large' %} is-large{% endif %}{% if state == 'loading' %} is-loading{% endif %}{% if full_width %} is-fullwidth{% endif %}{% if extra_class %} {{ extra_class }}{% endif %}"
-{%- if href %}{% if state == 'disabled' %} role="link" aria-disabled="true"{% else %} href="{{ href }}"{% endif %}
+  {% set content = content if content is defined else "" %}
+  {% set variant = variant if variant is defined else "neutral" %}
+  {% set size = size if size is defined else "normal" %}
+  {% set state = state if state is defined else "normal" %}
+  {% set href = href if href is defined else "" %}
+  {% set type = type if type is defined else "button" %}
+  {% set full_width = full_width if full_width is defined else false %}
+  {% set extra_class = extra_class if extra_class is defined else "" %}
+  {{ cf_ui_validate("button", variant=variant, size=size, state=state, type=type) }}
+  {%- set cf_tag = "a" if href else "button" -%}
+  <{{ cf_tag }} class="button{% if variant == 'primary' %} is-primary{% elif variant == 'secondary' %} is-link{% elif variant == 'success' %} is-success{% elif variant == 'warning' %} is-warning{% elif variant == 'danger' %} is-danger{% elif variant == 'info' %} is-info{% endif %}{% if size == 'small' %} is-small{% elif size == 'large' %} is-large{% endif %}{% if state == 'loading' %} is-loading{% endif %}{% if full_width %} is-fullwidth{% endif %}{% if extra_class %} {{ extra_class }}{% endif %}"
+  {%- if href %}{% if state == 'disabled' %} role="link" aria-disabled="true"{% else %} href="{{ href }}"{% endif %}
 {%- else %} type="{{ type }}"{% if state == 'disabled' %} disabled{% endif %}{% endif %}>{{ content }}</{{ cf_tag }}>
 {% endautoescape %}

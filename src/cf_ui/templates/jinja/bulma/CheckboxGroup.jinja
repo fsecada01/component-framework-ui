@@ -1,18 +1,20 @@
 {#def name, label, choices=[], selected=[], error="", extra_class="", control_class="" #}
 {% autoescape true %}
-<div class="field {{ extra_class }}">
-  <label class="label">{{ label }}</label>
-  <div class="control{% if control_class %} {{ control_class }}{% endif %}">
-    {% for choice in choices %}
-    <label class="checkbox mr-3">
-      <input type="checkbox"
-             name="{{ name }}"
-             value="{{ choice.value }}"
-             {% if choice.value in selected %}checked{% endif %}>
-      {{ choice.label }}
-    </label>
-    {% endfor %}
+  <div class="field {{ extra_class }}">
+    <label class="label">{{ label }}</label>
+    <div class="control{% if control_class %} {{ control_class }}{% endif %}">
+      {% for choice in choices %}
+        <label class="checkbox mr-3">
+          <input
+            type="checkbox"
+            name="{{ name }}"
+            value="{{ choice.value }}"
+            {% if choice.value in selected %}checked{% endif %}
+          >
+          {{ choice.label }}
+        </label>
+      {% endfor %}
+    </div>
+    {% if error %}<p class="help is-danger">{{ error }}</p>{% endif %}
   </div>
-  {% if error %}<p class="help is-danger">{{ error }}</p>{% endif %}
-</div>
 {% endautoescape %}

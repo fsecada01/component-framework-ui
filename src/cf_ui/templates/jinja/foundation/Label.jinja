@@ -1,12 +1,12 @@
 {#def content="", size="normal", for_id="", required=false, extra_class="" #}
 {% autoescape true %}
-{% set content = content if content is defined else "" %}
-{% set size = size if size is defined else "normal" %}
-{% set for_id = for_id if for_id is defined else "" %}
-{% set required = required if required is defined else false %}
-{% set extra_class = extra_class if extra_class is defined else "" %}
-{{ cf_ui_validate("label", size=size) }}
-{# No base class on purpose. Foundation styles form labels off the element
+  {% set content = content if content is defined else "" %}
+  {% set size = size if size is defined else "normal" %}
+  {% set for_id = for_id if for_id is defined else "" %}
+  {% set required = required if required is defined else false %}
+  {% set extra_class = extra_class if extra_class is defined else "" %}
+  {{ cf_ui_validate("label", size=size) }}
+  {# No base class on purpose. Foundation styles form labels off the element
    (`label { font-size: .875rem; font-weight: 400 }`), and its `.label` class is
    the *badge* component — a blue pill with padding and a white foreground.
    Applying it here would turn every field label into a tag.
@@ -14,5 +14,8 @@
    `lead` is the only real font-size class Foundation ships outside the button
    scale, and at 125% it lands on 1.25rem — the same size `.button.large` uses.
    There is no counterpart below the default, so `small` maps to nothing. #}
-<label class="{% if size == 'large' %}lead {% endif %}{{ extra_class }}"{% if for_id %} for="{{ for_id }}"{% endif %}>{{ content }}{% if required %} <span role="img" aria-label="required">*</span>{% endif %}</label>
+  <label
+    class="{% if size == 'large' %}lead {% endif %}{{ extra_class }}"
+    {% if for_id %} for="{{ for_id }}"{% endif %}
+  >{{ content }}{% if required %} <span role="img" aria-label="required">*</span>{% endif %}</label>
 {% endautoescape %}

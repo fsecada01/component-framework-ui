@@ -1,15 +1,15 @@
 {% comment %} Foundation draws the "/" separator with `.breadcrumbs li:not(:last-child)::after`,
-   so the markup must not carry one of its own. {% endcomment %}
+so the markup must not carry one of its own. {% endcomment %}
 <nav aria-label="breadcrumbs">
   <ul class="breadcrumbs {{ class }}">
     {% for item in items %}
-    <li>
-      {% if forloop.last %}
-      <a href="{{ item.url }}" aria-current="page">{{ item.label }}</a>
-      {% else %}
-      <a href="{{ item.url }}">{{ item.label }}</a>
-      {% endif %}
-    </li>
+      <li>
+        {% if forloop.last %}
+          <a href="{{ item.url }}" aria-current="page">{{ item.label }}</a>
+        {% else %}
+          <a href="{{ item.url }}">{{ item.label }}</a>
+        {% endif %}
+      </li>
     {% endfor %}
   </ul>
 </nav>

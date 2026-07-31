@@ -30,13 +30,27 @@
     "emphasis": [
       "normal",
       "subtle"
+    ],
+    "type": [
+      "button",
+      "submit",
+      "reset"
     ]
+  },
+  "axis_kinds": {
+    "variant": "class",
+    "size": "class",
+    "state": "class",
+    "emphasis": "class",
+    "level": "tag",
+    "type": "attribute"
   },
   "primitives": {
     "button": [
       "variant",
       "size",
-      "state"
+      "state",
+      "type"
     ],
     "badge": [
       "variant",
@@ -97,14 +111,6 @@
       },
       "heading": {
         "base": "",
-        "level": {
-          "1": "",
-          "2": "",
-          "3": "",
-          "4": "",
-          "5": "",
-          "6": ""
-        },
         "size": {
           "small": "is-6",
           "normal": "is-4",
@@ -174,14 +180,6 @@
       },
       "heading": {
         "base": "font-bold",
-        "level": {
-          "1": "",
-          "2": "",
-          "3": "",
-          "4": "",
-          "5": "",
-          "6": ""
-        },
         "size": {
           "small": "text-base",
           "normal": "text-2xl",
@@ -251,14 +249,6 @@
       },
       "heading": {
         "base": "",
-        "level": {
-          "1": "",
-          "2": "",
-          "3": "",
-          "4": "",
-          "5": "",
-          "6": ""
-        },
         "size": {
           "small": "h6",
           "normal": "h4",
@@ -328,14 +318,6 @@
       },
       "heading": {
         "base": "",
-        "level": {
-          "1": "",
-          "2": "",
-          "3": "",
-          "4": "",
-          "5": "",
-          "6": ""
-        },
         "size": {
           "small": "h6",
           "normal": "h4",
@@ -405,14 +387,6 @@
       },
       "heading": {
         "base": "ui header",
-        "level": {
-          "1": "",
-          "2": "",
-          "3": "",
-          "4": "",
-          "5": "",
-          "6": ""
-        },
         "size": {
           "small": "small",
           "normal": "large",

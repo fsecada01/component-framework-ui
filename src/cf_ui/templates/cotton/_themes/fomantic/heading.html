@@ -9,5 +9,5 @@
    `size` also has no `medium` step to map `normal` onto: Fomantic ships mini, tiny, small,
    large, big, huge and massive, with nothing between small and large. Emitting no size
    class would fall back to the *tag's* size and re-couple size to level, so `normal` takes
-   `large` (1.71em) — the token reads oddly, the rendered size does not. {% endcomment %}
+`large` (1.71em) — the token reads oddly, the rendered size does not. {% endcomment %}
 <h{{ level }} class="ui header{% if size == 'small' %} small{% elif size == 'normal' %} large{% elif size == 'large' %} massive{% endif %}{% if emphasis == 'subtle' %} grey{% endif %}{% if class %} {{ class }}{% endif %}">{{ slot }}</h{{ level }}>

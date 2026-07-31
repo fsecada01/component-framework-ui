@@ -1,18 +1,21 @@
 {#def items=[], extra_class="" #}
 {% autoescape true %}
-{% set items = items if items is defined else [] %}
-{% set extra_class = extra_class if extra_class is defined else "" %}
-<nav class="breadcrumbs text-sm {{ extra_class }}" aria-label="breadcrumbs">
-  <ul>
-    {% for item in items %}
-    <li>
-      {% if loop.last %}
-      <a href="{{ item.url }}" aria-current="page">{{ item.label }}</a>
-      {% else %}
-      <a href="{{ item.url }}">{{ item.label }}</a>
-      {% endif %}
-    </li>
-    {% endfor %}
-  </ul>
-</nav>
+  {% set items = items if items is defined else [] %}
+  {% set extra_class = extra_class if extra_class is defined else "" %}
+  <nav
+    class="breadcrumbs text-sm {{ extra_class }}"
+    aria-label="breadcrumbs"
+  >
+    <ul>
+      {% for item in items %}
+        <li>
+          {% if loop.last %}
+            <a href="{{ item.url }}" aria-current="page">{{ item.label }}</a>
+          {% else %}
+            <a href="{{ item.url }}">{{ item.label }}</a>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  </nav>
 {% endautoescape %}

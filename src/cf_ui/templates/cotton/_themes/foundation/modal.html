@@ -9,24 +9,31 @@
    The overlay is the root because `.reveal` is `position: relative; top: 100px`
    — it is only centred and scrollable because the fixed, full-screen overlay
    is its container. The plugin injects that wrapper at runtime; here it is
-   just markup. {% endcomment %}
-<div id="{{ id }}"
-     class="reveal-overlay {{ class }}"
-     role="dialog"
-     aria-modal="true"
-     {% if header %}aria-labelledby="{{ id }}-title"{% else %}aria-label="{{ label|default:'Dialog' }}"{% endif %}
-     x-data="cfModal"
-     x-init="initModal()"
-     :style="open ? 'display: block' : 'display: none'"
-     @click.self="close()">
+just markup. {% endcomment %}
+<div
+  id="{{ id }}"
+  class="reveal-overlay {{ class }}"
+  role="dialog"
+  aria-modal="true"
+  {% if header %}aria-labelledby="{{ id }}-title"{% else %}aria-label="{{ label|default:'Dialog' }}"{% endif %}
+  x-data="cfModal"
+  x-init="initModal()"
+  :style="open ? 'display: block' : 'display: none'"
+  @click.self="close()"
+>
   <div class="reveal" style="display: block">
-    <button type="button" class="close-button" aria-label="close" @click="close()">
+    <button
+      type="button"
+      class="close-button"
+      aria-label="close"
+      @click="close()"
+    >
       <span aria-hidden="true">&times;</span>
     </button>
     {% if header %}<h2 id="{{ id }}-title">{{ header }}</h2>{% endif %}
     <div>{{ slot }}</div>
     {% if footer %}
-    <div class="text-right">{{ footer }}</div>
+      <div class="text-right">{{ footer }}</div>
     {% endif %}
   </div>
 </div>

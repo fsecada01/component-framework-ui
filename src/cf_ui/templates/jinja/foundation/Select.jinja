@@ -1,24 +1,27 @@
 {#def name, label, value="", error="", options=[], extra_class="", input_class="" #}
 {% autoescape true %}
-{% set value = value if value is defined else "" %}
-{% set error = error if error is defined else "" %}
-{% set options = options if options is defined else [] %}
-{% set extra_class = extra_class if extra_class is defined else "" %}
-{% set input_class = input_class if input_class is defined else "" %}
-<div class="{{ extra_class }}">
-  <label for="{{ name }}"{% if error %} class="is-invalid-label"{% endif %}>{{ label }}</label>
-  <select class="{% if error %}is-invalid-input{% endif %}{% if input_class %} {{ input_class }}{% endif %}"
-          id="{{ name }}"
-          name="{{ name }}"
-          {% if error %}aria-invalid="true" aria-describedby="{{ name }}-error"{% endif %}>
-    {% for opt in options %}
-    <option value="{{ opt.value }}"{% if opt.value|string == value|string %} selected{% endif %}>
-      {{ opt.label }}
-    </option>
-    {% endfor %}
-  </select>
-  {% if error %}
-  <span class="form-error is-visible" id="{{ name }}-error">{{ error }}</span>
-  {% endif %}
-</div>
+  {% set value = value if value is defined else "" %}
+  {% set error = error if error is defined else "" %}
+  {% set options = options if options is defined else [] %}
+  {% set extra_class = extra_class if extra_class is defined else "" %}
+  {% set input_class = input_class if input_class is defined else "" %}
+  <div class="{{ extra_class }}">
+    <label for="{{ name }}"{% if error %} class="is-invalid-label"{% endif %}>{{ label }}</label>
+    <select
+      class="{% if error %}is-invalid-input{% endif %}{% if input_class %} {{ input_class }}{% endif %}"
+      id="{{ name }}"
+      name="{{ name }}"
+      {% if error %}aria-invalid="true" aria-describedby="{{ name }}-error"{% endif %}
+    >
+      {% for opt in options %}
+        <option
+          value="{{ opt.value }}"
+          {% if opt.value|string == value|string %} selected{% endif %}
+        >{{ opt.label }}</option>
+      {% endfor %}
+    </select>
+    {% if error %}
+      <span class="form-error is-visible" id="{{ name }}-error">{{ error }}</span>
+    {% endif %}
+  </div>
 {% endautoescape %}

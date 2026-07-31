@@ -1,12 +1,12 @@
 {#def content="", size="normal", for_id="", required=false, extra_class="" #}
 {% autoescape true %}
-{% set content = content if content is defined else "" %}
-{% set size = size if size is defined else "normal" %}
-{% set for_id = for_id if for_id is defined else "" %}
-{% set required = required if required is defined else false %}
-{% set extra_class = extra_class if extra_class is defined else "" %}
-{{ cf_ui_validate("label", size=size) }}
-{# `.label` is the flex row; `.label-text` is what actually carries the font
+  {% set content = content if content is defined else "" %}
+  {% set size = size if size is defined else "normal" %}
+  {% set for_id = for_id if for_id is defined else "" %}
+  {% set required = required if required is defined else false %}
+  {% set extra_class = extra_class if extra_class is defined else "" %}
+  {{ cf_ui_validate("label", size=size) }}
+  {# `.label` is the flex row; `.label-text` is what actually carries the font
    size and colour — the same pair `FormField.jinja` renders. Size has to go on
    the inner span because `.label-text` sets `font-size` itself, so a utility
    on the outer `<label>` would be overridden rather than inherited.
@@ -14,5 +14,10 @@
    The required glyph also lives inside `.label-text`: `.label` is
    `justify-content: space-between`, so a second flex child would be flung to
    the far edge of the row. #}
-<label class="label{% if extra_class %} {{ extra_class }}{% endif %}"{% if for_id %} for="{{ for_id }}"{% endif %}><span class="label-text{% if size == 'small' %} text-xs{% elif size == 'large' %} text-lg{% endif %}">{{ content }}{% if required %} <span class="text-error" role="img" aria-label="required">*</span>{% endif %}</span></label>
+  <label
+    class="label{% if extra_class %} {{ extra_class }}{% endif %}"
+    {% if for_id %} for="{{ for_id }}"{% endif %}
+  ><span
+  class="label-text{% if size == 'small' %} text-xs{% elif size == 'large' %} text-lg{% endif %}"
+>{{ content }}{% if required %} <span class="text-error" role="img" aria-label="required">*</span>{% endif %}</span></label>
 {% endautoescape %}

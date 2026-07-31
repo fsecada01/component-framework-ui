@@ -32,7 +32,7 @@ how they compose, and the disabled-link rule.
 | `size` | `"normal"` | `small` `normal` `large` |
 | `state` | `"normal"` | `normal` `loading` `disabled` |
 | `href` | `""` | Non-empty renders an `<a>` instead of a `<button>` |
-| `type` | `"button"` | `<button>` form only |
+| `type` | `"button"` | `button` `submit` `reset`. `<button>` form only |
 | `full_width` | `false` | |
 | `extra_class` | `""` | |
 
@@ -51,7 +51,7 @@ an unstyled element.
 
 | Prop | Default | Notes |
 |---|---|---|
-| `level` | `"2"` | `1`–`6`. Picks the tag; semantics only |
+| `level` | `"2"` | `1`–`6`. Picks the tag; semantics only. Cannot be empty |
 | `size` | `"normal"` | Visual size, independent of `level` |
 | `emphasis` | `"normal"` | `normal` `subtle` |
 | `extra_class` | `""` | |

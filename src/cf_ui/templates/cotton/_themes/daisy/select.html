@@ -1,12 +1,15 @@
 <div class="form-control {{ class }}">
   <label class="label" for="{{ name }}"><span class="label-text">{{ label }}</span></label>
-  <select class="select select-bordered w-full{% if error %} select-error{% endif %}{% if input_class %} {{ input_class }}{% endif %}"
-          id="{{ name }}"
-          name="{{ name }}">
+  <select
+    class="select select-bordered w-full{% if error %} select-error{% endif %}{% if input_class %} {{ input_class }}{% endif %}"
+    id="{{ name }}"
+    name="{{ name }}"
+  >
     {% for opt in options %}
-    <option value="{{ opt.value }}"{% if opt.value|stringformat:"s" == value|stringformat:"s" %} selected{% endif %}>
-      {{ opt.label }}
-    </option>
+      <option
+        value="{{ opt.value }}"
+        {% if opt.value|stringformat:"s" == value|stringformat:"s" %} selected{% endif %}
+      >{{ opt.label }}</option>
     {% endfor %}
   </select>
   {% if error %}<span class="label-text-alt text-error">{{ error }}</span>{% endif %}

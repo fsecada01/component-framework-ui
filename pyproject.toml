@@ -77,6 +77,9 @@ dev = [
     "ruff>=0.1",
     "ty>=0.0.18",
     "pre-commit>=3.5",
+    # Keep in step with the `djlint` pinned in .pre-commit-config.yaml, for
+    # the same reason the `ruff` pin is documented there.
+    "djlint>=1.43",
 ]
 
 [project.urls]
@@ -121,3 +124,47 @@ known-first-party = ["cf_ui"]
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
+
+# ---------------------------------------------------------------------------
+# djLint — template formatting and linting
+#
+# The problem it solves: a cf-ui template's whole contract lives in its opening
+# tag. `<c-vars>` declares every prop, and a theme partial's element carries a
+# literal `{% if %}` chain per axis. Written on one line — which is how they
+# were authored, because Django has no whitespace-control syntax and the safe
+# default was "don't introduce whitespace" — a wrapper's prop list is a 100-
+# character run that has to be read character by character.
+#
+# `--single-attribute-per-line` fixes exactly that and nothing else: one
+# attribute per line inside the opening tag. It is safe because whitespace
+# *between* attributes is insignificant in HTML, and djLint keeps the closing
+# `>` inside the tag rather than letting it leak into the element's content.
+# Verified rather than assumed: all 190 primitive renders (5 themes x 19
+# components x 2 engines) are byte-identical with whitespace removed, and the
+# parsed DOM matches except for djLint adding a space after `;` in inline
+# `style` attributes.
+#
+# It does *not* touch the class chains themselves, and must not. Breaking a
+# line inside `class="..."` emits real whitespace into the attribute value —
+# harmless to browsers, but it changes the rendered bytes and defeats every
+# substring assertion in the suite.
+# ---------------------------------------------------------------------------
+[tool.djlint]
+profile = "django"
+indent = 2
+single_attribute_per_line = true
+# Both extensions are formatted. The Jinja tree is passed `--profile=jinja`
+# on its own hook invocation; this file-level setting cannot vary per path.
+extension = "html"
+# H021 inline styles — the Bootstrap backdrop needs `z-index:-1` and the panel
+#      chevron animates through Alpine's `:style`. Both are documented in the
+#      templates and neither has a class-based equivalent in that framework.
+# H023 entity references — `&times;` and `&#9776;` are the close and hamburger
+#      glyphs. Spelling them literally would put raw UTF-8 in the templates
+#      for no gain.
+# H026 empty id/class — fires on `<c-vars ... class="" />`, which is a *prop
+#      declaration*, not an HTML class attribute. Removing it would delete the
+#      prop's default and break the component.
+# T028 spaceless tags in attributes — the Jinja templates use `{%- -%}`
+#      deliberately, which is what this rule asks for; it fires anyway.
+ignore = "H021,H023,H026,T028"

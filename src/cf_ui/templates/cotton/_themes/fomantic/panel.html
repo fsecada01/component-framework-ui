@@ -1,25 +1,29 @@
 {% comment %} `.ui.accordion .title ~ .content:not(.active)` is `display:none`, so the open
    state has to be a *class*, not only `x-show`: Alpine dropping its inline
    `display:none` would leave the stylesheet's rule in force. Both are bound so
-   the panel is right with Alpine off (class, server-rendered) and with it on. {% endcomment %}
-<div class="ui styled fluid accordion {{ class }}"
-     x-data="cfPanel"
-     x-init="initPanel()"
-     data-cf-open="{% if open and open != 'false' %}true{% else %}false{% endif %}">
-  <button type="button"
-          class="title{% if open and open != 'false' %} active{% endif %}"
-          :class="{ 'active': open }"
-          aria-controls="{{ id }}-body"
-          aria-expanded="{% if open and open != 'false' %}true{% else %}false{% endif %}"
-          :aria-expanded="open"
-          @click="toggle()">
+the panel is right with Alpine off (class, server-rendered) and with it on. {% endcomment %}
+<div
+  class="ui styled fluid accordion {{ class }}"
+  x-data="cfPanel"
+  x-init="initPanel()"
+  data-cf-open="{% if open and open != 'false' %}true{% else %}false{% endif %}"
+>
+  <button
+    type="button"
+    class="title{% if open and open != 'false' %} active{% endif %}"
+    :class="{ 'active': open }"
+    aria-controls="{{ id }}-body"
+    aria-expanded="{% if open and open != 'false' %}true{% else %}false{% endif %}"
+    :aria-expanded="open"
+    @click="toggle()"
+  >
     <span class="dropdown icon" aria-hidden="true">&#9654;</span>{{ title }}
   </button>
-  <div id="{{ id }}-body"
-       class="content{% if open and open != 'false' %} active{% endif %}"
-       :class="{ 'active': open }"
-       x-show="open"
-       {% if not open or open == 'false' %}x-cloak{% endif %}>
-    {{ slot }}
-  </div>
+  <div
+    id="{{ id }}-body"
+    class="content{% if open and open != 'false' %} active{% endif %}"
+    :class="{ 'active': open }"
+    x-show="open"
+    {% if not open or open == 'false' %}x-cloak{% endif %}
+  >{{ slot }}</div>
 </div>

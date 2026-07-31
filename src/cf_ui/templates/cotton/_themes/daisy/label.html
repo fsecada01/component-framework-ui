@@ -1,5 +1,12 @@
 {% comment %}Size goes on `.label-text`, which sets `font-size` itself — a
-utility on the outer `<label>` would be overridden. The required glyph goes
+utility on the outer `
+<label>
+` would be overridden. The required glyph goes
 inside it too: `.label` is `justify-content: space-between`, so a second flex
 child would be flung to the far edge of the row.{% endcomment %}
-<label class="label{% if class %} {{ class }}{% endif %}"{% if for_id %} for="{{ for_id }}"{% endif %}><span class="label-text{% if size == 'small' %} text-xs{% elif size == 'large' %} text-lg{% endif %}">{{ slot }}{% if required %} <span class="text-error" role="img" aria-label="required">*</span>{% endif %}</span></label>
+<label
+  class="label{% if class %} {{ class }}{% endif %}"
+  {% if for_id %} for="{{ for_id }}"{% endif %}
+><span
+  class="label-text{% if size == 'small' %} text-xs{% elif size == 'large' %} text-lg{% endif %}"
+>{{ slot }}{% if required %} <span class="text-error" role="img" aria-label="required">*</span>{% endif %}</span></label>

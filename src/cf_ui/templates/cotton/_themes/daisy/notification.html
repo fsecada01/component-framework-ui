@@ -1,12 +1,16 @@
-<div role="alert"
-     class="alert {% if type == 'danger' or type == 'error' %}alert-error{% elif type == 'success' %}alert-success{% elif type == 'warning' %}alert-warning{% else %}alert-info{% endif %} {{ class }}"
-     x-data="{ visible: true }"
-     x-show="visible">
+<div
+  role="alert"
+  class="alert {% if type == 'danger' or type == 'error' %}alert-error{% elif type == 'success' %}alert-success{% elif type == 'warning' %}alert-warning{% else %}alert-info{% endif %} {{ class }}"
+  x-data="{ visible: true }"
+  x-show="visible"
+>
   <span>{{ message }}</span>
   {% if dismissible == "true" %}
-  <button type="button"
-          class="btn btn-sm btn-circle btn-ghost"
-          aria-label="dismiss"
-          @click="visible = false">&times;</button>
+    <button
+      type="button"
+      class="btn btn-sm btn-circle btn-ghost"
+      aria-label="dismiss"
+      @click="visible = false"
+    >&times;</button>
   {% endif %}
 </div>

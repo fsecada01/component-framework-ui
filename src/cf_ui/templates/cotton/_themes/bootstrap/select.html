@@ -1,12 +1,15 @@
 <div class="mb-3 {{ class }}">
   <label class="form-label" for="{{ name }}">{{ label }}</label>
-  <select class="form-select{% if error %} is-invalid{% endif %}{% if input_class %} {{ input_class }}{% endif %}"
-          id="{{ name }}"
-          name="{{ name }}">
+  <select
+    class="form-select{% if error %} is-invalid{% endif %}{% if input_class %} {{ input_class }}{% endif %}"
+    id="{{ name }}"
+    name="{{ name }}"
+  >
     {% for opt in options %}
-    <option value="{{ opt.value }}"{% if opt.value|stringformat:"s" == value|stringformat:"s" %} selected{% endif %}>
-      {{ opt.label }}
-    </option>
+      <option
+        value="{{ opt.value }}"
+        {% if opt.value|stringformat:"s" == value|stringformat:"s" %} selected{% endif %}
+      >{{ opt.label }}</option>
     {% endfor %}
   </select>
   {% if error %}<div class="invalid-feedback d-block">{{ error }}</div>{% endif %}

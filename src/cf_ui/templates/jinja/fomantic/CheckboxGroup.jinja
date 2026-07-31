@@ -1,30 +1,34 @@
 {#def name, label, choices=[], selected=[], error="", extra_class="", control_class="" #}
 {% autoescape true %}
-{% set choices = choices if choices is defined else [] %}
-{% set selected = selected if selected is defined else [] %}
-{% set error = error if error is defined else "" %}
-{% set extra_class = extra_class if extra_class is defined else "" %}
-{% set control_class = control_class if control_class is defined else "" %}
-<div class="ui form {{ extra_class }}">
-  <div class="grouped fields{% if control_class %} {{ control_class }}{% endif %}{% if error %} error{% endif %}">
-    <label>{{ label }}</label>
-    {% for choice in choices %}
-    <div class="field">
-      {# Fomantic's CSS-only checkbox works because the real input is stretched
+  {% set choices = choices if choices is defined else [] %}
+  {% set selected = selected if selected is defined else [] %}
+  {% set error = error if error is defined else "" %}
+  {% set extra_class = extra_class if extra_class is defined else "" %}
+  {% set control_class = control_class if control_class is defined else "" %}
+  <div class="ui form {{ extra_class }}">
+    <div
+      class="grouped fields{% if control_class %} {{ control_class }}{% endif %}{% if error %} error{% endif %}"
+    >
+      <label>{{ label }}</label>
+      {% for choice in choices %}
+        <div class="field">
+          {# Fomantic's CSS-only checkbox works because the real input is stretched
          invisibly over the box, so a click anywhere hits it. That is a mouse
          affordance, not an accessible name — the label is wired up with
          for/id so a screen reader announces it too. #}
-      <div class="ui checkbox">
-        <input type="checkbox"
-               id="{{ name }}-{{ loop.index }}"
-               name="{{ name }}"
-               value="{{ choice.value }}"
-               {% if choice.value in selected %}checked{% endif %}>
-        <label for="{{ name }}-{{ loop.index }}">{{ choice.label }}</label>
-      </div>
+          <div class="ui checkbox">
+            <input
+              type="checkbox"
+              id="{{ name }}-{{ loop.index }}"
+              name="{{ name }}"
+              value="{{ choice.value }}"
+              {% if choice.value in selected %}checked{% endif %}
+            >
+            <label for="{{ name }}-{{ loop.index }}">{{ choice.label }}</label>
+          </div>
+        </div>
+      {% endfor %}
+      {% if error %}<div class="ui basic red pointing prompt label">{{ error }}</div>{% endif %}
     </div>
-    {% endfor %}
-    {% if error %}<div class="ui basic red pointing prompt label">{{ error }}</div>{% endif %}
   </div>
-</div>
 {% endautoescape %}

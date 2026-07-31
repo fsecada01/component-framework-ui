@@ -26,12 +26,16 @@ from pathlib import Path
 import pytest
 
 from cf_ui.primitives import (
+    ALIASES,
+    AXIS_KINDS,
+    CLASS_VALUED,
     CLASSES,
     EMPHASIS,
     LEVELS,
     PRIMITIVES,
     SIZES,
     STATES,
+    TYPES,
     VARIANTS,
     VOCABULARIES,
     PrimitiveConfigError,
@@ -60,7 +64,24 @@ def test_the_vocabularies_are_registered_under_their_axis_names():
         "state": STATES,
         "level": LEVELS,
         "emphasis": EMPHASIS,
+        "type": TYPES,
     }
+
+
+def test_every_axis_declares_what_its_value_becomes():
+    """``AXIS_KINDS`` decides both the class map and the empty-value rule.
+
+    An axis missing from it would be treated as class-valued by omission —
+    which is the permissive branch on both counts, so the omission would not
+    show up as a failure anywhere else.
+    """
+    assert set(AXIS_KINDS) == set(VOCABULARIES)
+    assert set(AXIS_KINDS.values()) <= {"class", "tag", "attribute"}
+
+
+def test_class_valued_is_derived_from_the_kinds():
+    assert CLASS_VALUED == {axis for axis, kind in AXIS_KINDS.items() if kind == "class"}
+    assert CLASS_VALUED, "no class-valued axes — the parity tests would pass vacuously"
 
 
 @pytest.mark.parametrize("axis", sorted(VOCABULARIES))
@@ -155,17 +176,148 @@ def test_an_omitted_axis_is_not_validated():
     assert validate("button") == ""
 
 
+# ── An empty value: benign for a class, malformed for a tag or attribute ──
+
+
+@pytest.mark.parametrize("axis", sorted(CLASS_VALUED))
+@pytest.mark.parametrize("empty", ["", None])
+def test_an_empty_class_valued_axis_passes(axis: str, empty):
+    """Django resolves a missing context variable to ``""``.
+
+    Every cotton wrapper forwards its props unconditionally, so this branch is
+    taken on every render where the caller omitted a prop and the compiler was
+    bypassed. Dropping a class leaves a valid, unstyled element — raising here
+    would make the guard unusable.
+    """
+    component = next(c for c, axes in PRIMITIVES.items() if axis in axes)
+    assert validate(component, **{axis: empty}) == ""
+
+
+@pytest.mark.parametrize(
+    ("component", "axis"),
+    [("heading", "level"), ("button", "type")],
+)
+@pytest.mark.parametrize("empty", ["", None])
+def test_an_empty_tag_or_attribute_axis_raises(component: str, axis: str, empty):
+    """``<h{{ level }}>`` with nothing in it renders ``<h>``.
+
+    Not an element. Browsers parse it as an unknown inline, so it keeps the
+    ``title`` class and looks right while being absent from the document
+    outline and unreachable by screen-reader heading navigation — the silent
+    failure this whole module exists to convert into an exception.
+
+    ``type=""`` is the same shape: HTML's missing-value default for an invalid
+    ``<button type>`` is ``submit``, so an empty one submits the form.
+    """
+    with pytest.raises(PrimitiveConfigError, match=axis):
+        validate(component, **{axis: empty})
+
+
+def test_the_empty_value_error_says_why_and_what_to_pass():
+    with pytest.raises(PrimitiveConfigError) as excinfo:
+        validate("heading", level="")
+    message = str(excinfo.value)
+    assert "tag" in message
+    for level in LEVELS:
+        assert level in message
+
+
+def test_an_empty_value_for_an_axis_the_component_does_not_take_still_passes():
+    """The ``for`` trip-wire depends on this.
+
+    ``label`` declares no ``level``, so an empty one is not the component's
+    problem — and the wrapper forwards ``for=for`` on every render, which
+    resolves to ``""`` whenever the caller spelled it correctly.
+    """
+    assert validate("label", level="") == ""
+    assert validate("label", **{"for": ""}) == ""
+
+
+def test_an_invalid_button_type_raises():
+    """HTML's fallback for an invalid ``type`` is ``submit``, not ``button``.
+
+    So a typo does not render an inert button — it renders one that submits
+    the enclosing form. cf-ui defaults to ``button`` to avoid exactly that.
+    """
+    with pytest.raises(PrimitiveConfigError, match="sumbit"):
+        validate("button", type="sumbit")
+
+
+@pytest.mark.parametrize("value", TYPES)
+def test_every_html_button_type_is_accepted(value: str):
+    assert validate("button", type=value) == ""
+
+
+# ── Declared aliases: the HTML spelling raises instead of vanishing ───────
+
+
+def test_every_alias_targets_a_real_prop_on_a_real_primitive():
+    for component, aliases in ALIASES.items():
+        assert component in PRIMITIVES, f"alias table names unknown primitive {component!r}"
+        for html_name, cf_name in aliases.items():
+            assert html_name != cf_name
+            assert html_name not in PRIMITIVES[component], (
+                f"{html_name!r} is a real axis of {component} — it cannot also be an alias"
+            )
+
+
+@pytest.mark.parametrize(
+    ("component", "html_name", "cf_name"),
+    [(c, h, f) for c, m in ALIASES.items() for h, f in m.items()],
+)
+def test_a_declared_alias_raises_and_names_the_prop_that_works(
+    component: str, html_name: str, cf_name: str
+):
+    """django-cotton accepts an undeclared attribute and drops it.
+
+    ``<c-cf.label for="email">`` would render a ``<label>`` with no ``for``:
+    valid HTML, broken label/control association, no error. The wrapper
+    forwards the HTML spelling into the guard so it raises here instead.
+    """
+    with pytest.raises(PrimitiveConfigError) as excinfo:
+        validate(component, **{html_name: "anything"})
+    assert cf_name in str(excinfo.value)
+
+
+def test_the_correctly_spelled_prop_is_not_an_axis_and_is_not_validated():
+    """``for_id`` is a plain string prop — it has no vocabulary to check.
+
+    Passing it must not raise, or the alias fix would have closed the wrong
+    door.
+    """
+    assert validate("label", size="large") == ""
+
+
 # ── Every theme covers every value ────────────────────────────────────────
 
 
 @pytest.mark.parametrize("theme", THEMES)
 @pytest.mark.parametrize("component", IMPLEMENTED)
 def test_every_theme_maps_every_value_of_every_axis(theme: str, component: str):
-    """A missing key is an unstyled variant, which review does not catch."""
+    """A missing key is an unstyled variant, which review does not catch.
+
+    Class-valued axes only: a tag- or attribute-valued axis has no class to
+    map, and ``level`` previously carried thirty empty strings to satisfy this
+    check rather than because they meant anything.
+    """
     mapping = CLASSES[theme][component]
     for axis in PRIMITIVES[component]:
+        if axis not in CLASS_VALUED:
+            continue
         missing = set(VOCABULARIES[axis]) - set(mapping.get(axis, {}))
         assert not missing, f"{theme}/{component} has no {axis} class for {sorted(missing)}"
+
+
+@pytest.mark.parametrize("theme", THEMES)
+@pytest.mark.parametrize("component", IMPLEMENTED)
+def test_no_theme_maps_a_non_class_axis(theme: str, component: str):
+    """The other direction: a class map for ``level`` or ``type`` is dead data.
+
+    Without this, dropping the axis from :data:`CLASS_VALUED` would leave the
+    stale map in place and nothing would say so.
+    """
+    stale = set(CLASSES[theme][component]) - CLASS_VALUED - {"base"}
+    assert not stale, f"{theme}/{component} maps non-class axes {sorted(stale)}"
 
 
 @pytest.mark.parametrize("theme", THEMES)

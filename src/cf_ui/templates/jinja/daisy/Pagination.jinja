@@ -1,35 +1,40 @@
 {#def page=1, total_pages=1, hx_target="", hx_url="", extra_class="" #}
 {% autoescape true %}
-{% set page = page if page is defined else 1 %}
-{% set total_pages = total_pages if total_pages is defined else 1 %}
-{% set hx_target = hx_target if hx_target is defined else "" %}
-{% set hx_url = hx_url if hx_url is defined else "" %}
-{% set extra_class = extra_class if extra_class is defined else "" %}
-<nav class="join {{ extra_class }}" role="navigation" aria-label="pagination">
-  {% if page > 1 %}
-  <a class="join-item btn"
-     hx-get="{{ hx_url }}?page={{ page - 1 }}"
-     hx-target="{{ hx_target }}">Previous</a>
-  {% else %}
-  <a class="join-item btn btn-disabled" aria-disabled="true">Previous</a>
-  {% endif %}
-
-  {% for p in range(1, total_pages + 1) %}
-  <a class="join-item btn{% if p == page %} btn-active{% endif %}"
-     {% if p != page %}
-     hx-get="{{ hx_url }}?page={{ p }}"
-     hx-target="{{ hx_target }}"
-     {% endif %}
-     aria-label="Page {{ p }}"
-     {% if p == page %}aria-current="page"{% endif %}>{{ p }}</a>
-  {% endfor %}
-
-  {% if page < total_pages %}
-  <a class="join-item btn"
-     hx-get="{{ hx_url }}?page={{ page + 1 }}"
-     hx-target="{{ hx_target }}">Next</a>
-  {% else %}
-  <a class="join-item btn btn-disabled" aria-disabled="true">Next</a>
-  {% endif %}
-</nav>
+  {% set page = page if page is defined else 1 %}
+  {% set total_pages = total_pages if total_pages is defined else 1 %}
+  {% set hx_target = hx_target if hx_target is defined else "" %}
+  {% set hx_url = hx_url if hx_url is defined else "" %}
+  {% set extra_class = extra_class if extra_class is defined else "" %}
+  <nav
+    class="join {{ extra_class }}"
+    role="navigation"
+    aria-label="pagination"
+  >
+    {% if page > 1 %}
+      <a
+        class="join-item btn"
+        hx-get="{{ hx_url }}?page={{ page - 1 }}"
+        hx-target="{{ hx_target }}"
+      >Previous</a>
+    {% else %}
+      <a class="join-item btn btn-disabled" aria-disabled="true">Previous</a>
+    {% endif %}
+    {% for p in range(1, total_pages + 1) %}
+      <a
+        class="join-item btn{% if p == page %} btn-active{% endif %}"
+        {% if p != page %} hx-get="{{ hx_url }}?page={{ p }}" hx-target="{{ hx_target }}" {% endif %}
+        aria-label="Page {{ p }}"
+        {% if p == page %}aria-current="page"{% endif %}
+      >{{ p }}</a>
+    {% endfor %}
+    {% if page < total_pages %}
+      <a
+        class="join-item btn"
+        hx-get="{{ hx_url }}?page={{ page + 1 }}"
+        hx-target="{{ hx_target }}"
+      >Next</a>
+    {% else %}
+      <a class="join-item btn btn-disabled" aria-disabled="true">Next</a>
+    {% endif %}
+  </nav>
 {% endautoescape %}

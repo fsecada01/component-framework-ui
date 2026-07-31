@@ -1,29 +1,31 @@
 {#def value=0, max=100, type="primary", label="", extra_class="" #}
 {% autoescape true %}
-{% set value = value if value is defined else 0 %}
-{% set max = max if max is defined else 100 %}
-{% set type = type if type is defined else "primary" %}
-{% set label = label if label is defined else "" %}
-{% set extra_class = extra_class if extra_class is defined else "" %}
-{% set pct = ((value | float) * 100 / (max | float)) | round | int if (max | float) else 0 %}
-{# Not a native `<progress>`. Foundation 6.7.5's compiled CSS gives the bare
+  {% set value = value if value is defined else 0 %}
+  {% set max = max if max is defined else 100 %}
+  {% set type = type if type is defined else "primary" %}
+  {% set label = label if label is defined else "" %}
+  {% set extra_class = extra_class if extra_class is defined else "" %}
+  {% set pct = ((value | float) * 100 / (max | float)) | round | int if (max | float) else 0 %}
+  {# Not a native `<progress>`. Foundation 6.7.5's compiled CSS gives the bare
    element only `vertical-align: baseline`; every colour rule is
    `.progress.<variant> .progress-meter`, which needs a child the native
    control cannot have. So the ARIA the native element would have supplied is
    written out by hand, and the meter width is an inline style because
    Foundation ships no width utility for it. `tabindex` is deliberately
    omitted — a progress bar is not an interactive stop. #}
-<div class="{{ extra_class }}">
-  {% if label %}<p class="text-center">{{ label }}</p>{% endif %}
-  <div class="progress {% if type == 'danger' or type == 'error' %}alert{% elif type == 'success' %}success{% elif type == 'warning' %}warning{% elif type == 'secondary' %}secondary{% else %}primary{% endif %}"
-       role="progressbar"
-       aria-valuenow="{{ value }}"
-       aria-valuemin="0"
-       aria-valuemax="{{ max }}"
-       {% if label %}aria-label="{{ label }}"{% endif %}>
-    <span class="progress-meter" style="width: {{ pct }}%">
-      <span class="progress-meter-text">{{ pct }}%</span>
-    </span>
+  <div class="{{ extra_class }}">
+    {% if label %}<p class="text-center">{{ label }}</p>{% endif %}
+    <div
+      class="progress {% if type == 'danger' or type == 'error' %}alert{% elif type == 'success' %}success{% elif type == 'warning' %}warning{% elif type == 'secondary' %}secondary{% else %}primary{% endif %}"
+      role="progressbar"
+      aria-valuenow="{{ value }}"
+      aria-valuemin="0"
+      aria-valuemax="{{ max }}"
+      {% if label %}aria-label="{{ label }}"{% endif %}
+    >
+      <span class="progress-meter" style="width: {{ pct }}%">
+        <span class="progress-meter-text">{{ pct }}%</span>
+      </span>
+    </div>
   </div>
-</div>
 {% endautoescape %}
