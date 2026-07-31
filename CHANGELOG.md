@@ -2,6 +2,24 @@
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-07-31
+
+First release published to PyPI. Five themes instead of two, an axis layer
+that enforces what it claimed, components that render on Litestar at all, and
+two security fixes on the Jinja path. **Three breaking changes** — listed
+first, because a 0.x version number carries no semver promise to read them
+off:
+
+- Components render on the Litestar path (#42). `<Cf:Card>` previously reached
+  the browser as literal text — no exception, no output, a 200 response. An
+  app that worked around this by hand-writing the markup should drop the
+  workaround.
+- Cf-ui's Jinja templates escape their own output (#36). Anything previously
+  interpolated raw through a component now renders as entities; a prop
+  deliberately carrying markup must be `markupsafe.Markup`.
+- The axis layer validates token *values*, drops the `--spacing` alias, and
+  validates by default in every exported generator (#20).
+
 ### Fixed — BREAKING for Litestar: components actually render there now (#42)
 
 - **`<Cf:Card>` reached the browser as literal text on the Litestar path.** No
@@ -152,19 +170,6 @@
   behaviour: the extra's own `` `[django]` `` marker must not stand in for the
   Django distribution, and `django` must not be found inside `django-cotton`.
   Both passed a earlier cut of the guard, and both are now regression cases.
-
-## [0.2.0] — 2026-07-30
-
-Five themes instead of two, an axis layer that enforces what it claimed, and
-two security fixes on the Jinja path. **Two breaking changes** — both listed
-first below, because a 0.x version number carries no semver promise to read
-them off:
-
-- Cf-ui's Jinja templates escape their own output (#36). Anything previously
-  interpolated raw through a component now renders as entities; a prop
-  deliberately carrying markup must be `markupsafe.Markup`.
-- The axis layer validates token *values*, drops the `--spacing` alias, and
-  validates by default in every exported generator (#20).
 
 ### Security — BREAKING: cf-ui's Jinja templates now escape their own output (#36)
 
