@@ -63,8 +63,8 @@ html = catalog.render("Cf:Card", header="Welcome", _content="Card body.")
 | Theme | Status |
 |---|---|
 | Bulma | ✅ |
-| Tailwind + DaisyUI | ✅ — [guide](docs/daisyui.md) |
-| Bootstrap 5 | ✅ — CSS only, no `bootstrap.bundle.js`; [decision record](docs/bootstrap.md) |
+| Tailwind + DaisyUI | ✅ — [guide](https://fsecada01.github.io/component-framework-ui/daisyui/) |
+| Bootstrap 5 | ✅ — CSS only, no `bootstrap.bundle.js`; [decision record](https://fsecada01.github.io/component-framework-ui/bootstrap/) |
 | Foundation 6 | ✅ — CSS only, no jQuery |
 | Fomantic UI | ✅ — CSS only, no jQuery |
 
@@ -82,9 +82,9 @@ unimplemented theme name is rejected at startup rather than at first render.
 | [Use cases](https://fsecada01.github.io/component-framework-ui/use-cases/) | HTMX tables, modals, forms with errors |
 | [Components](https://fsecada01.github.io/component-framework-ui/components/) | All fourteen, with every prop |
 | [Escaping](https://fsecada01.github.io/component-framework-ui/escaping/) | Why cf-ui escapes its own output |
-| [Theming](docs/theming.md) | Composition axes and custom value sets |
-| [Tailwind plugin](docs/tailwind-plugin.md) | Build-time axis validation |
-| [Accessibility](docs/accessibility.md) | Focus management, ARIA, keyboard behavior |
+| [Theming](https://fsecada01.github.io/component-framework-ui/theming/) | Composition axes and custom value sets |
+| [Tailwind plugin](https://fsecada01.github.io/component-framework-ui/tailwind-plugin/) | Build-time axis validation |
+| [Accessibility](https://fsecada01.github.io/component-framework-ui/accessibility/) | Focus management, ARIA, keyboard behavior |
 
 ## Development
 

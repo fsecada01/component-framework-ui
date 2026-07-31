@@ -301,3 +301,53 @@ def test_slot_content_from_python_uses_the_underscore_prefix():
     html = catalog.render("Cf:Card", header="Welcome", _content="Card body.")
     assert "Welcome" in html
     assert "Card body." in html
+
+
+# ── README links have to work off GitHub too ───────────────────────────────
+
+DOCS_SITE = "https://fsecada01.github.io/component-framework-ui/"
+
+#: The pages MkDocs publishes, derived from the source files rather than
+#: listed — a hand-written list would drift the moment a page is added.
+PUBLISHED_PAGES = {p.stem for p in DOCS_DIR.glob("*.md")}
+
+
+def test_every_readme_link_is_absolute():
+    """The README is also cf-ui's PyPI description, where relative links die.
+
+    This applies to ``README.md`` alone. The pages under ``docs/`` link to
+    each other *relatively* on purpose — that is what MkDocs rewrites at
+    build time, and ``mkdocs build --strict`` validates. Absolutising those
+    would defeat the strict link check.
+    """
+    readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+    relative = [
+        (label, target)
+        for label, target in re.findall(r"\[([^\]]+)\]\(([^)]+)\)", readme)
+        if not target.startswith(("http://", "https://", "#", "mailto:"))
+    ]
+    assert not relative, (
+        "README links must be absolute so they work from the PyPI page: "
+        + ", ".join(f"[{label}]({target})" for label, target in relative)
+    )
+
+
+def test_every_readme_docs_link_names_a_page_the_site_publishes():
+    """A docs-site URL for a page that does not exist 404s silently.
+
+    Checked against the source files MkDocs builds from, so renaming or
+    deleting a page fails here rather than on the reader's click.
+    """
+    readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+    checked, dead = 0, []
+    for _, url in re.findall(r"\[([^\]]+)\]\(([^)]+)\)", readme):
+        if not url.startswith(DOCS_SITE):
+            continue
+        slug = url[len(DOCS_SITE) :].split("#")[0].strip("/")
+        checked += 1
+        if slug and slug not in PUBLISHED_PAGES:
+            dead.append(url)
+
+    assert PUBLISHED_PAGES, "no docs pages found; this guard would pass vacuously"
+    assert checked >= 8, f"only {checked} docs-site links in the README; is the URL stale?"
+    assert not dead, "README links at pages the docs site does not publish:\n  " + "\n  ".join(dead)
