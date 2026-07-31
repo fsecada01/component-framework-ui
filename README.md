@@ -110,9 +110,16 @@ just docs             # serve the docs site locally
 - Pydantic 2.0+ *(only mandatory runtime dependency)*
 
 Optional extras:
-- `[django]` — Django 4.2+, django-cotton 2.x
-- `[fastapi]` — FastAPI 0.109+, JinjaX 0.41+
-- `[litestar]` — Litestar 2.0+, Jinja2 3.1+
+- `[django]` — Django 4.2+, django-cotton 2.0+
+- `[fastapi]` — FastAPI 0.109+, JinjaX 0.41+, uvicorn, python-multipart
+- `[litestar]` — Litestar 2.0+, Jinja2 3.1+, JinjaX 0.41+
+
+Jinja2 and JinjaX are layers, not alternatives, which is why the Litestar
+extra names both. Litestar's `JinjaTemplateEngine` owns the Jinja2
+environment, and cf-ui installs a JinjaX catalog onto it — so `<Cf:Card>`
+renders from the same template on both paths. The FastAPI extra omits Jinja2
+only because JinjaX pulls it in transitively there, where the catalog owns
+the environment outright.
 
 ## License
 

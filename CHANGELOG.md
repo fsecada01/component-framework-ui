@@ -117,6 +117,42 @@
 - `just docs` serves the site locally, `just docs-build` runs the exact
   `--strict` build CI does. New `[docs]` extra; `[dev]` includes it.
 
+### Fixed — extras that did not match their own documentation (#47)
+
+- **`django-cotton>=0.9` admitted versions that cannot work.** All 14 cotton
+  wrappers use `<c-vars>`, and `<c-props>` was renamed to `<c-vars>` in
+  django-cotton **0.9.6** — so the floor resolved 0.9.0 through 0.9.5, on
+  which every wrapper installs cleanly and then silently drops every prop.
+  Nothing surfaced it because the dev environment resolves 2.7.2. The floor
+  is now `>=2.0`, the major series actually tested, rather than the bare
+  0.9.6 syntax minimum that would claim two years of untested range.
+  `CLAUDE.md` said the rename landed "in 2.x"; that was wrong, and is the
+  reason the floor looked defensible.
+
+- **The `[litestar]` extra was documented without JinjaX** in both `README.md`
+  and `docs/installation.md`, long after it was added to `pyproject.toml`.
+  Harmless to installs, but actively misleading: the `[fastapi]` line above it
+  *does* name JinjaX, so the pair read as "Litestar is the non-JinjaX path" —
+  the exact misconception #42 was about. Both files now name it, and say why
+  Litestar needs both: they are layers, not alternatives. Litestar's
+  `JinjaTemplateEngine` owns the Jinja2 environment and cf-ui installs a
+  JinjaX catalog onto it, while on the FastAPI path the catalog owns the
+  environment outright and pulls Jinja2 in transitively.
+
+- The README also described `[fastapi]` without `uvicorn` or
+  `python-multipart`, which `docs/installation.md` had listed all along.
+
+- **`tests/unit/test_extras_docs.py` is the guard.** It reads
+  `optional-dependencies` out of `pyproject.toml` and diffs it against the
+  extras described in `README.md` and `docs/installation.md` — the reference
+  table must carry every public extra, and either file must describe
+  completely whatever it describes at all. `test_docs_samples.py` could not
+  see any of this: it validates Python samples and link targets, and these
+  are prose claims about packaging metadata. Two traps are pinned as
+  behaviour: the extra's own `` `[django]` `` marker must not stand in for the
+  Django distribution, and `django` must not be found inside `django-cotton`.
+  Both passed a earlier cut of the guard, and both are now regression cases.
+
 ## [0.2.0] — 2026-07-30
 
 Five themes instead of two, an axis layer that enforces what it claimed, and

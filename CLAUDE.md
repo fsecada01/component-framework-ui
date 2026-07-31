@@ -70,7 +70,7 @@ Templates live **inside** the Python package so hatchling includes them automati
 - `{#def}` defaults only work under JinjaX; plain Jinja2 treats `{#def}` as a comment — templates add `{% set x = x if x is defined else "" %}` guards for `StrictUndefined` compatibility
 
 **django-cotton (2.x):**
-- Use `<c-vars>` for variable declarations, NOT `<c-props>` — `<c-props>` was renamed in 2.x
+- Use `<c-vars>` for variable declarations, NOT `<c-props>` — the rename landed in django-cotton **0.9.6**, not 2.x as this file long claimed. That is why the `[django]` extra floors at `>=2.0` (the tested series) and why `>=0.9` was a bug: it resolved 0.9.0–0.9.5, where the wrappers install and silently drop every prop (#47)
 - `COTTON_DIR` (singular, string) sets the component root directory, not `COTTON_DIRS`
 - Unit tests using `render_to_string` bypass the django-cotton compiler — only E2E tests exercise real Cotton compilation
 - Consumer Django projects must add `"libraries": {"cf_ui": "cf_ui.templatetags.cf_ui"}` to `TEMPLATES[0]["OPTIONS"]` — the `cf_ui.django` app name prevents templatetag autodiscovery
