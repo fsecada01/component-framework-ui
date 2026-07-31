@@ -1,0 +1,174 @@
+{
+  "vocabularies": {
+    "variant": [
+      "primary",
+      "secondary",
+      "success",
+      "warning",
+      "danger",
+      "info",
+      "neutral"
+    ],
+    "size": [
+      "small",
+      "normal",
+      "large"
+    ],
+    "state": [
+      "normal",
+      "loading",
+      "disabled"
+    ],
+    "level": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6"
+    ]
+  },
+  "primitives": {
+    "button": [
+      "variant",
+      "size",
+      "state"
+    ],
+    "badge": [
+      "variant",
+      "size"
+    ],
+    "heading": [
+      "level",
+      "size"
+    ],
+    "label": [
+      "size"
+    ],
+    "icon": [
+      "size"
+    ]
+  },
+  "classes": {
+    "bulma": {
+      "button": {
+        "base": "button",
+        "variant": {
+          "primary": "is-primary",
+          "secondary": "is-link",
+          "success": "is-success",
+          "warning": "is-warning",
+          "danger": "is-danger",
+          "info": "is-info",
+          "neutral": ""
+        },
+        "size": {
+          "small": "is-small",
+          "normal": "",
+          "large": "is-large"
+        },
+        "state": {
+          "normal": "",
+          "loading": "is-loading",
+          "disabled": ""
+        }
+      }
+    },
+    "daisy": {
+      "button": {
+        "base": "btn",
+        "variant": {
+          "primary": "btn-primary",
+          "secondary": "btn-secondary",
+          "success": "btn-success",
+          "warning": "btn-warning",
+          "danger": "btn-error",
+          "info": "btn-info",
+          "neutral": "btn-neutral"
+        },
+        "size": {
+          "small": "btn-sm",
+          "normal": "",
+          "large": "btn-lg"
+        },
+        "state": {
+          "normal": "",
+          "loading": "",
+          "disabled": "btn-disabled"
+        }
+      }
+    },
+    "bootstrap": {
+      "button": {
+        "base": "btn",
+        "variant": {
+          "primary": "btn-primary",
+          "secondary": "btn-secondary",
+          "success": "btn-success",
+          "warning": "btn-warning",
+          "danger": "btn-danger",
+          "info": "btn-info",
+          "neutral": "btn-light"
+        },
+        "size": {
+          "small": "btn-sm",
+          "normal": "",
+          "large": "btn-lg"
+        },
+        "state": {
+          "normal": "",
+          "loading": "",
+          "disabled": "disabled"
+        }
+      }
+    },
+    "foundation": {
+      "button": {
+        "base": "button",
+        "variant": {
+          "primary": "primary",
+          "secondary": "secondary",
+          "success": "success",
+          "warning": "warning",
+          "danger": "alert",
+          "info": "secondary",
+          "neutral": ""
+        },
+        "size": {
+          "small": "small",
+          "normal": "",
+          "large": "large"
+        },
+        "state": {
+          "normal": "",
+          "loading": "",
+          "disabled": "disabled"
+        }
+      }
+    },
+    "fomantic": {
+      "button": {
+        "base": "ui button",
+        "variant": {
+          "primary": "primary",
+          "secondary": "secondary",
+          "success": "positive",
+          "warning": "yellow",
+          "danger": "negative",
+          "info": "teal",
+          "neutral": ""
+        },
+        "size": {
+          "small": "small",
+          "normal": "",
+          "large": "large"
+        },
+        "state": {
+          "normal": "",
+          "loading": "loading",
+          "disabled": "disabled"
+        }
+      }
+    }
+  }
+}

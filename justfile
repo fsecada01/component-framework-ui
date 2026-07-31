@@ -35,6 +35,9 @@ test-tailwind:
 axes:
     python -m cf_ui.axes
 
+primitives:
+    python -m cf_ui.primitives
+
 test-integration:
     pytest tests/integration -q --tb=short
 

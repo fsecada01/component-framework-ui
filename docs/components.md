@@ -1,6 +1,6 @@
 # Components
 
-Fourteen components, identical prop names across every theme. Names are
+Identical prop names across every theme. Names are
 theme-agnostic — the same tag renders Bulma, Bootstrap, Foundation, Fomantic,
 or DaisyUI depending on `CF_UI_THEME` / `theme=`.
 
@@ -17,6 +17,27 @@ or DaisyUI depending on `CF_UI_THEME` / `theme=`.
 Every component accepts `extra_class` for consumer CSS overrides. Form
 components additionally accept `input_class` (and `CheckboxGroup`,
 `control_class`) so you can style the control without restyling the wrapper.
+
+## Primitives
+
+Small, high-frequency elements whose `variant`/`size`/`state` values come from
+closed vocabularies. See [Primitives](primitives.md) for the shared contract,
+how they compose, and the disabled-link rule.
+
+### `Cf:Button` / `<c-cf.button>`
+
+| Prop | Default | Notes |
+|---|---|---|
+| `variant` | `"neutral"` | `primary` `secondary` `success` `warning` `danger` `info` `neutral` |
+| `size` | `"normal"` | `small` `normal` `large` |
+| `state` | `"normal"` | `normal` `loading` `disabled` |
+| `href` | `""` | Non-empty renders an `<a>` instead of a `<button>` |
+| `type` | `"button"` | `<button>` form only |
+| `full_width` | `false` | |
+| `extra_class` | `""` | |
+
+An out-of-vocabulary value raises `PrimitiveConfigError` rather than rendering
+an unstyled element.
 
 ## Forms
 

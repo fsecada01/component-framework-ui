@@ -3,6 +3,7 @@ from typing import Any
 
 from cf_ui import JINJA_TEMPLATES_DIR
 from cf_ui.axes import build_axis_globals
+from cf_ui.primitives import build_primitive_globals
 
 try:  # pragma: no cover - exercised by test_litestar_args_prefix_matches_jinjax
     from jinjax.utils import ARGS_PREFIX
@@ -110,6 +111,7 @@ def install_cf_ui(
         # JinjaTemplateEngine exposes the Jinja2 Environment as .engine
         environment = getattr(engine, "engine", engine)
         environment.globals.update(axis_globals)
+        environment.globals.update(build_primitive_globals())
         _install_catalog(environment, template_dir)
 
     config.engine_callback = _register

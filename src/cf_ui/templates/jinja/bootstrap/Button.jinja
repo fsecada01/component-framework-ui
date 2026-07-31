@@ -1,0 +1,16 @@
+{#def content="", variant="neutral", size="normal", state="normal", href="", type="button", full_width=false, extra_class="" #}
+{% autoescape true %}
+{% set content = content if content is defined else "" %}
+{% set variant = variant if variant is defined else "neutral" %}
+{% set size = size if size is defined else "normal" %}
+{% set state = state if state is defined else "normal" %}
+{% set href = href if href is defined else "" %}
+{% set type = type if type is defined else "button" %}
+{% set full_width = full_width if full_width is defined else false %}
+{% set extra_class = extra_class if extra_class is defined else "" %}
+{{ cf_ui_validate("button", variant=variant, size=size, state=state) }}
+{%- set cf_tag = "a" if href else "button" -%}
+<{{ cf_tag }} class="btn{% if variant == 'primary' %} btn-primary{% elif variant == 'secondary' %} btn-secondary{% elif variant == 'success' %} btn-success{% elif variant == 'warning' %} btn-warning{% elif variant == 'danger' %} btn-danger{% elif variant == 'info' %} btn-info{% elif variant == 'neutral' %} btn-light{% endif %}{% if size == 'small' %} btn-sm{% elif size == 'large' %} btn-lg{% endif %}{% if state == 'disabled' %} disabled{% endif %}{% if full_width %} w-100{% endif %}{% if extra_class %} {{ extra_class }}{% endif %}"
+{%- if href %}{% if state == 'disabled' %} role="link" aria-disabled="true"{% else %} href="{{ href }}"{% endif %}
+{%- else %} type="{{ type }}"{% if state == 'disabled' %} disabled{% endif %}{% endif %}>{% if state == 'loading' %}<span class="spinner-border spinner-border-sm" aria-hidden="true"></span> {% endif %}{{ content }}</{{ cf_tag }}>
+{% endautoescape %}

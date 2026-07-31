@@ -113,7 +113,12 @@ _CLASS_ATTR = re.compile(r"""\bclass="([^"]*)\"""")
 
 def test_the_daisy_template_set_is_complete():
     """Without this, the parametrized scan below silently degrades to a skip."""
-    assert len(DAISY_TEMPLATES) == 28, f"expected 14 jinja + 14 cotton, got {DAISY_TEMPLATES}"
+    from cf_ui.themes import COMPONENTS
+
+    assert COMPONENTS, "the component registry is empty"
+    assert len(DAISY_TEMPLATES) == 2 * len(COMPONENTS), (
+        f"expected {len(COMPONENTS)} jinja + {len(COMPONENTS)} cotton, got {DAISY_TEMPLATES}"
+    )
 
 
 @pytest.mark.parametrize("template", DAISY_TEMPLATES, ids=lambda p: p.name)

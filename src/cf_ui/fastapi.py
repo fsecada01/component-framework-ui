@@ -3,6 +3,7 @@ from typing import Any
 
 from cf_ui import JINJA_TEMPLATES_DIR
 from cf_ui.axes import build_axis_globals
+from cf_ui.primitives import build_primitive_globals
 
 
 def install_cf_ui(
@@ -40,3 +41,4 @@ def install_cf_ui(
     template_dir = JINJA_TEMPLATES_DIR / theme
     catalog.add_folder(template_dir, prefix="Cf")
     catalog.jinja_env.globals.update(build_axis_globals(composition, value_sets, value_sets_mode))
+    catalog.jinja_env.globals.update(build_primitive_globals())

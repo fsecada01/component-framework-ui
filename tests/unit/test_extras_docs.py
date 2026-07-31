@@ -191,7 +191,12 @@ def test_every_cotton_wrapper_uses_the_syntax_the_floor_guarantees():
     arguing about nothing, and this test says so rather than passing quietly.
     """
     wrappers = sorted((REPO_ROOT / "src" / "cf_ui" / "templates" / "cotton" / "cf").glob("*.html"))
-    assert len(wrappers) == 14, f"expected 14 cotton wrappers, found {len(wrappers)}"
+    from cf_ui.themes import COMPONENTS
+
+    assert COMPONENTS, "the component registry is empty"
+    assert len(wrappers) == len(COMPONENTS), (
+        f"expected {len(COMPONENTS)} cotton wrappers, found {len(wrappers)}"
+    )
 
     without = [w.name for w in wrappers if "<c-vars" not in w.read_text(encoding="utf-8")]
     assert not without, f"wrappers with no <c-vars> declaration: {without}"
