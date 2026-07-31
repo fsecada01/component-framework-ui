@@ -1,0 +1,6 @@
+{% comment %} `font-bold` is the base rather than a flourish: Tailwind's Preflight resets
+   `font-size` and `font-weight` on h1–h6, so an unclassed heading here renders as body
+   text. daisyUI ships no heading component, so the type scale is Tailwind's own — these
+   utilities are absent from the daisyUI CDN bundle and only exist in a real Tailwind
+   build. {% endcomment %}
+<h{{ level }} class="font-bold{% if size == 'small' %} text-base{% elif size == 'normal' %} text-2xl{% elif size == 'large' %} text-4xl{% endif %}{% if emphasis == 'subtle' %} opacity-60{% endif %}{% if class %} {{ class }}{% endif %}">{{ slot }}</h{{ level }}>

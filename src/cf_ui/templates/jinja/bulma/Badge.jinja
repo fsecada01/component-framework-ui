@@ -1,0 +1,9 @@
+{#def content="", variant="neutral", size="normal", extra_class="" #}
+{% autoescape true %}
+{% set content = content if content is defined else "" %}
+{% set variant = variant if variant is defined else "neutral" %}
+{% set size = size if size is defined else "normal" %}
+{% set extra_class = extra_class if extra_class is defined else "" %}
+{{- cf_ui_validate("badge", variant=variant, size=size) -}}
+<span class="tag{% if variant == 'primary' %} is-primary{% elif variant == 'secondary' %} is-link{% elif variant == 'success' %} is-success{% elif variant == 'warning' %} is-warning{% elif variant == 'danger' %} is-danger{% elif variant == 'info' %} is-info{% endif %}{% if size == 'normal' %} is-medium{% elif size == 'large' %} is-large{% endif %}{% if extra_class %} {{ extra_class }}{% endif %}">{{ content }}</span>
+{% endautoescape %}

@@ -1,0 +1,8 @@
+{% comment %} `title` and `subtitle` are Bulma alternatives, not additive — `.subtitle` is
+   defined after `.title` at equal specificity, so an element carrying both renders as a
+   subtitle with the title rules dead underneath. The emphasis axis therefore carries the
+   base class, and this branch is an `else` rather than an `elif` so exactly one of the two
+   is always emitted: an `emphasis` that reached here empty would otherwise produce a
+   heading with no Bulma class at all, which is a broken render rather than a missing
+   modifier. {% endcomment %}
+<h{{ level }} class="{% if emphasis == 'subtle' %}subtitle{% else %}title{% endif %}{% if size == 'small' %} is-6{% elif size == 'normal' %} is-4{% elif size == 'large' %} is-2{% endif %}{% if class %} {{ class }}{% endif %}">{{ slot }}</h{{ level }}>

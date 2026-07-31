@@ -13,8 +13,10 @@
     </div>
     {% endfor %}
   </div>
-  {# `.invalid-feedback` is display:none until an `.is-invalid` sibling precedes
-     it, and a checkbox group has none — `d-block` keeps the message from
-     rendering invisibly. #}
+  {% comment %}
+  `.invalid-feedback` is display:none until an `.is-invalid` sibling precedes
+  it, and a checkbox group has none — `d-block` keeps the message from
+  rendering invisibly.
+  {% endcomment %}
   {% if error %}<div class="invalid-feedback d-block">{{ error }}</div>{% endif %}
 </div>

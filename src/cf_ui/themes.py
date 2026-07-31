@@ -38,11 +38,15 @@ DEFAULT_THEME = "bulma"
 #: render. ``tests/unit/test_primitives.py`` holds this tuple against the
 #: primitives that actually ship.
 COMPONENTS = (
+    "badge",
     "breadcrumb",
     "button",
     "card",
     "checkbox-group",
     "form-field",
+    "heading",
+    "icon",
+    "label",
     "modal",
     "navbar",
     "notification",

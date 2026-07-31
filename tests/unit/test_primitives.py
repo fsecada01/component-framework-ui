@@ -27,6 +27,7 @@ import pytest
 
 from cf_ui.primitives import (
     CLASSES,
+    EMPHASIS,
     LEVELS,
     PRIMITIVES,
     SIZES,
@@ -46,7 +47,7 @@ COTTON_THEME_DIR = REPO_ROOT / "src" / "cf_ui" / "templates" / "cotton" / "_them
 #: Components whose per-theme class maps ship in this phase. The prop contract
 #: is settled for all of Tier 1 (see ``docs/primitives.md``); the class maps
 #: land with each component's templates.
-IMPLEMENTED = ("button",)
+IMPLEMENTED = ("badge", "button", "heading", "icon", "label")
 
 
 # ── The vocabularies are closed ───────────────────────────────────────────
@@ -58,6 +59,7 @@ def test_the_vocabularies_are_registered_under_their_axis_names():
         "size": SIZES,
         "state": STATES,
         "level": LEVELS,
+        "emphasis": EMPHASIS,
     }
 
 
@@ -243,7 +245,7 @@ def test_the_templates_introduce_no_class_the_map_does_not_know(theme: str, comp
     Layout and utility classes that carry no axis meaning are allowed through
     by name, so the exemption is itself reviewable.
     """
-    allowed = _mapped_classes(theme, component) | ALLOWED_UTILITY_CLASSES
+    allowed = _mapped_classes(theme, component) | ALLOWED_UTILITY_CLASSES[component]
     for path in (
         JINJA_DIR / theme / f"{component.title()}.jinja",
         COTTON_THEME_DIR / theme / f"{component}.html",
@@ -257,19 +259,74 @@ def test_the_templates_introduce_no_class_the_map_does_not_know(theme: str, comp
 
 
 #: Classes that appear in a primitive template without belonging to an axis.
-#: Small and explicit on purpose: an open-ended allowance would turn the test
+#:
+#: Keyed **per component** rather than shared. ``label`` needs to wave through
+#: tokens as generic as ``ui``, ``text``, ``form`` and ``field`` — Fomantic
+#: styles labels by ancestry, so the partial renders the required
+#: ``.ui.form > .field`` wrappers. Allowing those package-wide would gut the
+#: check for every other primitive, which is the one thing this list must not
+#: do. Small and explicit on purpose: an open-ended allowance turns the test
 #: above into a no-op.
-ALLOWED_UTILITY_CLASSES = {
-    "is-fullwidth",  # bulma
-    "w-100",  # bootstrap
-    "expanded",  # foundation
-    "fluid",  # fomantic
-    "btn-block",  # daisy
-    "loading",  # daisy spinner element
-    "loading-spinner",
-    "spinner-border",  # bootstrap spinner element
-    "spinner-border-sm",
+ALLOWED_UTILITY_CLASSES: dict[str, set[str]] = {
+    "button": {
+        "is-fullwidth",  # bulma
+        "w-100",  # bootstrap
+        "expanded",  # foundation
+        "fluid",  # fomantic
+        "btn-block",  # daisy
+        "loading",  # daisy spinner element
+        "loading-spinner",
+        "spinner-border",  # bootstrap spinner element
+        "spinner-border-sm",
+    },
+    "badge": set(),
+    "heading": set(),
+    "icon": set(),
+    "label": {
+        # The required indicator's colour, per theme. Not an axis: `label`
+        # takes no variant, and this is the only coloured thing it renders.
+        "has-text-danger",  # bulma
+        "text-danger",  # bootstrap
+        "text-error",  # daisy
+        "red",  # fomantic, as span.ui.red.text
+        # Structural wrappers Fomantic requires: its only label rule is
+        # `.ui.form .field > label`, so the ancestry has to be rendered.
+        "ui",
+        "text",
+        "form",
+        "field",
+        # daisy puts the size class on this inner span, not the outer label.
+        "label-text",
+    },
 }
+
+
+def _guard_call(source: str, component: str) -> str:
+    """The text of the ``cf_ui_validate`` call for ``component``.
+
+    Both spellings are one call on one line — Jinja's
+    ``{{ cf_ui_validate("button", variant=variant, ...) }}`` and Django's
+    ``{% cf_ui_validate "button" variant=variant ... %}`` — so the enclosing
+    delimiter is enough to bound it. Jinja's whitespace-control dashes are
+    optional and some templates carry them.
+    """
+    match = re.search(r"\{[{%]-?\s*cf_ui_validate\b.*?-?[}%]\}", source, flags=re.S)
+    assert match, f"no cf_ui_validate call found for {component}"
+    return match.group(0)
+
+
+def _assert_guard_covers_every_axis(source: str, component: str, where: str) -> None:
+    """Calling the guard is not enough — it has to be *passed* every axis.
+
+    A guard invoked as ``cf_ui_validate("heading", level=level, size=size)``
+    passes cleanly on ``emphasis="loud"``, which then matches no branch of the
+    literal chain and renders unstyled. Presence of the call name is what the
+    earlier version of this check tested, and dropping ``emphasis=emphasis``
+    survived it.
+    """
+    call = _guard_call(source, component)
+    for axis in PRIMITIVES[component]:
+        assert f"{axis}=" in call, f"{where} calls the guard without passing {axis!r}: {call}"
 
 
 @pytest.mark.parametrize("theme", THEMES)
@@ -282,6 +339,7 @@ def test_every_jinja_primitive_calls_the_guard(theme: str, component: str):
     """
     jinja = (JINJA_DIR / theme / f"{component.title()}.jinja").read_text(encoding="utf-8")
     assert "cf_ui_validate" in jinja, f"jinja/{theme}/{component} does not call the guard"
+    _assert_guard_covers_every_axis(jinja, component, f"jinja/{theme}/{component}")
 
 
 @pytest.mark.parametrize("component", IMPLEMENTED)
@@ -293,7 +351,49 @@ def test_the_cotton_wrapper_calls_the_guard(component: str):
     rather than being copied into five partials that could each drop it.
     """
     wrapper = REPO_ROOT / "src" / "cf_ui" / "templates" / "cotton" / "cf" / f"{component}.html"
-    assert "cf_ui_validate" in wrapper.read_text(encoding="utf-8")
+    source = wrapper.read_text(encoding="utf-8")
+    assert "cf_ui_validate" in source
+    _assert_guard_covers_every_axis(source, component, f"cotton/cf/{component}")
+
+
+# ── `for` is not a prop, and saying it is must not fail silently ──────────
+
+
+def test_a_stray_for_attribute_on_the_cotton_label_raises():
+    """``<c-cf.label for="email">`` is the mistake this trip-wire exists for.
+
+    The attribute is ``for_id``, because ``for`` is a Python reserved word and
+    JinjaX cannot express it. django-cotton *can*, so the wrong spelling is
+    accepted by the compiler and produces a ``<label>`` with no ``for``
+    attribute at all — valid HTML, broken label/control association, no error.
+    The wrapper routes the value through the guard, which declares no ``for``
+    axis, so a non-empty one raises.
+    """
+    from django.template.loader import render_to_string
+
+    with pytest.raises(PrimitiveConfigError, match="takes no 'for'"):
+        render_to_string("cotton/cf/label.html", {"for": "email", "slot": "Email"})
+
+
+def test_the_correct_spelling_renders_the_for_attribute():
+    """The other half of the trip-wire: ``for_id`` must still work.
+
+    Without this, the test above would also pass on a wrapper that rejected
+    every label.
+    """
+    from django.template.loader import render_to_string
+
+    html = render_to_string("cotton/cf/label.html", {"for_id": "email", "slot": "Email"})
+    assert 'for="email"' in html
+
+
+def test_an_absent_for_does_not_trip_the_wire():
+    """Django resolves a missing context variable to ``""``, and ``validate``
+    skips empty values — which is the only reason the trip-wire can sit in the
+    call unconditionally."""
+    from django.template.loader import render_to_string
+
+    assert "<label" in render_to_string("cotton/cf/label.html", {"slot": "Email"})
 
 
 # ── The JSON export the Tailwind plugin reads ─────────────────────────────

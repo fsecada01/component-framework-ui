@@ -1,0 +1,1 @@
+<span class="icon{% if size == 'small' %} is-small{% elif size == 'large' %} is-large{% endif %}{% if class %} {{ class }}{% endif %}"{% if label %} role="img" aria-label="{{ label }}"{% else %} aria-hidden="true"{% endif %}>{{ slot }}</span>

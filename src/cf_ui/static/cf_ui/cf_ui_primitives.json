@@ -26,6 +26,10 @@
       "4",
       "5",
       "6"
+    ],
+    "emphasis": [
+      "normal",
+      "subtle"
     ]
   },
   "primitives": {
@@ -40,7 +44,8 @@
     ],
     "heading": [
       "level",
-      "size"
+      "size",
+      "emphasis"
     ],
     "label": [
       "size"
@@ -72,6 +77,59 @@
           "loading": "is-loading",
           "disabled": ""
         }
+      },
+      "badge": {
+        "base": "tag",
+        "variant": {
+          "primary": "is-primary",
+          "secondary": "is-link",
+          "success": "is-success",
+          "warning": "is-warning",
+          "danger": "is-danger",
+          "info": "is-info",
+          "neutral": ""
+        },
+        "size": {
+          "small": "",
+          "normal": "is-medium",
+          "large": "is-large"
+        }
+      },
+      "heading": {
+        "base": "",
+        "level": {
+          "1": "",
+          "2": "",
+          "3": "",
+          "4": "",
+          "5": "",
+          "6": ""
+        },
+        "size": {
+          "small": "is-6",
+          "normal": "is-4",
+          "large": "is-2"
+        },
+        "emphasis": {
+          "normal": "title",
+          "subtle": "subtitle"
+        }
+      },
+      "label": {
+        "base": "label",
+        "size": {
+          "small": "is-small",
+          "normal": "",
+          "large": "is-large"
+        }
+      },
+      "icon": {
+        "base": "icon",
+        "size": {
+          "small": "is-small",
+          "normal": "",
+          "large": "is-large"
+        }
       }
     },
     "daisy": {
@@ -95,6 +153,59 @@
           "normal": "",
           "loading": "",
           "disabled": "btn-disabled"
+        }
+      },
+      "badge": {
+        "base": "badge",
+        "variant": {
+          "primary": "badge-primary",
+          "secondary": "badge-secondary",
+          "success": "badge-success",
+          "warning": "badge-warning",
+          "danger": "badge-error",
+          "info": "badge-info",
+          "neutral": "badge-neutral"
+        },
+        "size": {
+          "small": "badge-sm",
+          "normal": "",
+          "large": "badge-lg"
+        }
+      },
+      "heading": {
+        "base": "font-bold",
+        "level": {
+          "1": "",
+          "2": "",
+          "3": "",
+          "4": "",
+          "5": "",
+          "6": ""
+        },
+        "size": {
+          "small": "text-base",
+          "normal": "text-2xl",
+          "large": "text-4xl"
+        },
+        "emphasis": {
+          "normal": "",
+          "subtle": "opacity-60"
+        }
+      },
+      "label": {
+        "base": "label",
+        "size": {
+          "small": "text-xs",
+          "normal": "",
+          "large": "text-lg"
+        }
+      },
+      "icon": {
+        "base": "inline-flex items-center justify-center",
+        "size": {
+          "small": "text-[0.75em]",
+          "normal": "",
+          "large": "text-[1.5em]"
         }
       }
     },
@@ -120,6 +231,59 @@
           "loading": "",
           "disabled": "disabled"
         }
+      },
+      "badge": {
+        "base": "badge",
+        "variant": {
+          "primary": "text-bg-primary",
+          "secondary": "text-bg-secondary",
+          "success": "text-bg-success",
+          "warning": "text-bg-warning",
+          "danger": "text-bg-danger",
+          "neutral": "text-bg-light",
+          "info": "text-bg-info"
+        },
+        "size": {
+          "small": "",
+          "normal": "",
+          "large": ""
+        }
+      },
+      "heading": {
+        "base": "",
+        "level": {
+          "1": "",
+          "2": "",
+          "3": "",
+          "4": "",
+          "5": "",
+          "6": ""
+        },
+        "size": {
+          "small": "h6",
+          "normal": "h4",
+          "large": "h1"
+        },
+        "emphasis": {
+          "normal": "",
+          "subtle": "text-body-secondary"
+        }
+      },
+      "label": {
+        "base": "form-label",
+        "size": {
+          "small": "small",
+          "normal": "",
+          "large": "fs-5"
+        }
+      },
+      "icon": {
+        "base": "",
+        "size": {
+          "small": "small",
+          "normal": "",
+          "large": "fs-4"
+        }
       }
     },
     "foundation": {
@@ -144,6 +308,59 @@
           "loading": "",
           "disabled": "disabled"
         }
+      },
+      "badge": {
+        "base": "label",
+        "variant": {
+          "primary": "primary",
+          "secondary": "secondary",
+          "success": "success",
+          "warning": "warning",
+          "danger": "alert",
+          "info": "secondary",
+          "neutral": ""
+        },
+        "size": {
+          "small": "",
+          "normal": "",
+          "large": ""
+        }
+      },
+      "heading": {
+        "base": "",
+        "level": {
+          "1": "",
+          "2": "",
+          "3": "",
+          "4": "",
+          "5": "",
+          "6": ""
+        },
+        "size": {
+          "small": "h6",
+          "normal": "h4",
+          "large": "h2"
+        },
+        "emphasis": {
+          "normal": "",
+          "subtle": "subheader"
+        }
+      },
+      "label": {
+        "base": "",
+        "size": {
+          "small": "",
+          "normal": "",
+          "large": "lead"
+        }
+      },
+      "icon": {
+        "base": "",
+        "size": {
+          "small": "",
+          "normal": "",
+          "large": ""
+        }
       }
     },
     "fomantic": {
@@ -167,6 +384,59 @@
           "normal": "",
           "loading": "loading",
           "disabled": "disabled"
+        }
+      },
+      "badge": {
+        "base": "ui label",
+        "variant": {
+          "primary": "primary",
+          "secondary": "secondary",
+          "success": "green",
+          "warning": "yellow",
+          "danger": "red",
+          "info": "teal",
+          "neutral": ""
+        },
+        "size": {
+          "small": "small",
+          "normal": "",
+          "large": "large"
+        }
+      },
+      "heading": {
+        "base": "ui header",
+        "level": {
+          "1": "",
+          "2": "",
+          "3": "",
+          "4": "",
+          "5": "",
+          "6": ""
+        },
+        "size": {
+          "small": "small",
+          "normal": "large",
+          "large": "massive"
+        },
+        "emphasis": {
+          "normal": "",
+          "subtle": "grey"
+        }
+      },
+      "label": {
+        "base": "",
+        "size": {
+          "small": "small",
+          "normal": "",
+          "large": "large"
+        }
+      },
+      "icon": {
+        "base": "ui text",
+        "size": {
+          "small": "small",
+          "normal": "",
+          "large": "large"
         }
       }
     }

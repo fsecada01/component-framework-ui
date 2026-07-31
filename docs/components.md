@@ -39,6 +39,42 @@ how they compose, and the disabled-link rule.
 An out-of-vocabulary value raises `PrimitiveConfigError` rather than rendering
 an unstyled element.
 
+### `Cf:Badge` / `<c-cf.badge>`
+
+| Prop | Default | Notes |
+|---|---|---|
+| `variant` | `"neutral"` | |
+| `size` | `"normal"` | Inert on Bootstrap and Foundation |
+| `extra_class` | `""` | |
+
+### `Cf:Heading` / `<c-cf.heading>`
+
+| Prop | Default | Notes |
+|---|---|---|
+| `level` | `"2"` | `1`–`6`. Picks the tag; semantics only |
+| `size` | `"normal"` | Visual size, independent of `level` |
+| `emphasis` | `"normal"` | `normal` `subtle` |
+| `extra_class` | `""` | |
+
+### `Cf:Label` / `<c-cf.label>`
+
+| Prop | Default | Notes |
+|---|---|---|
+| `size` | `"normal"` | No `small` step on Foundation |
+| `for_id` | `""` | Becomes `for`. Spelling it `for` raises — `for` is a Python keyword |
+| `required` | `false` | Renders an indicator announced as "required" |
+| `extra_class` | `""` | |
+
+### `Cf:Icon` / `<c-cf.icon>`
+
+| Prop | Default | Notes |
+|---|---|---|
+| `size` | `"normal"` | Inert on Foundation |
+| `label` | `""` | Empty ⇒ `aria-hidden`. Non-empty ⇒ `role="img"` + that name |
+| `extra_class` | `""` | |
+
+cf-ui ships no icons — put your own `<i>` or `<svg>` in the slot.
+
 ## Forms
 
 ### `Cf:FormField` / `<c-cf.form-field>`

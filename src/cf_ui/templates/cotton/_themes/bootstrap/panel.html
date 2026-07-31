@@ -1,6 +1,8 @@
-{# The body deliberately carries no `.collapse`: that class is display:none
-   without `.show`, which would hide a server-open panel permanently once
-   Alpine is off. `x-show` owns display here, seeded from `data-cf-open`. #}
+{% comment %}
+The body deliberately carries no `.collapse`: that class is display:none
+without `.show`, which would hide a server-open panel permanently once
+Alpine is off. `x-show` owns display here, seeded from `data-cf-open`.
+{% endcomment %}
 <div class="accordion {{ class }}"
      x-data="cfPanel"
      x-init="initPanel()"

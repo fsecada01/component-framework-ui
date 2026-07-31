@@ -2,6 +2,65 @@
 
 ## [Unreleased]
 
+### Added — a primitives layer: button, badge, heading, label, icon (#52)
+
+- **Five new components, on all five themes, in both template sets.**
+  `<Cf:Button>` / `<c-cf.button>`, and the same for `Badge`, `Heading`,
+  `Label`, `Icon`. cf-ui shipped 14 *structural* components and no primitives,
+  which is why adoption stalled: measured against a real consumer, `button`
+  was the single most-used CSS-framework class in the codebase (204 uses) and
+  cf-ui had nothing for it, while `modal`, `tabs`, `panel` and `breadcrumb`
+  had zero uses between them.
+
+- **`src/cf_ui/primitives.py` is the closed vocabulary and the class map.**
+  `variant`, `size`, `state`, `level` and `emphasis` are fixed sets; a value
+  outside one raises `PrimitiveConfigError` naming the values that would have
+  worked. Which primitive accepts which axis is declared, so
+  `<Cf:Badge state="loading">` raises rather than rendering a badge with no
+  loading state.
+
+- **The classes are spelled out longhand in the templates, on purpose.**
+  daisyUI compiles through Tailwind, whose scanner reads source *text* — a
+  class assembled at render time (`btn-{{ variant }}`, or one returned from
+  Python) is tree-shaken out of the build with no error and an unstyled
+  element as the only symptom. So `primitives.py` and the templates hold the
+  same knowledge twice, and a bidirectional parity test in
+  `tests/unit/test_primitives.py` fails the build the moment they disagree —
+  in either direction. `classes_for()` exists for tests, docs and
+  outside-the-templates consumers; nothing in the shipped templates calls it.
+
+- **`static/cf_ui/cf_ui_primitives.json`** is generated from the module by
+  `just primitives`, the way `cf_ui_axes.json` is generated from `axes.py`,
+  and a drift test fails if the committed copy is stale.
+
+- **Escaping and accessibility are decided once, in the component.** A
+  disabled `<a>` renders `aria-disabled="true"` and *no* `href` — an anchor
+  without one is not focusable or activatable, so this is the only spelling
+  where "disabled" is more than cosmetic. An icon is either decorative
+  (`aria-hidden="true"`) or named (`role="img"` plus `aria-label`), never
+  both, and `role="img"` makes it a leaf so the caller's glyph markup is not
+  descended into. Primitives take slot content rather than markup props, so
+  `docs/escaping.md` needs no new rule.
+
+- **`docs/primitives.md`** documents the shared contract, composition, the
+  per-theme places an axis is legitimately inert, and why the classes are
+  longhand. Tier 2 (`box`/`surface`, `prose`) and Tier 3 (`grid`) are tracked
+  separately so this could ship on its own.
+
+### Fixed — multi-line `{# #}` comments rendered into the page
+
+- **Six shipped cotton partials leaked their own source comments as page
+  text.** Django's comment regex is `\{#.*?#\}` without `DOTALL`: `{# #}` is
+  single-line only, so a comment opened on one line and closed on another
+  never forms a comment token and every line in between is emitted verbatim.
+  Five bootstrap partials and one daisy partial were affected —
+  `checkbox-group`, `modal`, `navbar`, `panel`, `progress` and
+  `daisy/navbar` — each shipping a paragraph of rationale prose about z-index
+  stacking or Tailwind layer ordering straight into the consumer's HTML. All
+  six now use `{% comment %}`, and
+  `tests/unit/cotton/test_comment_syntax.py` fails the build on a recurrence.
+  Found while writing a primitives wrapper that made the same mistake.
+
 ### Changed — dependencies resolve from PyPI, not from git (#50)
 
 - **Dropped the `[tool.uv.sources]` git pin for `component-framework`.** It

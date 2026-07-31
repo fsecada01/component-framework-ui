@@ -8,11 +8,13 @@
             :aria-expanded="menuOpen"
             @click="toggle()">&#9776;</button>
   </div>
-  {# Toggle `hidden` rather than adding `flex`: both are display utilities in
-     the same layer, and Tailwind emits `hidden` last, so adding `flex` to an
-     element that keeps `hidden` would never show it. Removing `hidden` leaves
-     the div at its default display on mobile, and `lg:flex` (a media query,
-     emitted after the base utilities) governs desktop either way. #}
+  {% comment %}
+  Toggle `hidden` rather than adding `flex`: both are display utilities in
+  the same layer, and Tailwind emits `hidden` last, so adding `flex` to an
+  element that keeps `hidden` would never show it. Removing `hidden` leaves
+  the div at its default display on mobile, and `lg:flex` (a media query,
+  emitted after the base utilities) governs desktop either way.
+  {% endcomment %}
   <div class="navbar-center lg:flex" :class="{ 'hidden': !menuOpen }">{{ start }}</div>
   <div class="navbar-end lg:flex" :class="{ 'hidden': !menuOpen }">{{ end }}</div>
 </nav>

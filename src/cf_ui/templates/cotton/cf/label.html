@@ -1,0 +1,14 @@
+<c-vars size="normal" for_id="" required="" class="" />
+{% comment %}
+`for=for` is a trip-wire, not a prop. The attribute is named `for_id` because
+`for` is a Python reserved word and JinjaX cannot express it — but
+django-cotton accepts `for` happily, so <c-cf.label for="email"> would render
+valid HTML with no `for` attribute and a silently broken label/control
+association. Routing it through the guard turns that into a
+PrimitiveConfigError. `label` declares no `for` axis, so any non-empty value
+raises; an absent one resolves to "" and is skipped.
+
+`{% comment %}`, not `{# #}`: Django's `{# #}` is single-line only, and a
+multi-line one renders every line in between as literal text into the page.
+{% endcomment %}
+{% load cf_ui %}{% cf_ui_validate "label" size=size for=for %}{% cf_ui_theme_path "label" as cf_ui_partial %}{% include cf_ui_partial %}

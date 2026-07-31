@@ -73,6 +73,9 @@ Templates live **inside** the Python package so hatchling includes them automati
 - Use `<c-vars>` for variable declarations, NOT `<c-props>` — the rename landed in django-cotton **0.9.6**, not 2.x as this file long claimed. That is why the `[django]` extra floors at `>=2.0` (the tested series) and why `>=0.9` was a bug: it resolved 0.9.0–0.9.5, where the wrappers install and silently drop every prop (#47)
 - `COTTON_DIR` (singular, string) sets the component root directory, not `COTTON_DIRS`
 - Unit tests using `render_to_string` bypass the django-cotton compiler — only E2E tests exercise real Cotton compilation
+- **The Django template language has no whitespace-control syntax.** Jinja's `{%- ... -%}` is a `TemplateSyntaxError` there (`Invalid block tag: '-'`), so a cotton partial that needs no stray whitespace has to keep the whole tag on one physical line
+- **Django has no multi-line `{# #}` comment.** `{#` … `#}` is single-line only; open it on one line and close it on another and every line in between renders as literal text into the page. Use `{% comment %}…{% endcomment %}` for anything longer than one line
+- `{% cf_ui_validate %}` (#52) is how a primitive wrapper rejects a bad prop. It returns `""`, so it must sit somewhere its output is *rendered* — inside `{% if %}` that never runs, or assigned via `as`, and the guard silently never fires
 - Consumer Django projects must add `"libraries": {"cf_ui": "cf_ui.templatetags.cf_ui"}` to `TEMPLATES[0]["OPTIONS"]` — the `cf_ui.django` app name prevents templatetag autodiscovery
 
 **Django AppConfig:**

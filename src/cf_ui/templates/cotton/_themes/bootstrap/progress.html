@@ -1,6 +1,8 @@
-{# Bootstrap's bar is a div sized in percent, not a native <progress>, so the
-   width has to be computed from value/max rather than emitted verbatim.
-   `widthratio` returns "0" on a zero max rather than raising. #}
+{% comment %}
+Bootstrap's bar is a div sized in percent, not a native <progress>, so the
+width has to be computed from value/max rather than emitted verbatim.
+`widthratio` returns "0" on a zero max rather than raising.
+{% endcomment %}
 <div class="{{ class }}">
   {% if label %}<p class="text-center mb-1">{{ label }}</p>{% endif %}
   <div class="progress"

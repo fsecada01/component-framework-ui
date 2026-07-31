@@ -50,6 +50,7 @@ from cf_ui.themes import THEMES
 
 __all__ = [
     "CLASSES",
+    "EMPHASIS",
     "LEVELS",
     "PRIMITIVES",
     "PRIMITIVE_DEFINITION_PATH",
@@ -88,9 +89,20 @@ VARIANTS: tuple[str, ...] = (
     "neutral",
 )
 
-#: Three sizes. Frameworks ship between three and six; three is the intersection
-#: that maps cleanly everywhere, and "normal" is always the framework default
-#: (an empty class) rather than an explicit token.
+#: Three sizes. Frameworks ship between three and six; three is the
+#: intersection that maps cleanly everywhere.
+#:
+#: ``normal`` is the middle step, *not* "whatever the framework does with no
+#: class". Usually those coincide and it maps to an empty string — but Bulma's
+#: ``.tag`` defaults to its smallest step, so a normal badge needs
+#: ``is-medium`` to line up with a normal button. The shared vocabulary is the
+#: point: ``size="normal"`` has to mean one thing across primitives, or
+#: sharing it buys nothing.
+#:
+#: The reverse also happens: Bootstrap and Foundation ship no badge size
+#: classes at all, so all three values map to an empty string and ``size`` is
+#: inert there. Documented in ``docs/primitives.md`` rather than faked with
+#: font-size utilities that cannot reach the right steps.
 SIZES: tuple[str, ...] = ("small", "normal", "large")
 
 STATES: tuple[str, ...] = ("normal", "loading", "disabled")
@@ -98,13 +110,34 @@ STATES: tuple[str, ...] = ("normal", "loading", "disabled")
 #: Heading levels, as strings — they land in a tag name, and ``{{ level }}``
 #: renders ``1`` for both ``1`` and ``"1"``. Kept as strings so the vocabulary
 #: and the rendered value are the same type.
+#:
+#: Unlike the other axes this one is *tag*-valued: every theme maps all six
+#: levels to an empty class, because the semantics live in ``<h1>``…``<h6>``
+#: rather than in a class. That is correct, but it does mean ``CLASSES``
+#: cannot express the distinction — worth knowing before a second tag-valued
+#: axis is added.
 LEVELS: tuple[str, ...] = ("1", "2", "3", "4", "5", "6")
+
+#: De-emphasis, as an axis rather than a boolean prop.
+#:
+#: It started as ``subtitle=True`` and had to be promoted: in Bulma ``title``
+#: and ``subtitle`` are *alternatives*, not additive, so a boolean outside the
+#: map made :func:`classes_for` report ``"title is-4"`` for a call that
+#: actually rendered ``subtitle is-4``. A prop that changes which classes are
+#: emitted belongs in the map, where the parity test can see it — otherwise it
+#: lives on an exception list and the mechanism quietly lies.
+#:
+#: Bulma is also why ``base`` may be empty: with nothing in ``base``, this
+#: axis carries the base class itself, which is how an alternatives-style
+#: framework fits a format built for additive ones.
+EMPHASIS: tuple[str, ...] = ("normal", "subtle")
 
 VOCABULARIES: dict[str, tuple[str, ...]] = {
     "variant": VARIANTS,
     "size": SIZES,
     "state": STATES,
     "level": LEVELS,
+    "emphasis": EMPHASIS,
 }
 
 #: Which axes each primitive accepts. This is the prop contract for all of
@@ -118,7 +151,7 @@ VOCABULARIES: dict[str, tuple[str, ...]] = {
 PRIMITIVES: dict[str, tuple[str, ...]] = {
     "button": ("variant", "size", "state"),
     "badge": ("variant", "size"),
-    "heading": ("level", "size"),
+    "heading": ("level", "size", "emphasis"),
     "label": ("size",),
     "icon": ("size",),
 }
@@ -213,10 +246,227 @@ _BUTTON_CLASSES: dict[str, dict[str, Any]] = {
     },
 }
 
+_BADGE_CLASSES: dict[str, dict[str, Any]] = {
+    "bulma": {
+        "base": "tag",
+        "variant": {
+            "primary": "is-primary",
+            "secondary": "is-link",
+            "success": "is-success",
+            "warning": "is-warning",
+            "danger": "is-danger",
+            "info": "is-info",
+            "neutral": "",
+        },
+        # The one place `normal` is not an empty class. Bulma's `.tag` defaults
+        # to its *smallest* step (0.75rem — a button's `is-small`), so reaching
+        # the middle step needs `is-medium`. See the note on SIZES.
+        "size": {"small": "", "normal": "is-medium", "large": "is-large"},
+    },
+    "bootstrap": {
+        "base": "badge",
+        "variant": {
+            "primary": "text-bg-primary",
+            "secondary": "text-bg-secondary",
+            "success": "text-bg-success",
+            "warning": "text-bg-warning",
+            "danger": "text-bg-danger",
+            # Not "": a `.badge` with no colour class is #fff on a transparent
+            # background — invisible. `neutral` cannot be the default here.
+            "neutral": "text-bg-light",
+            "info": "text-bg-info",
+        },
+        # Bootstrap 5.3 ships no badge size modifiers; badges scale from the
+        # parent via `$badge-font-size: .75em`. Not faked with `fs-*`, whose
+        # scale bottoms out *larger* than a default badge and so cannot express
+        # "small" at all.
+        "size": {"small": "", "normal": "", "large": ""},
+    },
+    "foundation": {
+        "base": "label",
+        "variant": {
+            "primary": "primary",
+            "secondary": "secondary",
+            "success": "success",
+            "warning": "warning",
+            "danger": "alert",
+            # Foundation labels ship five colours and no informational one.
+            "info": "secondary",
+            "neutral": "",
+        },
+        # Foundation ships no label size classes at all — one font-size, no
+        # modifiers. `size` is inert on this theme.
+        "size": {"small": "", "normal": "", "large": ""},
+    },
+    "fomantic": {
+        "base": "ui label",
+        "variant": {
+            "primary": "primary",
+            "secondary": "secondary",
+            # `green`/`red`, not the button map's `positive`/`negative`:
+            # `.ui.positive.label` and `.ui.negative.label` do not exist in
+            # Fomantic 2.9.3 — those are button and message variations.
+            "success": "green",
+            "warning": "yellow",
+            "danger": "red",
+            "info": "teal",
+            "neutral": "",
+        },
+        "size": {"small": "small", "normal": "", "large": "large"},
+    },
+    "daisy": {
+        "base": "badge",
+        "variant": {
+            "primary": "badge-primary",
+            "secondary": "badge-secondary",
+            "success": "badge-success",
+            "warning": "badge-warning",
+            "danger": "badge-error",
+            "info": "badge-info",
+            "neutral": "badge-neutral",
+        },
+        "size": {"small": "badge-sm", "normal": "", "large": "badge-lg"},
+    },
+}
+
+_HEADING_CLASSES: dict[str, dict[str, Any]] = {
+    "bulma": {
+        # Empty, because `title` and `subtitle` are alternatives rather than
+        # additive — the emphasis axis carries the base class instead. This is
+        # the case that forced `emphasis` to become an axis at all.
+        "base": "",
+        "level": {"1": "", "2": "", "3": "", "4": "", "5": "", "6": ""},
+        "size": {"small": "is-6", "normal": "is-4", "large": "is-2"},
+        "emphasis": {"normal": "title", "subtle": "subtitle"},
+    },
+    "bootstrap": {
+        "base": "",
+        "level": {"1": "", "2": "", "3": "", "4": "", "5": "", "6": ""},
+        # `.h1`–`.h6` are real utilities that outrank the tag selector, which
+        # is what lets level and size be set independently.
+        "size": {"small": "h6", "normal": "h4", "large": "h1"},
+        "emphasis": {"normal": "", "subtle": "text-body-secondary"},
+    },
+    "foundation": {
+        "base": "",
+        "level": {"1": "", "2": "", "3": "", "4": "", "5": "", "6": ""},
+        "size": {"small": "h6", "normal": "h4", "large": "h2"},
+        "emphasis": {"normal": "", "subtle": "subheader"},
+    },
+    "fomantic": {
+        "base": "ui header",
+        "level": {"1": "", "2": "", "3": "", "4": "", "5": "", "6": ""},
+        # Fomantic's ladder is mini/tiny/small/(nothing)/large/big/huge/massive
+        # — there is no `.ui.medium.header`. `normal` therefore emits the
+        # literal token `large`. It reads oddly, and it is the only way to keep
+        # three distinct steps while always emitting a size class; omitting one
+        # for `normal` would re-couple size to the tag.
+        "size": {"small": "small", "normal": "large", "large": "massive"},
+        # `grey`, not the idiomatic `.ui.sub.header`: `sub` sets a font-size
+        # *after* every size variation at equal specificity, so it silently
+        # destroys the size axis. Colour-only is the compatible choice.
+        "emphasis": {"normal": "", "subtle": "grey"},
+    },
+    "daisy": {
+        # Tailwind Preflight strips font-size and font-weight from h1–h6, so
+        # without this a daisy heading renders as body text.
+        "base": "font-bold",
+        "level": {"1": "", "2": "", "3": "", "4": "", "5": "", "6": ""},
+        "size": {"small": "text-base", "normal": "text-2xl", "large": "text-4xl"},
+        "emphasis": {"normal": "", "subtle": "opacity-60"},
+    },
+}
+
+_LABEL_CLASSES: dict[str, dict[str, Any]] = {
+    "bulma": {
+        "base": "label",
+        "size": {"small": "is-small", "normal": "", "large": "is-large"},
+    },
+    "bootstrap": {
+        "base": "form-label",
+        # No `form-label-sm`/`-lg` exists. `.small` (.875em) and `.fs-5`
+        # (1.25rem) are the exact sizes Bootstrap's own `.col-form-label-sm`
+        # and `-lg` use, so the scale is Bootstrap's rather than invented.
+        "size": {"small": "small", "normal": "", "large": "fs-5"},
+    },
+    "foundation": {
+        # Empty deliberately. Foundation styles `<label>` by element, and its
+        # `.label` class is the *badge* component — applying it would turn
+        # every field label into a blue pill.
+        "base": "",
+        # Foundation ships no font-size scale outside the button scale, so
+        # `small` has nothing to map to. `large` collapses onto `.lead`
+        # (125%, the size `.button.large` uses).
+        "size": {"small": "", "normal": "", "large": "lead"},
+    },
+    "fomantic": {
+        # Empty: the only rule is `.ui.form .field > label`, so the label is
+        # styled by ancestry. `.ui.label` is again the badge element.
+        "base": "",
+        # These land on the `.ui.form` ancestor, not the label — see the note
+        # on classes_for() about multi-element primitives.
+        "size": {"small": "small", "normal": "", "large": "large"},
+    },
+    "daisy": {
+        "base": "label",
+        # These land on the inner `.label-text` span: `.label-text` sets its
+        # own font-size, so a utility on the outer label is overridden rather
+        # than inherited.
+        "size": {"small": "text-xs", "normal": "", "large": "text-lg"},
+    },
+}
+
+_ICON_CLASSES: dict[str, dict[str, Any]] = {
+    "bulma": {
+        # The one theme with a real icon element: `.icon` does the flex
+        # centring and fixed 1.5rem box that hand-written markup misses.
+        "base": "icon",
+        "size": {"small": "is-small", "normal": "", "large": "is-large"},
+    },
+    "bootstrap": {
+        # Bootstrap ships no icon wrapper class.
+        "base": "",
+        # A mixed scale, honestly: `.small` is em-relative (.875em) and
+        # composes inside a `btn-sm`, but Bootstrap has no em-relative large,
+        # so `.fs-4` is absolute and does not. The alternatives (`.h4`,
+        # `.lead`, `.display-6`) all carry margin or weight and are worse.
+        "size": {"small": "small", "normal": "", "large": "fs-4"},
+    },
+    "foundation": {
+        # Foundation has no icon wrapper and no font-size utility scale. Its
+        # `.small-*` classes are grid breakpoint columns and would be actively
+        # harmful here, so `size` is entirely inert on this theme — the
+        # component earns its place through the aria decision alone.
+        "base": "",
+        "size": {"small": "", "normal": "", "large": ""},
+    },
+    "fomantic": {
+        # `.ui.icon` standalone does not exist — Fomantic's icon rules are
+        # element-qualified (`i.icon`), so a <span> wrapper gets nothing from
+        # them. `span.ui.text` is qualified to exactly this element and its
+        # small/large steps are the *same* font sizes as `i.small.icon` and
+        # `i.large.icon`, so this reproduces the native icon scale.
+        "base": "ui text",
+        "size": {"small": "small", "normal": "", "large": "large"},
+    },
+    "daisy": {
+        "base": "inline-flex items-center justify-center",
+        # Arbitrary em values rather than `text-sm`/`text-2xl`: Tailwind's
+        # `text-*` scale is rem-absolute, so a `text-2xl` icon inside a
+        # `btn-sm` would not scale with its container. No fixed box either — it
+        # would fight the large font-size.
+        "size": {"small": "text-[0.75em]", "normal": "", "large": "text-[1.5em]"},
+    },
+}
+
 #: Per-component maps, each keyed by theme. Adding a primitive is one entry
 #: here plus its templates — the assembly below and every test derive from it.
 _COMPONENT_CLASSES: dict[str, dict[str, dict[str, Any]]] = {
     "button": _BUTTON_CLASSES,
+    "badge": _BADGE_CLASSES,
+    "heading": _HEADING_CLASSES,
+    "label": _LABEL_CLASSES,
+    "icon": _ICON_CLASSES,
 }
 
 
@@ -310,6 +560,17 @@ def classes_for(theme: str, component: str, **axes: Any) -> str:
     render time is invisible to Tailwind's scanner and gets tree-shaken out of
     a daisyUI build. It exists for tests, documentation, and consumers
     rendering outside the shipped templates entirely.
+
+    **Lossy for multi-element primitives.** The return value is a flat string,
+    which assumes every class in the map belongs on one element. Two shipped
+    primitives break that assumption: Fomantic styles a label through
+    ``.ui.form .field > label`` ancestry, and daisyUI puts a label's size on an
+    inner ``.label-text`` span. So ``classes_for("daisy", "label",
+    size="large")`` returns ``"label text-lg"`` — a union of two elements'
+    classes, not a string to paste on either one. The templates are the
+    authority on placement; this function is the authority on membership, and
+    the parity test in ``tests/unit/test_primitives.py`` compares the two as
+    token *sets* for exactly that reason.
     """
     validate(component, **axes)
     try:

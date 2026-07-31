@@ -24,6 +24,7 @@ have worked — it does not fall through to an unstyled element.
 | `size` | `small` `normal` `large` |
 | `state` | `normal` `loading` `disabled` |
 | `level` | `1`–`6` |
+| `emphasis` | `normal` `subtle` |
 
 Seven variants, not "whatever the framework ships". All five frameworks can
 express all seven, though two collapse a pair onto one class — Foundation has
@@ -32,19 +33,53 @@ cf-ui inventing a class Foundation's own CSS does not define. A vocabulary cut
 down to the poorest framework would make the richer ones useless; one built for
 the richest would make `info` mean nothing in Foundation.
 
-`normal` is always the framework's default and always maps to *no class*. That
-is a real entry in the map, not a gap — the completeness test treats a missing
-key as the failure, so the two cannot be confused.
+`normal` is the **middle step**, not "whatever the framework does with no
+class". Usually those coincide and it maps to no class at all — a real entry in
+the map, not a gap, since the completeness test treats a *missing* key as the
+failure.
+
+Two things follow from that, and both are visible to consumers:
+
+**Sometimes `normal` needs a class.** Bulma's `.tag` defaults to its smallest
+step, so a normal badge maps to `is-medium` in order to line up with a normal
+button. The shared vocabulary is the whole point — `size="normal"` has to mean
+one thing across primitives, or sharing it buys nothing.
+
+**Sometimes `size` does nothing.** Bootstrap and Foundation ship no badge size
+classes, so all three values map to no class and a Bootstrap badge renders
+identically at every size. cf-ui does not fake this with font-size utilities:
+Bootstrap's `fs-*` scale bottoms out *larger* than a default badge, so it
+cannot express "small" and would be a wrong-direction lie. Switching
+`CF_UI_THEME` can therefore change whether `size` has any effect on a given
+primitive.
+
+## Colour is not a channel on its own
+
+A `danger` badge and a `success` badge differ only by hue. If the badge's own
+text does not carry the meaning, that is a
+[WCAG 1.4.1](https://www.w3.org/WAI/WCAG22/Understanding/use-of-color.html)
+failure, and it is not one cf-ui can fix from inside the component:
+
+```html
+<!-- Fails: "4" means nothing without the colour -->
+<c-cf.badge variant="danger">4</c-cf.badge>
+
+<!-- Passes: the text carries it -->
+<c-cf.badge variant="danger">4 failed</c-cf.badge>
+```
+
+The variant sets the colour. Making the meaning legible without it is the
+caller's obligation.
 
 ## Which primitive takes which axis
 
-| Primitive | `variant` | `size` | `state` | `level` | Status |
-|---|:-:|:-:|:-:|:-:|---|
-| `button` | ● | ● | ● | | **Shipped** |
-| `badge` | ● | ● | | | Contract settled |
-| `heading` | | ● | | ● | Contract settled |
-| `label` | | ● | | | Contract settled |
-| `icon` | | ● | | | Contract settled |
+| Primitive | `variant` | `size` | `state` | `level` | `emphasis` |
+|---|:-:|:-:|:-:|:-:|:-:|
+| `button` | ● | ● | ● | | |
+| `badge` | ● | ● | | | |
+| `heading` | | ● | | ● | ● |
+| `label` | | ● | | | |
+| `icon` | | ● | | | |
 
 `label` and `icon` take no `variant` on purpose. A label's colour belongs to
 the field it labels and an icon's to whatever contains it; giving either its
@@ -54,6 +89,31 @@ own would create two sources of truth for one colour.
 questions — `level` is the document outline (`<h1>`…`<h6>`, which screen
 readers navigate by) and `size` is how big it looks. Coupling them forces a
 choice between a correct outline and a correct visual hierarchy.
+
+`emphasis` started life as a `subtitle=True` boolean and was promoted, because
+in Bulma `title` and `subtitle` are *alternatives* rather than additive. As a
+boolean outside the class map it made `classes_for()` report `"title is-4"`
+for a call that actually rendered `subtitle is-4` — and, worse, its daisyUI
+class (`opacity-60`) was invisible to `cf_ui_primitives.json`, so a Tailwind
+build would have tree-shaken it away. A prop that decides which classes are
+emitted belongs in the map, where the parity test can see it.
+
+## The axes are not all equally useful on every theme
+
+This is the honest cost of one vocabulary across five frameworks, and it is
+worth knowing before you reach for an axis:
+
+| Primitive | Where an axis does less than you'd expect |
+|---|---|
+| `badge` | `size` is **inert** on Bootstrap and Foundation — neither ships badge size modifiers |
+| `icon` | `size` is **inert** on Foundation, which has no icon wrapper and no font-size scale. On Bootstrap the scale is mixed: `small` is em-relative and composes inside a `btn-sm`, `large` is absolute and does not |
+| `label` | `size` has no `small` step on Foundation |
+| `button` | `info` renders as `secondary` on Foundation, which ships five button colours and no informational one |
+
+cf-ui does not paper over these with utilities that reach the wrong values.
+Bootstrap's `fs-*` scale, for instance, bottoms out *larger* than a default
+badge, so using it for `size="small"` would be a wrong-direction lie rather
+than a fallback.
 
 ## How they compose
 
@@ -113,6 +173,95 @@ Dropping the attribute is what actually removes it from the tab order, and
 
 If you need a disabled control that is genuinely inert, prefer omitting `href`
 so it renders a real `<button disabled>`.
+
+## `Cf:Badge` / `<c-cf.badge>`
+
+| Prop | Default | Notes |
+|---|---|---|
+| `variant` | `"neutral"` | |
+| `size` | `"normal"` | Inert on Bootstrap and Foundation |
+| `extra_class` / `class` | `""` | |
+| slot | — | The badge text |
+
+Renders a `<span>` on every theme, with no `role` and no ARIA. `role="status"`
+would make it a live region announced on every re-render, which is wrong for
+a static badge — its slot text is its accessible name.
+
+There is no `pill` prop. It is idiomatic in Bootstrap and Bulma and absent
+from daisyUI, Foundation and Fomantic, so it would be inert on three of five;
+reach for `class="rounded-pill"` instead.
+
+## `Cf:Heading` / `<c-cf.heading>`
+
+| Prop | Default | Notes |
+|---|---|---|
+| `level` | `"2"` | Renders `<h1>`…`<h6>`. Semantics only |
+| `size` | `"normal"` | Visual size, independent of `level` |
+| `emphasis` | `"normal"` | `subtle` for a de-emphasised heading |
+| `extra_class` / `class` | `""` | |
+| slot | — | The heading text |
+
+```html
+<!-- An h2 in the outline that looks small -->
+<c-cf.heading level="3" size="small">Section</c-cf.heading>
+```
+
+## `Cf:Label` / `<c-cf.label>`
+
+| Prop | Default | Notes |
+|---|---|---|
+| `size` | `"normal"` | No `small` step on Foundation |
+| `for_id` | `""` | Becomes the `for` attribute. **Not** `for` — see below |
+| `required` | `false` | Renders an indicator announced as "required" |
+| `extra_class` / `class` | `""` | |
+| slot | — | The label text |
+
+!!! warning "The attribute is `for_id`, not `for`"
+
+    `for` is a Python reserved word, so JinjaX cannot express it. django-cotton
+    *can*, which is the hazard: `<c-cf.label for="email">` would render valid
+    HTML with no `for` attribute at all and a silently broken label/control
+    association. The cotton wrapper routes any stray `for` through the guard,
+    so it raises `PrimitiveConfigError` instead of rendering wrong.
+
+The required indicator is a single `<span role="img" aria-label="required">*</span>`
+rather than a hidden-glyph-plus-visually-hidden-text pair, because Fomantic
+2.9.3 ships no visually-hidden utility — that approach would have given four
+themes one accessibility mechanism and the fifth another. Fomantic's own
+`.required::after` is deliberately not used: generated content disappears under
+print and high-contrast stylesheets, and its announcement is inconsistent.
+
+## `Cf:Icon` / `<c-cf.icon>`
+
+| Prop | Default | Notes |
+|---|---|---|
+| `size` | `"normal"` | Inert on Foundation; mixed scale on Bootstrap |
+| `label` | `""` | Empty ⇒ decorative. Non-empty ⇒ the accessible name |
+| `extra_class` / `class` | `""` | |
+| slot | — | Your `<i>`, `<svg>`, or `<span>` |
+
+The accessibility decision is most of what this component buys you, and it is
+the part hand-written icon markup usually gets wrong:
+
+```html
+<!-- Decorative: skipped by screen readers entirely -->
+<c-cf.icon><i class="fas fa-star"></i></c-cf.icon>
+<span aria-hidden="true">…</span>
+
+<!-- Meaningful: announced as "Delete item", and not descended into -->
+<c-cf.icon label="Delete item"><i class="fas fa-trash"></i></c-cf.icon>
+<span role="img" aria-label="Delete item">…</span>
+```
+
+The two are mutually exclusive by construction, so a labelled icon can never
+also be `aria-hidden`. `role="img"` matters as much as the label: it makes the
+wrapper a leaf for assistive technology, so the caller's meaningless glyph
+markup is not descended into.
+
+cf-ui ships no icons and depends on no icon set. Bootstrap assumes Bootstrap
+Icons, Bulma assumes Font Awesome, daisyUI assumes nothing — there is no
+class-level abstraction spanning all five, and adopting one would make a UI kit
+choose its consumers' icon vendor.
 
 ## Escaping
 
