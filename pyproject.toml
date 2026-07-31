@@ -38,7 +38,12 @@ all = [
 ]
 django = [
     "django>=4.2",
-    "django-cotton>=0.9",
+    # 2.0, not 0.9: every cotton wrapper here uses <c-vars>, and <c-props>
+    # was renamed to <c-vars> in django-cotton 0.9.6 — so a >=0.9 floor
+    # resolved 0.9.0-0.9.5, which install cleanly and then drop every prop.
+    # The floor sits at the major series actually tested rather than at the
+    # bare syntax minimum (#47).
+    "django-cotton>=2.0",
 ]
 fastapi = [
     "fastapi>=0.109.0",

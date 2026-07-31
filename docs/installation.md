@@ -22,9 +22,9 @@ files; the extra records intent, and theme selection happens at runtime.
 | Extra | Pulls in |
 |---|---|
 | `[bulma]` `[bootstrap]` `[foundation]` `[fomantic]` `[daisy]` | nothing — theme markers |
-| `[django]` | Django 4.2+, django-cotton 2.x |
+| `[django]` | Django 4.2+, django-cotton 2.0+ |
 | `[fastapi]` | FastAPI 0.109+, JinjaX 0.41+, uvicorn, python-multipart |
-| `[litestar]` | Litestar 2.0+, Jinja2 3.1+ |
+| `[litestar]` | Litestar 2.0+, Jinja2 3.1+, JinjaX 0.41+ |
 | `[all]` | every theme marker plus all three web-framework extras |
 
 You want at least one web-framework extra, because that is where the real
