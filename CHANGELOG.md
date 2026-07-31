@@ -2,6 +2,58 @@
 
 ## [Unreleased]
 
+### Fixed — BREAKING for Litestar: components actually render there now (#42)
+
+- **`<Cf:Card>` reached the browser as literal text on the Litestar path.** No
+  exception, no output, a 200 response — the worst possible failure shape. The
+  installer appended a template directory and registered axis globals but
+  never built a JinjaX catalog, so Litestar's Jinja2 environment had never
+  heard of the component tag.
+
+  `Catalog(jinja_env=env)` does not convert the environment it is given: it
+  builds its own, copies extensions/globals/filters across, and writes
+  `catalog` back into the original. Three things have to land on Litestar's
+  environment directly — the `JinjaX` extension, a catalog built over that
+  environment, and a `__prefix` binding. JinjaX rewrites `<Cf:Card>` into
+  `catalog.irender("Cf:Card", __prefix=__prefix, …)` and binds `__prefix`
+  per-component while rendering *inside* a component, so a page template
+  rendered by Litestar has no binding and raises `'__prefix' is undefined`.
+
+- **`{% from "cf_ui/assets.jinja" import … %}` raised `TemplateNotFound` on
+  Litestar** — the macros are a sibling of `templates/jinja/`, and only
+  `templates/jinja/<theme>` was on the search path. Both that directory and
+  the package template root are now registered.
+
+- **`jinjax>=0.41` added to the `[litestar]` extra**, matching
+  `component-framework`, whose litestar extra has always listed it.
+
+- **Litestar had no integration or E2E coverage at all** — only `MagicMock`
+  unit tests, which cannot observe a render, which is why both defects
+  shipped. `tests/integration/test_litestar_components.py` runs a live
+  Litestar app through its real template engine: component tags, self-closing
+  tags, the assets macros, the axis globals, a non-default theme, and #36
+  escaping on a path where Litestar does not enable autoescaping. Four of the
+  six fail with the catalog install removed.
+
+### Fixed — documented JinjaX attributes that never interpolated (#42)
+
+- `header="{{ title }}"` does **not** interpolate in JinjaX; the braces arrive
+  at the component as literal text with no error. Computed values need the
+  colon binding, `:header="title"`. Four published samples in the quickstart
+  and use-cases pages had the brace form. `tests/unit/test_docs_samples.py`
+  now fails the build on a braced attribute in any `Cf:` tag, while leaving
+  django-cotton's `{{ }}` alone — there it is ordinary Django syntax and
+  correct.
+
+### Packaging (#43)
+
+- **Added a `LICENSE` file.** `pyproject.toml` declared `license = {text =
+  "MIT"}` while the repository carried no license text, so the wheel shipped
+  none. The built wheel now carries `License-File: LICENSE`.
+- **Added the classifier set** — Development Status, Intended Audience,
+  License, Python 3.11–3.14, Framework and Topic entries. There were none at
+  all, which is what the PyPI page is built from.
+
 ### Documentation — a published site, and three broken README samples fixed (#39)
 
 - **A MkDocs + Material site now builds from `docs/` and deploys to GitHub

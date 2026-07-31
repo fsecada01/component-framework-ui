@@ -82,7 +82,31 @@ def test_litestar_install_cf_ui_wraps_single_dir():
     config = MagicMock()
     config.directory = Path("/some/dir")
     install_cf_ui(config, theme="bulma")
-    assert config.directory == [Path("/some/dir"), JINJA_TEMPLATES_DIR / "bulma"]
+    assert config.directory == [
+        Path("/some/dir"),
+        JINJA_TEMPLATES_DIR / "bulma",
+        JINJA_TEMPLATES_DIR.parent,
+    ]
+
+
+def test_litestar_install_cf_ui_puts_the_assets_root_on_the_search_path():
+    """``cf_ui/assets.jinja`` is a sibling of ``jinja/``, not inside it (#42).
+
+    With only the theme folder registered, every documented
+    ``{% from "cf_ui/assets.jinja" import ... %}`` raised ``TemplateNotFound``.
+    """
+    from unittest.mock import MagicMock
+
+    from cf_ui import JINJA_TEMPLATES_DIR
+    from cf_ui.litestar import install_cf_ui
+
+    config = MagicMock()
+    config.directory = []
+    install_cf_ui(config, theme="bulma")
+
+    assets = JINJA_TEMPLATES_DIR.parent / "cf_ui" / "assets.jinja"
+    assert assets.exists(), "assets.jinja moved; this test's premise is stale"
+    assert any(assets.is_relative_to(d) for d in config.directory)
 
 
 def test_version_exported():

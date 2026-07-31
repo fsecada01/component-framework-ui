@@ -264,3 +264,31 @@ def test_select_autoescape_would_not_have_covered_dot_jinja(extension_list: list
     it. In-template blocks are the mechanism this trap cannot reach.
     """
     assert select_autoescape(extension_list)("Tabs.jinja") is False
+
+
+def test_litestar_args_prefix_matches_jinjax():
+    """``cf_ui.litestar`` depends on a jinjax internal; pin it (#42).
+
+    JinjaX rewrites ``<Cf:Card>`` into ``catalog.irender("Cf:Card",
+    __prefix=__prefix, ...)``. cf-ui binds that name as a global so a page
+    template rendered by Litestar — which has no enclosing component to supply
+    it — does not raise ``'__prefix' is undefined``. If jinjax ever renames
+    the constant, the fallback literal in ``cf_ui/litestar.py`` would silently
+    bind the wrong name and component rendering would break on that path.
+    """
+    import jinjax.utils
+
+    from cf_ui.litestar import ARGS_PREFIX
+
+    assert ARGS_PREFIX == jinjax.utils.ARGS_PREFIX == "__prefix"
+
+
+def test_litestar_catalog_install_does_not_touch_autoescape():
+    """The catalog install is new (#42); #36's promise has to survive it."""
+    from cf_ui.litestar import _install_catalog
+
+    selector = select_autoescape(["html"])
+    for supplied in (False, selector):
+        env = Environment(autoescape=supplied)
+        _install_catalog(env, JINJA_TEMPLATES_DIR / "bulma")
+        assert env.autoescape is supplied
