@@ -7,7 +7,14 @@ dist/
 .pytest_cache/
 .ruff_cache/
 node_modules/
+
+# Agent tooling scratch. None of it is an input to a build, a test or the
+# docs site — it is per-developer state that happens to land in the repo
+# root, so it belongs here next to .superpowers/ rather than in a global
+# excludes file where a second contributor would not inherit it.
 .superpowers/
+.serena/
+claudedocs/
 build/
 .eggs/
 *.egg

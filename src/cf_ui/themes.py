@@ -30,6 +30,17 @@ THEMES = ("bulma", "daisy", "bootstrap", "foundation", "fomantic")
 
 DEFAULT_THEME = "bulma"
 
+#: daisyUI is a Tailwind *plugin* — its CDN bundle carries only the component
+#: layer (``.btn``, ``.card``), never the utility layer (``.flex``, ``.gap-4``,
+#: ``.w-full``) that the shipped daisy templates lean on for layout. daisyUI's
+#: own CDN docs (https://v4.daisyui.com/docs/cdn/) pair the stylesheet with
+#: Tailwind's Play CDN script for exactly this reason. ``"play"`` completes
+#: that documented pair; ``"off"`` is for a consumer with a real Tailwind
+#: build, who supplies both layers themselves (see docs/daisyui.md).
+DAISY_CDN_MODES = ("play", "off")
+
+DEFAULT_DAISY_CDN = "play"
+
 #: django-cotton file stems, as used by ``<c-cf.form-field>``.
 #:
 #: A name here must have a partial under every theme in :data:`THEMES` —
@@ -87,6 +98,22 @@ def resolve_theme(theme: str | None = None) -> str:
         available = ", ".join(THEMES)
         raise ThemeError(f"unknown theme {theme!r} — implemented themes are: {available}")
     return theme
+
+
+def resolve_daisy_cdn(mode: str | None = None) -> str:
+    """Validate a daisy CDN mode, defaulting to ``"play"``.
+
+    Fails loudly here rather than silently — see :data:`DAISY_CDN_MODES` for
+    why the two values exist. A bad value is a configuration mistake, so it
+    is rejected at startup (:mod:`cf_ui.django`) the same way an unknown
+    ``CF_UI_THEME`` is, not left to surface as a half-styled page.
+    """
+    if not mode:
+        return DEFAULT_DAISY_CDN
+    if mode not in DAISY_CDN_MODES:
+        available = ", ".join(DAISY_CDN_MODES)
+        raise ThemeError(f"unknown daisy CDN mode {mode!r} — valid values are: {available}")
+    return mode
 
 
 def cotton_partial(component: str, theme: str | None = None) -> str:

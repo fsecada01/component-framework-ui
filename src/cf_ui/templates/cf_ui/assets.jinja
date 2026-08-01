@@ -12,7 +12,7 @@
   they are inert rather than an error, so plain Jinja2 apps still render.
 #}
 
-{% macro cf_ui_head(theme="bulma", versions={}, cf_axes_url="/static/cf_ui/cf_ui_axes.css") %}{% autoescape true %}
+{% macro cf_ui_head(theme="bulma", versions={}, cf_axes_url="/static/cf_ui/cf_ui_axes.css", daisy_cdn="play") %}{% autoescape true %}
 {%- set v = {
     "bulma": "1.0.2",
     "bootstrap": "5.3.3",
@@ -29,8 +29,14 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/foundation-sites@{{ v.foundation }}/dist/css/foundation.min.css">
 {%- elif theme == "fomantic" -%}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fomantic-ui@{{ v.fomantic }}/dist/semantic.min.css">
-{%- elif theme == "daisy" -%}
+{%- elif theme == "daisy" and daisy_cdn != "off" -%}
+<!-- cf-ui: daisyUI CDN mode ("play"). Loads Tailwind's Play CDN, which
+     compiles utilities in the browser; upstream labels it "for development
+     purposes only, and not intended for production"
+     (https://v4.daisyui.com/docs/cdn/). For production, run a real
+     Tailwind build and set CF_UI_DAISY_CDN = "off". -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@{{ v.daisy }}/dist/full.min.css">
+<script src="https://cdn.tailwindcss.com"></script>
 {%- endif %}
 <link rel="stylesheet" href="{{ cf_axes_url }}">
 <style>[x-cloak] { display: none !important; }</style>

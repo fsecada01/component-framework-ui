@@ -56,9 +56,17 @@ pinned CDN links for the active theme plus Alpine.js. See
 opinion about where the stylesheet comes from — only that the class names it
 emits are the ones that stylesheet defines.
 
-!!! warning "DaisyUI needs one extra step"
-    DaisyUI compiles through Tailwind, so Tailwind's content scanner has to
-    reach cf-ui's templates inside `site-packages` — otherwise every class is
+!!! warning "DaisyUI needs extra steps — for both the CDN and the self-hosted path"
+    DaisyUI is the one theme where the CDN link above is **not** enough on its
+    own. DaisyUI is a Tailwind plugin, so its CDN stylesheet ships component
+    classes only — no `.flex`, `.w-full`, or any other utility the shipped
+    templates rely on for layout. `{% cf_ui_head %}` covers this by also
+    emitting Tailwind's Play CDN script (`CF_UI_DAISY_CDN`, default `"play"`),
+    but that in-browser compile is not a production answer — see
+    [DaisyUI](daisyui.md#the-cdn-path-needs-two-tags-not-one).
+
+    For a real, self-hosted Tailwind build, its content scanner has to reach
+    cf-ui's templates inside `site-packages` — otherwise every class is
     tree-shaken away, leaving correct markup with no styling and no error.
     Get the glob from the package rather than hand-writing it:
 
@@ -66,8 +74,8 @@ emits are the ones that stylesheet defines.
     python -m cf_ui.themes
     ```
 
-    [DaisyUI](daisyui.md) covers that in full, along with the Tailwind plugin
-    that fails your build on an unknown theme-axis value.
+    [DaisyUI](daisyui.md) covers both paths in full, along with the Tailwind
+    plugin that fails your build on an unknown theme-axis value.
 
 ## Verify the install
 
