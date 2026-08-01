@@ -148,6 +148,44 @@ def test_jinja_body_wins_when_both_are_supplied(theme: str):
     assert MESSAGE not in html
 
 
+# ── A body that renders to nothing is not a body ──────────────────────────
+
+
+@pytest.mark.parametrize("theme", THEMES)
+def test_cotton_whitespace_only_body_falls_back_to_message(settings, theme: str):
+    """Otherwise the fix reintroduces the bug it exists to remove.
+
+    ``django_cotton/templatetags/_component.py`` sets ``"slot":
+    self.nodelist.render(context)`` — verbatim, unstripped. So a paired tag
+    whose body renders to nothing still hands the partial ``"\\n  "``, which
+    is truthy. The plausible call is a conditional body::
+
+        <c-cf.notification message="Nothing to report">
+          {% if error %}{{ error }}{% endif %}
+        </c-cf.notification>
+
+    On the false branch a naive ``{% if slot %}`` renders whitespace and drops
+    ``message`` — a correctly-styled empty box, silently, which is #65 again
+    with a new trigger. Verified against the real compiler, not inferred.
+    """
+    settings.CF_UI_THEME = theme
+    html = render_to_string(
+        "cotton/cf/notification.html", {**COTTON_BASE, "slot": "\n  \n", "message": MESSAGE}
+    )
+    assert MESSAGE in html, f"{theme}: whitespace-only body suppressed `message`"
+
+
+@pytest.mark.parametrize("theme", THEMES)
+def test_jinja_whitespace_only_body_falls_back_to_message(theme: str):
+    """The same rule, stated the same way, on the other engine.
+
+    JinjaX already strips slot content before it reaches the template, so this
+    is belt-and-braces there — but the two engines should not disagree about
+    what counts as a body, and the plain-Jinja path has no stripping at all.
+    """
+    assert MESSAGE in _jinja(theme, content="\n  \n", message=MESSAGE)
+
+
 # ── Escaping: the two channels want opposite treatment ────────────────────
 
 
@@ -219,26 +257,39 @@ def test_cotton_body_markup_survives(settings, theme: str):
 # ── Drift guard ───────────────────────────────────────────────────────────
 
 
-def test_every_theme_ships_a_notification_that_references_its_body():
+def _shipped_themes() -> list[str]:
+    """Read off the filesystem, not from ``THEMES`` — that is the whole point."""
+    return sorted(p.name for p in Path(JINJA_TEMPLATES_DIR).iterdir() if p.is_dir())
+
+
+def test_themes_under_test_are_every_theme_shipped():
+    """``THEMES`` is hand-written, so it goes stale the moment a sixth lands.
+
+    Without this, every parametrized test above quietly stops covering the new
+    theme and the suite still reports green.
+    """
+    assert _shipped_themes() == sorted(THEMES)
+
+
+@pytest.mark.parametrize("theme", THEMES)
+def test_every_shipped_theme_renders_its_notification_body(settings, theme: str):
     """A new theme copied from an old one must not reintroduce the bug.
 
     ``## Adding a New Theme`` in CLAUDE.md says to copy and adapt the existing
     templates, which is exactly how a fix applied to five files fails to reach
-    the sixth. Cheap to state, and it fails on the copy rather than on the
-    first empty box in production.
+    the sixth.
+
+    This renders rather than greps, because a substring guard on these files is
+    remarkably hard to make non-vacuous. ``"content" in src`` matches fomantic's
+    ``<div class="content">`` wrapper; the tightened ``"content if content"``
+    still matches the ``{% set content = content if content is defined %}``
+    StrictUndefined guard that every theme carries. Both needles looked
+    specific and both passed on a template with the fallback expression
+    deleted. Rendering cannot pass for the wrong reason.
     """
-    root = Path(JINJA_TEMPLATES_DIR).parent
-    missing = []
-    for theme in THEMES:
-        jinja = (root / "jinja" / theme / "Notification.jinja").read_text(encoding="utf-8")
-        if "content" not in jinja:
-            missing.append(f"jinja/{theme}/Notification.jinja")
-        cotton = (root / "cotton" / "_themes" / theme / "notification.html").read_text(
-            encoding="utf-8"
-        )
-        if "slot" not in cotton:
-            missing.append(f"cotton/_themes/{theme}/notification.html")
-    assert not missing, f"notification ignores its body in: {missing}"
+    settings.CF_UI_THEME = theme
+    assert BODY in _jinja(theme, content=BODY, message="")
+    assert BODY in render_to_string("cotton/cf/notification.html", {**COTTON_BASE, "slot": BODY})
 
 
 def test_markup_import_is_used_by_the_escaping_contract():

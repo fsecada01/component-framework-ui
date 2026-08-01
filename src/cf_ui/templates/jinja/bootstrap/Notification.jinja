@@ -15,7 +15,7 @@
        meant them. The two operands want opposite escaping and get it: JinjaX
        wraps slot content in `Markup`, so it passes through this block
        untouched, while `message` is caller-supplied text and is escaped. #}
-    <span>{{ content if content else message }}</span>
+    <span>{{ content if content|trim else message }}</span>
     {% if dismissible %}
       <button
         type="button"

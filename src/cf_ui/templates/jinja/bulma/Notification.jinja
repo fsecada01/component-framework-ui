@@ -14,6 +14,6 @@
        meant them. The two operands want opposite escaping and get it: JinjaX
        wraps slot content in `Markup`, so it passes through this block
        untouched, while `message` is caller-supplied text and is escaped. #}
-    {{ content if content else message }}
+    {{ content if content|trim else message }}
   </div>
 {% endautoescape %}

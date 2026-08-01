@@ -6,7 +6,7 @@
 >
   {% comment %} Body content wins over the scalar `message` — a caller who wrote children
   meant them. `message` stays for the existing call form (#65). {% endcomment %}
-  <span>{% if slot %}{{ slot }}{% else %}{{ message }}{% endif %}</span>
+  <span>{% if slot.strip %}{{ slot }}{% else %}{{ message }}{% endif %}</span>
   {% if dismissible == "true" %}
     <button
       type="button"

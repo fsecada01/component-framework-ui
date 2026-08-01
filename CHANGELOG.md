@@ -20,6 +20,12 @@
   `pagination`, `table`, `progress`) are all data-driven, where children would
   be meaningless. `Notification` is a container that happened to expose only a
   string.
+- **A body that renders to nothing is not a body.** django-cotton hands the
+  partial `nodelist.render(context)` verbatim, so a paired tag whose body
+  renders empty still supplies `"\n  "` — truthy. Without a guard, a `message=`
+  caller writing a conditional body would get an empty box on the false branch,
+  which is this same bug with a new trigger. Both engines now treat a
+  whitespace-only body as absent and fall back to `message`.
 - **The two operands want opposite escaping and now get it, under test.** JinjaX
   wraps slot content in `Markup`, so a body passes through the template's
   `{% autoescape true %}` block untouched; `message` is caller-supplied text and

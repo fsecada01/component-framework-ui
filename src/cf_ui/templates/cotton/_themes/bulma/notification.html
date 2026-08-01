@@ -8,5 +8,5 @@
   {% endif %}
   {% comment %} Body content wins over the scalar `message` — a caller who wrote children
   meant them. `message` stays for the existing call form (#65). {% endcomment %}
-  {% if slot %}{{ slot }}{% else %}{{ message }}{% endif %}
+  {% if slot.strip %}{{ slot }}{% else %}{{ message }}{% endif %}
 </div>
