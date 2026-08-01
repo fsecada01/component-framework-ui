@@ -7,5 +7,7 @@
   {# Foundation spells danger `alert` and ships no `info` hue, so `info` folds
    onto `secondary` — the same two substitutions the badge template makes for
    this theme. #}
-  <div class="callout{% if variant == 'primary' %} primary{% elif variant == 'secondary' %} secondary{% elif variant == 'success' %} success{% elif variant == 'warning' %} warning{% elif variant == 'danger' %} alert{% elif variant == 'info' %} secondary{% endif %}{% if extra_class %} {{ extra_class }}{% endif %}">{{ content }}</div>
+  <div
+    class="callout{% if variant == 'primary' %} primary{% elif variant == 'secondary' %} secondary{% elif variant == 'success' %} success{% elif variant == 'warning' %} warning{% elif variant == 'danger' %} alert{% elif variant == 'info' %} secondary{% endif %}{% if extra_class %} {{ extra_class }}{% endif %}"
+  >{{ content }}</div>
 {% endautoescape %}

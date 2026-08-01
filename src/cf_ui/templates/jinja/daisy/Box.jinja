@@ -9,5 +9,7 @@
    puts two border-color utilities of equal specificity on one element, and
    which one wins is then decided by Tailwind's emission order rather than by
    the class map. #}
-  <div class="rounded-box border bg-base-100 p-4{% if variant == 'primary' %} border-primary{% elif variant == 'secondary' %} border-secondary{% elif variant == 'success' %} border-success{% elif variant == 'warning' %} border-warning{% elif variant == 'danger' %} border-error{% elif variant == 'info' %} border-info{% else %} border-base-300{% endif %}{% if extra_class %} {{ extra_class }}{% endif %}">{{ content }}</div>
+  <div
+    class="rounded-box border bg-base-100 p-4{% if variant == 'primary' %} border-primary{% elif variant == 'secondary' %} border-secondary{% elif variant == 'success' %} border-success{% elif variant == 'warning' %} border-warning{% elif variant == 'danger' %} border-error{% elif variant == 'info' %} border-info{% else %} border-base-300{% endif %}{% if extra_class %} {{ extra_class }}{% endif %}"
+  >{{ content }}</div>
 {% endautoescape %}

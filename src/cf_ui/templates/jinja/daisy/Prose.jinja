@@ -9,5 +9,7 @@
    this one theme, see docs/daisyui.md. Without the plugin the class is
    unrecognised and the block renders unstyled, which is the benign failure
    mode rather than broken markup. #}
-  <div class="prose{% if size == 'small' %} prose-sm{% elif size == 'large' %} prose-lg{% endif %}{% if extra_class %} {{ extra_class }}{% endif %}">{{ content }}</div>
+  <div
+    class="prose{% if size == 'small' %} prose-sm{% elif size == 'large' %} prose-lg{% endif %}{% if extra_class %} {{ extra_class }}{% endif %}"
+  >{{ content }}</div>
 {% endautoescape %}
