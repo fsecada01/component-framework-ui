@@ -66,6 +66,12 @@
     ],
     "icon": [
       "size"
+    ],
+    "box": [
+      "variant"
+    ],
+    "prose": [
+      "size"
     ]
   },
   "classes": {
@@ -131,6 +137,26 @@
       },
       "icon": {
         "base": "icon",
+        "size": {
+          "small": "is-small",
+          "normal": "",
+          "large": "is-large"
+        }
+      },
+      "box": {
+        "base": "box",
+        "variant": {
+          "primary": "",
+          "secondary": "",
+          "success": "",
+          "warning": "",
+          "danger": "",
+          "info": "",
+          "neutral": ""
+        }
+      },
+      "prose": {
+        "base": "content",
         "size": {
           "small": "is-small",
           "normal": "",
@@ -205,6 +231,26 @@
           "normal": "",
           "large": "text-[1.5em]"
         }
+      },
+      "box": {
+        "base": "rounded-box border bg-base-100 p-4",
+        "variant": {
+          "primary": "border-primary",
+          "secondary": "border-secondary",
+          "success": "border-success",
+          "warning": "border-warning",
+          "danger": "border-error",
+          "info": "border-info",
+          "neutral": "border-base-300"
+        }
+      },
+      "prose": {
+        "base": "prose",
+        "size": {
+          "small": "prose-sm",
+          "normal": "",
+          "large": "prose-lg"
+        }
       }
     },
     "bootstrap": {
@@ -274,6 +320,26 @@
           "normal": "",
           "large": "fs-4"
         }
+      },
+      "box": {
+        "base": "border rounded p-3",
+        "variant": {
+          "primary": "border-primary",
+          "secondary": "border-secondary",
+          "success": "border-success",
+          "warning": "border-warning",
+          "danger": "border-danger",
+          "info": "border-info",
+          "neutral": ""
+        }
+      },
+      "prose": {
+        "base": "",
+        "size": {
+          "small": "",
+          "normal": "",
+          "large": ""
+        }
       }
     },
     "foundation": {
@@ -337,6 +403,26 @@
         }
       },
       "icon": {
+        "base": "",
+        "size": {
+          "small": "",
+          "normal": "",
+          "large": ""
+        }
+      },
+      "box": {
+        "base": "callout",
+        "variant": {
+          "primary": "primary",
+          "secondary": "secondary",
+          "success": "success",
+          "warning": "warning",
+          "danger": "alert",
+          "info": "secondary",
+          "neutral": ""
+        }
+      },
+      "prose": {
         "base": "",
         "size": {
           "small": "",
@@ -411,6 +497,26 @@
           "small": "small",
           "normal": "",
           "large": "large"
+        }
+      },
+      "box": {
+        "base": "ui segment",
+        "variant": {
+          "primary": "blue",
+          "secondary": "grey",
+          "success": "green",
+          "warning": "yellow",
+          "danger": "red",
+          "info": "teal",
+          "neutral": ""
+        }
+      },
+      "prose": {
+        "base": "",
+        "size": {
+          "small": "",
+          "normal": "",
+          "large": ""
         }
       }
     }

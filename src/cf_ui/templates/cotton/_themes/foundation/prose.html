@@ -1,0 +1,5 @@
+{% comment %}No class, and that is the correct answer rather than a gap. Foundation's
+base typography applies to bare `h1`-`h6`, `p` and `ul` document-wide, so the
+reset this component exists to scope is already in effect. `size` has no
+Foundation counterpart and is inert.{% endcomment %}
+<div class="{{ class }}">{{ slot }}</div>

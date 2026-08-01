@@ -1,0 +1,11 @@
+{#def content="", variant="neutral", extra_class="" #}
+{% autoescape true %}
+  {% set content = content if content is defined else "" %}
+  {% set variant = variant if variant is defined else "neutral" %}
+  {% set extra_class = extra_class if extra_class is defined else "" %}
+  {{ cf_ui_validate("box", variant=variant) }}
+  {# Bulma ships no colour modifier for `.box`, so `variant` is inert here.
+   `has-background-*` exists but sets a saturated background without touching
+   text colour, which would render unreadable rather than themed. #}
+  <div class="box{% if extra_class %} {{ extra_class }}{% endif %}">{{ content }}</div>
+{% endautoescape %}

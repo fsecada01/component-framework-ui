@@ -1,0 +1,6 @@
+{% comment %}Foundation spells danger `alert` and ships no `info` hue, so `info`
+folds onto `secondary` — the same two substitutions the badge partial makes for
+this theme.{% endcomment %}
+<div
+  class="callout{% if variant == 'primary' %} primary{% elif variant == 'secondary' %} secondary{% elif variant == 'success' %} success{% elif variant == 'warning' %} warning{% elif variant == 'danger' %} alert{% elif variant == 'info' %} secondary{% endif %}{% if class %} {{ class }}{% endif %}"
+>{{ slot }}</div>
