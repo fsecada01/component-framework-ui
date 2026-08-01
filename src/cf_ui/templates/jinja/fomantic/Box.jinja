@@ -1,0 +1,13 @@
+{#def content="", variant="neutral", extra_class="" #}
+{% autoescape true %}
+  {% set content = content if content is defined else "" %}
+  {% set variant = variant if variant is defined else "neutral" %}
+  {% set extra_class = extra_class if extra_class is defined else "" %}
+  {{ cf_ui_validate("box", variant=variant) }}
+  {# Real hues, not the literal words `primary` and `secondary`. Those two are
+   Fomantic's *emphasis* variation on a segment rather than colours —
+   `.ui.primary.segment` renders a subdued treatment, not a brand fill — so
+   mapping the variant onto them would silently produce the wrong thing on the
+   one theme where the name happens to match. #}
+  <div class="ui segment{% if variant == 'primary' %} blue{% elif variant == 'secondary' %} grey{% elif variant == 'success' %} green{% elif variant == 'warning' %} yellow{% elif variant == 'danger' %} red{% elif variant == 'info' %} teal{% endif %}{% if extra_class %} {{ extra_class }}{% endif %}">{{ content }}</div>
+{% endautoescape %}

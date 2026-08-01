@@ -121,10 +121,18 @@ caller's obligation.
 | `heading` | | ● | | ● | ● | |
 | `label` | | ● | | | | |
 | `icon` | | ● | | | | |
+| `box` | ● | | | | | |
+| `prose` | | ● | | | | |
 
 `label` and `icon` take no `variant` on purpose. A label's colour belongs to
 the field it labels and an icon's to whatever contains it; giving either its
 own would create two sources of truth for one colour.
+
+`box` takes `variant` and nothing else — a container's size is its content's
+business, and no shipped framework models a "state" for a plain box. `prose`
+takes only `size`: a typographic reset has no colour of its own, and giving
+it `variant` would mean colouring every nested element it wraps rather than
+the one thing this primitive actually decides.
 
 `heading` separates `level` from `size` because they answer different
 questions — `level` is the document outline (`<h1>`…`<h6>`, which screen
@@ -150,6 +158,8 @@ worth knowing before you reach for an axis:
 | `icon` | `size` is **inert** on Foundation, which has no icon wrapper and no font-size scale. On Bootstrap the scale is mixed: `small` is em-relative and composes inside a `btn-sm`, `large` is absolute and does not |
 | `label` | `size` has no `small` step on Foundation |
 | `button` | `info` renders as `secondary` on Foundation, which ships five button colours and no informational one |
+| `box` | `variant` is **inert** on Bulma — `.box` has no colour modifier at all |
+| `prose` | `size` is **inert** on Bootstrap, Foundation, and Fomantic — their base typography already applies document-wide, so there is no reset step left for `size` to control |
 
 cf-ui does not paper over these with utilities that reach the wrong values.
 Bootstrap's `fs-*` scale, for instance, bottoms out *larger* than a default
@@ -327,6 +337,146 @@ Icons, Bulma assumes Font Awesome, daisyUI assumes nothing — there is no
 class-level abstraction spanning all five, and adopting one would make a UI kit
 choose its consumers' icon vendor.
 
+## `Cf:Box` / `<c-cf.box>`
+
+| Prop | Default | Notes |
+|---|---|---|
+| `variant` | `"neutral"` | Inert on Bulma — see below |
+| `extra_class` / `class` | `""` | |
+| slot | — | Arbitrary content |
+
+`box` is a plain bordered or elevated container: one element, no imposed
+inner structure. It is named `box`, not `surface` — `box` is Bulma's actual
+class name for this element, and `surface` is Material Design vocabulary
+that none of the five shipped frameworks use.
+
+```jinja
+<Cf:Box variant="danger">
+  Something needs attention.
+</Cf:Box>
+```
+
+```html
+<c-cf.box variant="danger">
+  Something needs attention.
+</c-cf.box>
+```
+
+Bootstrap has no box component, so cf-ui composes one from utilities —
+`border rounded p-3`, with `variant` mapping to `border-primary` and so on.
+`card` was considered and rejected: it imposes a header/body/footer structure
+a plain box's caller cannot opt out of. Foundation renders `callout`, with
+`variant` mapped onto its five colours (`primary secondary success warning
+alert`); Foundation spells danger `alert` and ships no informational hue, so
+`info` folds onto `secondary` — the same substitution `badge` already makes
+on this theme. On daisy the border colour lives entirely in `variant`,
+`neutral` included (`border-base-300`): splitting a default colour into
+`base` and an override into `variant` would put two border-color utilities
+of equal specificity on one element, leaving Tailwind's emission order,
+rather than this map, to decide which one renders.
+
+### Bulma: `variant` is inert
+
+Bulma ships no colour modifier for `.box`. `has-background-*` classes exist,
+but they set a saturated background without touching text colour — routing
+`variant` through them would make a themed box unreadable rather than
+themed. cf-ui leaves the axis inert on this theme instead of faking it: a
+Bulma box looks the same regardless of `variant`.
+
+### Fomantic: the hue trap
+
+Fomantic renders a box as `ui segment` plus a hue — `blue grey green yellow
+red teal`. This is the theme where the obvious implementation is wrong, and
+worth saying plainly because it is the kind of trap this doc exists to
+record.
+
+`primary` and `secondary` are **not** colours on a Fomantic segment — they
+are its *emphasis* variation. `.ui.primary.segment` renders a subdued
+treatment, not a brand-coloured fill. Mapping `variant="primary"` onto the
+literal word `primary` would compile, look plausible, and silently produce
+the wrong result on the one theme where the variant name happens to match a
+real Fomantic class. cf-ui maps `primary` to `blue` and `secondary` to
+`grey` instead — real hues, not the words that look like they should work.
+
+## `Cf:Prose` / `<c-cf.prose>`
+
+| Prop | Default | Notes |
+|---|---|---|
+| `size` | `"normal"` | Inert on Bootstrap, Foundation, and Fomantic — see below |
+| `extra_class` / `class` | `""` | |
+| slot | — | Arbitrary rich content: headings, paragraphs, lists, tables |
+
+`prose` is a typographic reset block: it styles nested `h1`–`h6`, `p`, `ul`,
+and `table` without requiring a class on each one. It takes `size` and
+nothing else, for the reason given above the axis table.
+
+It is named `prose`, not `content`, for two concrete reasons. `content`
+collides with Bulma's own `.content` class — the exact class this component
+maps to on that theme — and `content` is already the prop name every Jinja
+primitive uses for slot text, so the JinjaX spelling would have been a
+`Content` component taking a `content` prop — self-contradictory. (Written
+out rather than shown as a tag: `tests/unit/test_docs_samples.py` resolves
+every `Cf:` tag in these docs against the real catalogue, so a component that
+deliberately does not exist cannot be illustrated as one.)
+
+```jinja
+<Cf:Prose size="large">
+  <h2>Release notes</h2>
+  <p>Everything in this block gets typographic styling for free.</p>
+</Cf:Prose>
+```
+
+```html
+<c-cf.prose size="large">
+  <h2>Release notes</h2>
+  <p>Everything in this block gets typographic styling for free.</p>
+</c-cf.prose>
+```
+
+On Bulma it maps to `.content`, with `is-small`/`is-large` for `size` — the
+reference implementation the other four themes are measured against.
+
+### Bootstrap and Foundation: no class, and that's correct
+
+Both frameworks emit no class at all for `prose`, and `size` is inert on
+both. That is not a gap. Bootstrap's Reboot and Foundation's base typography
+style bare `h1`-`h6`, `p`, and `ul` document-wide already, so the reset this
+component exists to scope is already in effect everywhere on the page —
+there is nothing for a class to add.
+
+### Fomantic: a real gap, and a different reason
+
+Fomantic emits no class either, but not for the same reason as the two
+above, and this one is a genuine limitation rather than a redundant no-op.
+
+Fomantic does style bare `h1`-`h5` and `p` globally, so headings and
+paragraphs inside a `Cf:Prose` block come out right with no wrapper class
+needed. It ships **no bare `ul`, `ol`, or `table` rule at all** — that
+styling lives on `.ui.list` and `.ui.table`, applied to the element itself
+rather than inherited from an ancestor. A list or table inside a prose block
+therefore renders with browser defaults, and no scoping class exists that
+would fix it.
+
+cf-ui does not paper over this by authoring its own Fomantic typography
+reset — that would mean shipping component CSS this package has never
+shipped, and guessing at a framework's type scale instead of using the
+framework's own. If you need a styled list or table inside a Fomantic prose
+block, reach for the framework's own element-level classes directly: use
+[`<c-cf.table>`](components.md) for tables, and put `ui list` on `<ul>`/`<ol>`.
+
+### daisyUI: requires `@tailwindcss/typography`
+
+On daisy, `prose` maps to the `prose` class, with `prose-sm`/`prose-lg` for
+`size` — but `prose` is not a daisyUI class and not a Tailwind core class.
+It comes from `@tailwindcss/typography`, a separate plugin declared a
+requirement for this one component on this one theme. See
+[DaisyUI theme](daisyui.md) for how to add it.
+
+Without the plugin, `prose` is simply an unrecognised class name: the block
+renders unstyled, with no error and no warning. That is the same benign
+class-valued failure mode `AXIS_KINDS` already tolerates for an empty axis
+value — it just arrives here from a missing plugin instead of an empty prop.
+
 ## Escaping
 
 The contract in [Escaping](escaping.md) applies unchanged: every cf-ui Jinja
@@ -348,9 +498,13 @@ governed by the caller's own escaping policy:
 still the slot rather than a prop — so passing a `Markup` value is a visible,
 per-call decision at the call site rather than a package default.
 
-When Tier 2 lands, `prose`/`content` will be the one component that exists to
-wrap caller-supplied HTML. It will need its own explicit statement here; the
-rule above is not sufficient for it.
+`prose` is the other one, and the stakes are higher: its whole purpose is to
+wrap caller-supplied HTML, often multiple elements of it, rather than one
+`<i>` tag. The mechanism is identical — slot-based, still inside cf-ui's own
+`{% autoescape true %}` block — but the rule above is not sufficient on its
+own to say what's safe to put there. See
+[Escaping: the `prose` contract](escaping.md#the-prose-contract) for the
+explicit statement.
 
 ## Why the classes are written out longhand
 
@@ -407,15 +561,15 @@ and commit both. A drift test fails the build otherwise.
 
 ## Not yet implemented
 
-`badge`, `heading`, `label`, and `icon` have settled contracts above but no
-templates yet — they are registered in `PRIMITIVES` and deliberately **not** in
-`themes.COMPONENTS`, so referring to one raises a clear `ThemeError` rather
-than a `TemplateDoesNotExist` at first render.
+Every primitive registered in `PRIMITIVES` — `button`, `badge`, `heading`,
+`label`, `icon`, `box`, `prose` — ships templates on all five themes in both
+engines as of #54. Tier 1 (`badge`, `heading`, `label`, `icon`) landed in
+#53; Tier 2 (`box`, `prose`), documented above, is #54.
 
-Tier 2 (`box`/`surface`, `prose`/`content`) and Tier 3 (`grid`) are tracked
-separately. `grid` in particular is not a settled question: Bootstrap, Bulma,
-Foundation, and Fomantic all ship 12-column systems with different
-vocabularies, while daisyUI ships none and defers to Tailwind utilities — so a
-daisy `grid` would emit raw utility classes while the other four emit framework
-classes. That is a genuine asymmetry rather than a thin adapter, and it is
-being decided on its own rather than inside this layer.
+What's left is Tier 3 — `grid` — tracked in #55, and it is not a settled
+question the way Tier 1 and 2 were. Bootstrap, Bulma, Foundation, and
+Fomantic all ship 12-column systems with different vocabularies, while
+daisyUI ships none and defers to Tailwind utilities — so a daisy `grid`
+would emit raw utility classes while the other four emit framework classes.
+That is a genuine asymmetry rather than a thin adapter, and it is being
+decided on its own rather than inside this layer.

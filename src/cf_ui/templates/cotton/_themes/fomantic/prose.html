@@ -1,0 +1,7 @@
+{% comment %}No class, but not for the same reason as Bootstrap and Foundation.
+Fomantic does style bare `h1`-`h5` and `p` globally, so headings and paragraphs
+come out right with no wrapper. It ships no bare `ul`, `ol` or `table` rule at
+all, though — that styling lives on `.ui.list` and `.ui.table`, on the element
+itself — so a list or table inside a prose block renders with browser defaults
+and no scoping class fixes it. See docs/primitives.md.{% endcomment %}
+<div class="{{ class }}">{{ slot }}</div>

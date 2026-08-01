@@ -39,6 +39,7 @@ DEFAULT_THEME = "bulma"
 #: primitives that actually ship.
 COMPONENTS = (
     "badge",
+    "box",
     "breadcrumb",
     "button",
     "card",
@@ -53,6 +54,7 @@ COMPONENTS = (
     "pagination",
     "panel",
     "progress",
+    "prose",
     "select",
     "table",
     "tabs",

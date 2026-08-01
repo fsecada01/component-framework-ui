@@ -1,0 +1,13 @@
+{#def content="", variant="neutral", extra_class="" #}
+{% autoescape true %}
+  {% set content = content if content is defined else "" %}
+  {% set variant = variant if variant is defined else "neutral" %}
+  {% set extra_class = extra_class if extra_class is defined else "" %}
+  {{ cf_ui_validate("box", variant=variant) }}
+  {# The border colour lives entirely in the variant, `neutral` included.
+   Splitting it — a default colour in the base and an override in the variant —
+   puts two border-color utilities of equal specificity on one element, and
+   which one wins is then decided by Tailwind's emission order rather than by
+   the class map. #}
+  <div class="rounded-box border bg-base-100 p-4{% if variant == 'primary' %} border-primary{% elif variant == 'secondary' %} border-secondary{% elif variant == 'success' %} border-success{% elif variant == 'warning' %} border-warning{% elif variant == 'danger' %} border-error{% elif variant == 'info' %} border-info{% else %} border-base-300{% endif %}{% if extra_class %} {{ extra_class }}{% endif %}">{{ content }}</div>
+{% endautoescape %}

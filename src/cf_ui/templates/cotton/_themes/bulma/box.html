@@ -1,0 +1,4 @@
+{% comment %}Bulma ships no colour modifier for `.box`, so `variant` is inert here.
+`has-background-*` exists but sets a saturated background without touching text
+colour, which would render unreadable rather than themed.{% endcomment %}
+<div class="box{% if class %} {{ class }}{% endif %}">{{ slot }}</div>

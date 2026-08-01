@@ -1,0 +1,12 @@
+{#def content="", variant="neutral", extra_class="" #}
+{% autoescape true %}
+  {% set content = content if content is defined else "" %}
+  {% set variant = variant if variant is defined else "neutral" %}
+  {% set extra_class = extra_class if extra_class is defined else "" %}
+  {{ cf_ui_validate("box", variant=variant) }}
+  {# Bootstrap has no box component. `card` would be wrong — it imposes a
+   header/body/footer structure the caller cannot opt out of — so this is the
+   utility composition Bootstrap's own docs reach for. `neutral` maps to
+   nothing because `.border` already sets the default border colour. #}
+  <div class="border rounded p-3{% if variant == 'primary' %} border-primary{% elif variant == 'secondary' %} border-secondary{% elif variant == 'success' %} border-success{% elif variant == 'warning' %} border-warning{% elif variant == 'danger' %} border-danger{% elif variant == 'info' %} border-info{% endif %}{% if extra_class %} {{ extra_class }}{% endif %}">{{ content }}</div>
+{% endautoescape %}

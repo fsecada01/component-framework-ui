@@ -114,6 +114,40 @@ The axis attributes emitted by `cf_ui_root_attrs()` are `Markup` by
 construction, so they survive; a hostile URL argument passed to
 `cf_ui_head()` or `cf_ui_body()` is escaped.
 
+## The prose contract
+
+[`Cf:Prose` / `<c-cf.prose>`](primitives.md#cfprose-c-cfprose) is a
+typographic reset block, and its whole purpose is to hold caller-supplied
+markup — usually several elements of it, not one icon tag. Mechanically
+nothing above changes: `prose` takes no markup prop, content arrives through
+the slot exactly like every other primitive, and cf-ui's own template is
+still wrapped in `{% autoescape true %}` regardless of what the calling
+environment does. What has to be said plainly, because `prose` is the
+component someone reaches for specifically to render a block of rich
+content, is what that mechanism does and does not cover.
+
+**cf-ui does not sanitize caller-supplied HTML.** If you wrap content in
+`Markup` (Jinja) or `mark_safe` (Django) to get real markup into a `prose`
+slot, you have told the template layer to trust that string completely —
+cf-ui renders it as-is, the same way it renders any other `Markup` value
+passed anywhere else in the package. `prose` does not inspect it, strip it,
+or narrow which tags are allowed.
+
+That is fine, and is exactly what `Markup`/`mark_safe` are for, when the
+HTML originates from your own code or a trusted template. It stops being
+fine the moment any part of that HTML came from a user — a comment body, a
+bio field, a rendered Markdown document someone else authored. Marking
+*that* safe and handing it to `prose` is a stored XSS vector, not a
+cf-ui bug: you told the template layer not to escape it, and it didn't.
+
+If the content is user-supplied, sanitize it **before** it reaches `Markup`
+or `mark_safe` — with an allowlist-based HTML sanitizer such as
+[`nh3`](https://pypi.org/project/nh3/) or
+[`bleach`](https://pypi.org/project/bleach/), not with escaping, since the
+whole point of `prose` is to render real markup rather than escaped text.
+Sanitizing is the caller's responsibility; cf-ui's escaping guarantee starts
+after that decision has already been made.
+
 ## Verifying it yourself
 
 The unfriendliest configuration a consumer can produce — no installer,

@@ -48,10 +48,22 @@ REPO_ROOT = Path(__file__).parent.parent.parent
 JINJA_DIR = REPO_ROOT / "src" / "cf_ui" / "templates" / "jinja"
 COTTON_THEME_DIR = REPO_ROOT / "src" / "cf_ui" / "templates" / "cotton" / "_themes"
 
-#: Components whose per-theme class maps ship in this phase. The prop contract
-#: is settled for all of Tier 1 (see ``docs/primitives.md``); the class maps
-#: land with each component's templates.
-IMPLEMENTED = ("badge", "button", "heading", "icon", "label")
+#: Primitives that actually ship templates — every test below that reads a
+#: file off disk is parametrized over this.
+#:
+#: Derived, not listed. It used to be a hand-written tuple, and that made it a
+#: silent-coverage trap: adding a primitive to :data:`PRIMITIVES` and to
+#: ``themes.COMPONENTS`` without also editing this line left its templates
+#: with *zero* parity and guard coverage, and nothing failed to say so. A
+#: primitive is implemented exactly when it is registered for rendering, so
+#: that is now what the name means. Get it wrong in the other direction —
+#: registered but no templates — and the parity tests fail loudly instead,
+#: which is the outcome that was missing.
+#:
+#: ``test_a_contract_only_primitive_is_not_registered_yet`` covers the
+#: complement: a settled contract with no templates yet must stay out of
+#: ``themes.COMPONENTS``.
+IMPLEMENTED = tuple(sorted(set(PRIMITIVES) & set(COMPONENTS)))
 
 
 # ── The vocabularies are closed ───────────────────────────────────────────
@@ -434,6 +446,13 @@ ALLOWED_UTILITY_CLASSES: dict[str, set[str]] = {
     "badge": set(),
     "heading": set(),
     "icon": set(),
+    # Both empty, and they should stay that way. Every class these two emit —
+    # Bootstrap's `border rounded p-3`, daisy's `rounded-box border
+    # bg-base-100 p-4` — is a *mapped* class, sitting in the component's
+    # ``base`` where the parity test can see it. A utility that lands here
+    # instead is one the map does not document.
+    "box": set(),
+    "prose": set(),
     "label": {
         # The required indicator's colour, per theme. Not an axis: `label`
         # takes no variant, and this is the only coloured thing it renders.

@@ -1,0 +1,6 @@
+{% comment %}`prose` comes from `@tailwindcss/typography` — not from daisyUI and not
+from Tailwind core. It is a declared requirement for this one component on this
+one theme, see docs/daisyui.md. Without the plugin the class is unrecognised and
+the block renders unstyled, which is the benign failure mode rather than broken
+markup.{% endcomment %}
+<div class="prose{% if size == 'small' %} prose-sm{% elif size == 'large' %} prose-lg{% endif %}{% if class %} {{ class }}{% endif %}">{{ slot }}</div>

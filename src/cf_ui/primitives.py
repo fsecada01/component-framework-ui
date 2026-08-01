@@ -217,12 +217,18 @@ ALIASES: dict[str, dict[str, str]] = {
 #: ``label`` and ``icon`` deliberately take no ``variant``: a label's colour
 #: belongs to the field it labels, and an icon's belongs to whatever contains
 #: it. Giving them one invites two sources of truth for the same colour.
+#: ``box`` takes ``variant`` and nothing else. A container's size is its
+#: content's business, and a "state" for a box has no meaning any framework
+#: models. ``prose`` takes only ``size`` — a typographic reset has no colour,
+#: and giving it one would mean colouring every nested element.
 PRIMITIVES: dict[str, tuple[str, ...]] = {
     "button": ("variant", "size", "state", "type"),
     "badge": ("variant", "size"),
     "heading": ("level", "size", "emphasis"),
     "label": ("size",),
     "icon": ("size",),
+    "box": ("variant",),
+    "prose": ("size",),
 }
 
 
@@ -523,6 +529,140 @@ _ICON_CLASSES: dict[str, dict[str, Any]] = {
     },
 }
 
+_BOX_CLASSES: dict[str, dict[str, Any]] = {
+    "bulma": {
+        "base": "box",
+        # Bulma ships no colour modifier for `.box`. `has-background-*` exists
+        # but sets a saturated background without touching text colour, so a
+        # variant routed through it renders unreadable rather than themed.
+        # Inert here, deliberately, and documented rather than faked.
+        "variant": {
+            "primary": "",
+            "secondary": "",
+            "success": "",
+            "warning": "",
+            "danger": "",
+            "info": "",
+            "neutral": "",
+        },
+    },
+    "bootstrap": {
+        # Bootstrap has no box component. This is the utility composition its
+        # own docs reach for: `card` would be wrong, because a card imposes a
+        # header/body/footer structure the caller cannot opt out of.
+        "base": "border rounded p-3",
+        "variant": {
+            "primary": "border-primary",
+            "secondary": "border-secondary",
+            "success": "border-success",
+            "warning": "border-warning",
+            "danger": "border-danger",
+            "info": "border-info",
+            # `.border` already sets the default border colour.
+            "neutral": "",
+        },
+    },
+    "foundation": {
+        "base": "callout",
+        "variant": {
+            "primary": "primary",
+            "secondary": "secondary",
+            "success": "success",
+            "warning": "warning",
+            # Foundation spells it `alert`, and ships no `info` hue — the same
+            # two substitutions `_BADGE_CLASSES` makes for this theme.
+            "danger": "alert",
+            "info": "secondary",
+            "neutral": "",
+        },
+    },
+    "fomantic": {
+        "base": "ui segment",
+        # Real hues, *not* the literal words `primary`/`secondary`. Those two
+        # are Fomantic's **emphasis** variation on a segment, not colours:
+        # `.ui.primary.segment` renders a subdued treatment rather than a
+        # brand fill, so mapping the variant onto them would silently produce
+        # the wrong thing on the one theme where the name happens to match.
+        "variant": {
+            "primary": "blue",
+            "secondary": "grey",
+            "success": "green",
+            "warning": "yellow",
+            "danger": "red",
+            "info": "teal",
+            "neutral": "",
+        },
+    },
+    "daisy": {
+        # The border *colour* lives entirely in the variant, including for
+        # `neutral`. Splitting it — a default colour in `base` and an override
+        # in the variant — puts two border-color utilities of equal
+        # specificity on one element, and which wins is then decided by
+        # Tailwind's emission order rather than by this map.
+        "base": "rounded-box border bg-base-100 p-4",
+        "variant": {
+            "primary": "border-primary",
+            "secondary": "border-secondary",
+            "success": "border-success",
+            "warning": "border-warning",
+            # daisyUI spells it `error`.
+            "danger": "border-error",
+            "info": "border-info",
+            "neutral": "border-base-300",
+        },
+    },
+}
+
+_PROSE_CLASSES: dict[str, dict[str, Any]] = {
+    "bulma": {
+        "base": "content",
+        "size": {"small": "is-small", "normal": "", "large": "is-large"},
+    },
+    "bootstrap": {
+        # Empty, and correct rather than missing. Bootstrap's Reboot styles
+        # bare `h1`-`h6`, `p` and `ul` globally, so the reset this component
+        # exists to scope is already in effect everywhere. A class here would
+        # have nothing to add.
+        "base": "",
+        "size": {"small": "", "normal": "", "large": ""},
+    },
+    "foundation": {
+        # Same as Bootstrap: Foundation's base typography applies to bare
+        # elements document-wide.
+        "base": "",
+        "size": {"small": "", "normal": "", "large": ""},
+    },
+    "fomantic": {
+        # Empty, but *not* for the same reason as the two above, and the
+        # difference is a real gap rather than a shrug.
+        #
+        # Fomantic does style bare `h1`-`h5` and `p` globally, so headings and
+        # paragraphs inside a prose block come out right with no wrapper. It
+        # ships no bare `ul`, `ol` or `table` rule at all, though — that
+        # styling lives on `.ui.list` and `.ui.table`, on the element itself.
+        # So a list or a table inside a prose block renders with browser
+        # defaults, and no scoping class exists that would fix it.
+        #
+        # Left empty on purpose. The alternative is cf-ui authoring its own
+        # Fomantic typography reset, which means shipping component CSS this
+        # package has never shipped and guessing at a framework's type scale.
+        # Stated in `docs/primitives.md` instead, with the workaround that
+        # actually works: `<c-cf.table>` inside the block.
+        "base": "",
+        "size": {"small": "", "normal": "", "large": ""},
+    },
+    "daisy": {
+        # `prose` comes from `@tailwindcss/typography` — not from daisyUI and
+        # not from Tailwind core. It is declared a requirement for this one
+        # component on this one theme (`docs/daisyui.md`). Without the plugin
+        # the class is simply unrecognised and the block renders unstyled,
+        # which is the benign class-valued failure mode rather than broken
+        # markup — the same reason `AXIS_KINDS` lets a class axis be empty.
+        "base": "prose",
+        "size": {"small": "prose-sm", "normal": "", "large": "prose-lg"},
+    },
+}
+
 #: Per-component maps, each keyed by theme. Adding a primitive is one entry
 #: here plus its templates — the assembly below and every test derive from it.
 _COMPONENT_CLASSES: dict[str, dict[str, dict[str, Any]]] = {
@@ -531,6 +671,8 @@ _COMPONENT_CLASSES: dict[str, dict[str, dict[str, Any]]] = {
     "heading": _HEADING_CLASSES,
     "label": _LABEL_CLASSES,
     "icon": _ICON_CLASSES,
+    "box": _BOX_CLASSES,
+    "prose": _PROSE_CLASSES,
 }
 
 

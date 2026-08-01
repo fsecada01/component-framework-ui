@@ -1,0 +1,5 @@
+{% comment %}No class, and that is the correct answer rather than a gap. Bootstrap's
+Reboot styles bare `h1`-`h6`, `p` and `ul` globally, so the typographic reset
+this component exists to scope is already in effect everywhere. `size` has no
+Bootstrap counterpart and is inert.{% endcomment %}
+<div class="{{ class }}">{{ slot }}</div>

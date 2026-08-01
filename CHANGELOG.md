@@ -2,6 +2,70 @@
 
 ## [Unreleased]
 
+### Added — primitives Tier 2: `box` and `prose` (#54)
+
+- **Two container primitives, on all five themes, in both template sets.**
+  `<Cf:Box>` / `<c-cf.box>` is a plain bordered container — one element, no
+  imposed header/body/footer, which is what separates it from `card`.
+  `<Cf:Prose>` / `<c-cf.prose>` is a typographic reset for a block of
+  server-rendered or user-supplied markup. `box` takes `variant`; `prose`
+  takes `size`. A container's size is its content's business, and a
+  typographic reset has no colour, so neither takes more.
+
+- **Named `box` and `prose`, not `surface` and `content`.** `box` is Bulma's
+  own class name; `surface` is Material vocabulary no shipped framework uses.
+  `content` was rejected twice over: it collides with Bulma's own `.content`
+  class, and `content` is already the prop every Jinja primitive uses for slot
+  text, so `<Cf:Content content="…">` would have been the spelling.
+
+- **Fomantic's `primary` and `secondary` are not colours on a segment.** They
+  are its *emphasis* variation — `.ui.primary.segment` renders a subdued
+  treatment, not a brand fill. The variant maps to real hues (`blue`, `grey`,
+  `green`, `yellow`, `red`, `teal`) instead, because the one theme where the
+  vocabulary appears to match by name is the one theme where matching it would
+  be wrong. Verified against Fomantic's own SCSS rather than assumed.
+
+- **`prose` is honest about where it does nothing.** On Bootstrap and
+  Foundation it emits no class at all, and that is correct rather than
+  missing: both style bare `h1`-`h6`, `p` and `ul` globally, so the reset this
+  component exists to scope is already in effect. Fomantic is different and
+  worse — it styles headings and paragraphs globally but ships **no** bare
+  `ul`, `ol` or `table` rule, so lists and tables inside a prose block fall
+  back to browser defaults and no scoping class fixes it. Documented in
+  `docs/primitives.md` with the workaround that does work, rather than papered
+  over with a cf-ui-authored type scale.
+
+- **On daisy, `prose` requires `@tailwindcss/typography`** — the class is from
+  that plugin, not from daisyUI and not from Tailwind core. Declared as a
+  requirement in `docs/daisyui.md`. Without it the block renders unstyled,
+  which is the benign class-valued failure mode rather than broken markup.
+
+- **`docs/escaping.md` now states the sanitization contract outright.**
+  `prose` is the first primitive whose purpose is wrapping caller-supplied
+  markup. Mechanically nothing changed — it is still slot-based and cf-ui's
+  own output is still escaped — but the thing that had never been written down
+  is that **cf-ui does not sanitize**. A caller reaching for `Markup` /
+  `mark_safe` has taken that on, and `nh3` or `bleach` is what does the job.
+
+### Fixed — two test guards that could not fail
+
+- **The theme-dispatch test was passing on whitespace.** It compared raw
+  rendered strings across the five themes and required all five to differ. A
+  `{% comment %}` block leaves its own blank lines behind, so two partials
+  emitting byte-identical markup still landed in different buckets on newline
+  count alone. Proven by mutation: gutting a partial's entire class chain left
+  the test green. It now compares collapsed markup, and allows two themes to
+  coincide only when their entry in `CLASSES` proves they agree — so `prose`
+  rendering alike on three themes passes for a stated reason, while a partial
+  that silently drops an axis still fails.
+
+- **`IMPLEMENTED` was a hand-written tuple**, which made adding a primitive a
+  silent-coverage trap: register it in `PRIMITIVES` and `themes.COMPONENTS`,
+  forget this one line, and its templates shipped with zero parity and guard
+  coverage without anything failing. It is now derived from the intersection
+  of the two, so the failure mode inverts — a primitive registered without
+  templates fails loudly instead of quietly not being checked.
+
 ### Added — a primitives layer: button, badge, heading, label, icon (#52)
 
 - **Five new components, on all five themes, in both template sets.**

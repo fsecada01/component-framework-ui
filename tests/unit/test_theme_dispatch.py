@@ -12,9 +12,12 @@ entry point and dispatches to a per-theme partial at
 all 14 components at once, with no template edits in the consuming app.
 """
 
+import json
 from pathlib import Path
 
 import pytest
+
+from cf_ui.primitives import CLASSES
 
 TEMPLATES_DIR = Path(__file__).parent.parent.parent / "src" / "cf_ui" / "templates"
 COTTON_DIR = TEMPLATES_DIR / "cotton"
@@ -22,6 +25,7 @@ COTTON_DIR = TEMPLATES_DIR / "cotton"
 # Cotton file stems (hyphenated), as used by <c-cf.form-field>.
 COMPONENT_STEMS = [
     "badge",
+    "box",
     "breadcrumb",
     "button",
     "card",
@@ -36,6 +40,7 @@ COMPONENT_STEMS = [
     "pagination",
     "panel",
     "progress",
+    "prose",
     "select",
     "table",
     "tabs",
@@ -268,9 +273,37 @@ def test_switching_the_setting_switches_the_rendered_markup(settings, stem):
         assert html.strip(), f"{theme} render produced nothing"
         rendered[theme] = html
 
-    assert len(set(rendered.values())) == len(IMPLEMENTED_THEMES), (
-        f"{stem} rendered identically under two themes: {sorted(rendered)}"
-    )
+    # Compare collapsed markup, not raw output. A `{% comment %}` block leaves
+    # its own blank lines behind, so two partials emitting byte-identical
+    # markup still landed in different buckets purely on how many newlines
+    # their rationale comments happened to produce — which made this
+    # assertion pass on whitespace noise. Verified by mutation: gutting a
+    # partial's whole class chain used to leave this test green.
+    by_output: dict[str, list[str]] = {}
+    for theme, html in rendered.items():
+        by_output.setdefault(" ".join(html.split()), []).append(theme)
+
+    # Usually every theme renders differently, and for anything with a
+    # per-theme partial and no class map that is the whole assertion. A
+    # primitive is allowed to coincide, but only when its class map *proves*
+    # the themes agree — `prose` is empty on Bootstrap, Foundation and
+    # Fomantic because all three style typography globally, so "emit no class"
+    # is the correct answer three times over and three correct answers render
+    # alike. Deriving the exemption from `CLASSES` rather than listing theme
+    # names keeps it honest: two themes whose maps differ must still diverge,
+    # so a partial that silently forgot to apply an axis still fails here.
+    for group in by_output.values():
+        if len(group) == 1:
+            continue
+        assert stem in CLASSES[group[0]], (
+            f"{stem} rendered identically under {sorted(group)} — it has no "
+            f"class map, so there is nothing that could make that correct"
+        )
+        signatures = {json.dumps(CLASSES[theme][stem], sort_keys=True) for theme in group}
+        assert len(signatures) == 1, (
+            f"{stem} rendered identically under {sorted(group)} despite those "
+            f"themes mapping different classes — the partial is dropping an axis"
+        )
 
 
 def test_dispatch_passes_the_slot_through_to_the_partial(settings):

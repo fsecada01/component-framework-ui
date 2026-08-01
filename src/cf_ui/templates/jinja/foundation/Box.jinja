@@ -1,0 +1,11 @@
+{#def content="", variant="neutral", extra_class="" #}
+{% autoescape true %}
+  {% set content = content if content is defined else "" %}
+  {% set variant = variant if variant is defined else "neutral" %}
+  {% set extra_class = extra_class if extra_class is defined else "" %}
+  {{ cf_ui_validate("box", variant=variant) }}
+  {# Foundation spells danger `alert` and ships no `info` hue, so `info` folds
+   onto `secondary` — the same two substitutions the badge template makes for
+   this theme. #}
+  <div class="callout{% if variant == 'primary' %} primary{% elif variant == 'secondary' %} secondary{% elif variant == 'success' %} success{% elif variant == 'warning' %} warning{% elif variant == 'danger' %} alert{% elif variant == 'info' %} secondary{% endif %}{% if extra_class %} {{ extra_class }}{% endif %}">{{ content }}</div>
+{% endautoescape %}

@@ -126,6 +126,42 @@ still works; DaisyUI has no `alert-danger`, so the templates map it onto
 `alert-error` internally. A test scans every DaisyUI template for class tokens
 split across a template construct and fails on any it finds.
 
+## `Cf:Prose` needs `@tailwindcss/typography`
+
+[`Cf:Prose` / `<c-cf.prose>`](primitives.md#cfprose-c-cfprose) maps to the
+`prose` class on daisy — and `prose` is not a daisyUI class, and not part of
+Tailwind core. It comes from
+[`@tailwindcss/typography`](https://github.com/tailwindlabs/tailwindcss-typography),
+a separate official plugin, and it is required for this one component on
+this one theme only. No other cf-ui component under any theme needs it.
+
+Add the plugin alongside daisyUI:
+
+```bash
+npm i -D @tailwindcss/typography
+```
+
+```js
+// tailwind.config.js  (Tailwind v3)
+module.exports = {
+  plugins: [require("@tailwindcss/typography"), require("daisyui")],
+};
+```
+
+```css
+/* app.css  (Tailwind v4) */
+@import "tailwindcss";
+@plugin "daisyui";
+@plugin "@tailwindcss/typography";
+```
+
+Without it, `prose` (and the `prose-sm`/`prose-lg` classes `Cf:Prose` emits
+for `size`) are simply class names Tailwind does not recognise. There is no
+build error and no runtime error — the block renders with valid markup and
+no typographic styling at all, the same silent-unstyled failure mode as a
+missed [content glob](#tailwind-content-glob-read-this-one) above, just with
+a missing plugin as the cause instead of a missing path.
+
 ## Coexistence with an existing framework
 
 Tailwind's preflight resets margins, font sizes, list styles, and form control
