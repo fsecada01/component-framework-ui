@@ -6,6 +6,72 @@ instead of linking a finished stylesheet. That changes two things — what
 Tailwind has to scan, and what Tailwind's preflight does to whatever styling
 you already had.
 
+## The CDN path needs two tags, not one
+
+DaisyUI is a Tailwind *plugin* — its CDN bundle
+(`daisyui@{version}/dist/full.min.css`) is the component layer only. It has
+`.btn{` and `.card{`, but no `.flex{`, `.w-full{`, `.gap-4{`, or any other
+Tailwind utility, because utilities are the host framework's job and a plugin
+bundle does not carry them. The shipped daisy templates lean on exactly those
+utilities for layout, so the stylesheet alone renders styled buttons and cards
+sitting in a broken layout — no error, no console warning, just a page that
+looks wrong in a way that does not point at the cause.
+
+DaisyUI's own CDN documentation (<https://v4.daisyui.com/docs/cdn/>)
+prescribes two tags, in this order:
+
+```html
+<link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.24/dist/full.min.css" rel="stylesheet" type="text/css" />
+<script src="https://cdn.tailwindcss.com"></script>
+```
+
+The second tag is Tailwind's **Play CDN** — a real Tailwind build that
+compiles utility classes in the browser, at request time. Upstream is explicit
+that this is "for development purposes only, and not intended for
+production."
+
+`{% cf_ui_head %}` / `cf_ui_head()` now emits that same pair for you, gated by
+one switch.
+
+### `CF_UI_DAISY_CDN`
+
+```python
+# settings.py  (Django)
+CF_UI_DAISY_CDN = "play"  # default — or "off"
+```
+
+```jinja
+{# Jinja2 / JinjaX #}
+{{ cf_ui_head(theme="daisy", daisy_cdn="play") }}
+```
+
+| Value | What `cf_ui_head` emits | When to use it |
+|---|---|---|
+| `"play"` (default) | An explanatory HTML comment, then the daisyUI stylesheet `<link>`, then the Tailwind Play CDN `<script>` — the vendor's own order | Prototyping, demos, anywhere without a Tailwind build step |
+| `"off"` | Neither tag. `cf_ui_axes.css`, the `[x-cloak]` style block, and any custom axis styles are unchanged | A consumer with a real Tailwind build (see below) — it already supplies both layers itself |
+
+An unrecognized value fails at startup: Django raises `ImproperlyConfigured`
+naming the valid values, the same treatment `CF_UI_THEME` and
+`CF_UI_COMPOSITION` already get.
+
+### Why `"play"` is the default, not `"off"`
+
+The failure this switch exists to prevent is a silently half-styled page. A
+default of `"off"` does not avoid that failure — it just changes who hits it:
+anyone who sets `CF_UI_THEME = "daisy"`, follows the quickstart, and has not
+yet read this page gets the exact same unstyled layout, with the same absence
+of an error. `"play"` gives that consumer a working page immediately, plus an
+unmissable, greppable signal in view-source (the comment) pointing at this
+document. A consumer running a real Tailwind build — the production path — is
+exactly the consumer who has read this far and can flip `CF_UI_DAISY_CDN` to
+`"off"` deliberately.
+
+**The CDN path, even in `"play"` mode, is not equivalent to a real Tailwind
+build.** It compiles in the browser on every page load, which is a real
+performance cost, and upstream does not support it in production. Treat
+`"play"` as a way to see cf-ui's daisy theme working with zero build-tooling
+setup — not as a deployment target.
+
 ## Switching to it
 
 ```python

@@ -29,7 +29,14 @@ gives the modal two owners, and `Alpine.store('cf').modal.open(id)` would then
 mean something different under one theme than under the others.
 
 cf-ui uses each framework's classes and markup structure and wires behavior
-through Alpine, so the CDN stylesheet is all a consuming app needs.
+through Alpine, so the CDN stylesheet is all a consuming app needs — for
+Bulma, Bootstrap, Foundation, and Fomantic. **DaisyUI is the exception**: it
+is a Tailwind plugin, so its CDN stylesheet is components only, with none of
+the utility classes (`flex`, `w-full`, `gap-4`, …) the daisy templates use for
+layout. `{% cf_ui_head %}` covers the gap by also emitting Tailwind's Play
+CDN script, but that is a browser-side compile step, not a production
+substitute for a real Tailwind build — see [DaisyUI](daisyui.md) before you
+ship it.
 [Bootstrap](bootstrap.md) is the full decision record — which of Bootstrap's
 twelve JS components cf-ui replaces, what to do about the eight it does not,
 and what changes at Bootstrap 6.
@@ -65,6 +72,15 @@ components. See [Components](components.md) for every prop.
 That order is load-bearing: both tags use `defer`, so DOM order determines
 execution order, and cf-ui's file must register its components before Alpine
 initializes them.
+
+!!! warning "DaisyUI is not like the other four themes here"
+    For Bulma, Bootstrap, Foundation, and Fomantic, `{% cf_ui_head %}` emits
+    one self-contained stylesheet and that is the whole story. DaisyUI
+    compiles through Tailwind, so its CDN stylesheet alone has no utility
+    classes — `{% cf_ui_head %}` also emits Tailwind's Play CDN script for it,
+    controlled by `CF_UI_DAISY_CDN` (`"play"` by default, `"off"` for a real
+    Tailwind build). See [DaisyUI](daisyui.md) before choosing which one you
+    ship.
 
 CDN versions are pinned defaults, overridable:
 
