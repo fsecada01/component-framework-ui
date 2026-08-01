@@ -2,6 +2,30 @@
 
 ## [Unreleased]
 
+### Fixed — `Notification` silently discarded its body content (#65)
+
+- **Every theme, both engines, rendered the scalar `message` prop and nothing
+  else.** A caller writing the natural container form —
+  `<c-cf.notification type="danger">{{ error }}</c-cf.notification>` — got a
+  correctly styled, correctly coloured, **empty** box. In cotton this failed
+  silently: `<c-vars message ...>` carried no default, so `message` resolved to
+  the empty string and the box rendered anyway. In JinjaX it failed loudly but
+  wrongly — `message` was a required `{#def}` parameter, so a body-only call
+  raised `MissingRequiredArgument`. Both paths now render the body when one is
+  present and fall back to `message` when it is not. `message=` callers are
+  untouched; the JinjaX signature only loosens.
+- `Notification` was the single outlier among the container-shaped components.
+  `card`, `modal`, `panel`, `prose` and `box` have always accepted a body
+  alongside their scalar props; the bodiless components (`breadcrumb`,
+  `pagination`, `table`, `progress`) are all data-driven, where children would
+  be meaningless. `Notification` is a container that happened to expose only a
+  string.
+- **The two operands want opposite escaping and now get it, under test.** JinjaX
+  wraps slot content in `Markup`, so a body passes through the template's
+  `{% autoescape true %}` block untouched; `message` is caller-supplied text and
+  is still escaped. Both halves are asserted per theme rather than left to
+  autoescape semantics.
+
 ## [0.3.0] — 2026-07-31
 
 The primitives layer. 0.2.0 shipped 14 *structural* components — card, modal,

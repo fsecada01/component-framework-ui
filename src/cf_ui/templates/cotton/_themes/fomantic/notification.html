@@ -17,5 +17,7 @@
       @click="visible = false"
     >&times;</button>
   {% endif %}
-  <div class="content">{{ message }}</div>
+  {% comment %} Body content wins over the scalar `message` — a caller who wrote children
+  meant them. `message` stays for the existing call form (#65). {% endcomment %}
+  <div class="content">{% if slot %}{{ slot }}{% else %}{{ message }}{% endif %}</div>
 </div>

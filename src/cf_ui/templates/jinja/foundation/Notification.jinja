@@ -1,5 +1,7 @@
-{#def message, type="info", dismissible=true, extra_class="" #}
+{#def content="", message="", type="info", dismissible=true, extra_class="" #}
 {% autoescape true %}
+  {% set content = content if content is defined else "" %}
+  {% set message = message if message is defined else "" %}
   {% set type = type if type is defined else "info" %}
   {% set dismissible = dismissible if dismissible is defined else true %}
   {% set extra_class = extra_class if extra_class is defined else "" %}
@@ -15,7 +17,11 @@
     x-data="{ visible: true }"
     x-show="visible"
   >
-    <p>{{ message }}</p>
+    {# Body content wins over the scalar `message` — a caller who wrote children
+       meant them. The two operands want opposite escaping and get it: JinjaX
+       wraps slot content in `Markup`, so it passes through this block
+       untouched, while `message` is caller-supplied text and is escaped. #}
+    <p>{{ content if content else message }}</p>
     {% if dismissible %}
       <button
         type="button"
