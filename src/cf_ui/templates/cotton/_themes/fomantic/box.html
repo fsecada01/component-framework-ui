@@ -3,4 +3,6 @@ Fomantic's *emphasis* variation on a segment rather than colours —
 `.ui.primary.segment` renders a subdued treatment, not a brand fill — so
 mapping the variant onto them would silently produce the wrong thing on the one
 theme where the name happens to match.{% endcomment %}
-<div class="ui segment{% if variant == 'primary' %} blue{% elif variant == 'secondary' %} grey{% elif variant == 'success' %} green{% elif variant == 'warning' %} yellow{% elif variant == 'danger' %} red{% elif variant == 'info' %} teal{% endif %}{% if class %} {{ class }}{% endif %}">{{ slot }}</div>
+<div
+  class="ui segment{% if variant == 'primary' %} blue{% elif variant == 'secondary' %} grey{% elif variant == 'success' %} green{% elif variant == 'warning' %} yellow{% elif variant == 'danger' %} red{% elif variant == 'info' %} teal{% endif %}{% if class %} {{ class }}{% endif %}"
+>{{ slot }}</div>

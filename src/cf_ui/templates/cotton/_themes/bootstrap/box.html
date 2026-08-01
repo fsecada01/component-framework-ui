@@ -2,4 +2,6 @@
 header/body/footer structure the caller cannot opt out of — so this is the
 utility composition Bootstrap's own docs reach for. `neutral` maps to nothing
 because `.border` already sets the default border colour.{% endcomment %}
-<div class="border rounded p-3{% if variant == 'primary' %} border-primary{% elif variant == 'secondary' %} border-secondary{% elif variant == 'success' %} border-success{% elif variant == 'warning' %} border-warning{% elif variant == 'danger' %} border-danger{% elif variant == 'info' %} border-info{% endif %}{% if class %} {{ class }}{% endif %}">{{ slot }}</div>
+<div
+  class="border rounded p-3{% if variant == 'primary' %} border-primary{% elif variant == 'secondary' %} border-secondary{% elif variant == 'success' %} border-success{% elif variant == 'warning' %} border-warning{% elif variant == 'danger' %} border-danger{% elif variant == 'info' %} border-info{% endif %}{% if class %} {{ class }}{% endif %}"
+>{{ slot }}</div>
