@@ -6,7 +6,7 @@ from django.utils.safestring import mark_safe
 from cf_ui.axes import root_attrs, style_element
 from cf_ui.django import axis_value_sets
 from cf_ui.primitives import validate as validate_primitive
-from cf_ui.themes import cotton_partial
+from cf_ui.themes import cotton_partial, resolve_daisy_cdn
 
 register = template.Library()
 
@@ -18,6 +18,18 @@ _CDN_CSS = {
     "daisy": "https://cdn.jsdelivr.net/npm/daisyui@{v}/dist/full.min.css",
 }
 _ALPINE_CDN = "https://cdn.jsdelivr.net/npm/alpinejs@{v}/dist/cdn.min.js"
+
+# daisyUI's own CDN recipe (https://v4.daisyui.com/docs/cdn/) is this
+# stylesheet paired with Tailwind's Play CDN script, in this order — daisyUI
+# is a Tailwind plugin, so the stylesheet alone has no utility layer (#56).
+_TAILWIND_PLAY_CDN = '<script src="https://cdn.tailwindcss.com"></script>'
+_DAISY_PLAY_COMMENT = (
+    '<!-- cf-ui: daisyUI CDN mode ("play"). Loads Tailwind\'s Play CDN, which\n'
+    '     compiles utilities in the browser; upstream labels it "for development\n'
+    '     purposes only, and not intended for production"\n'
+    "     (https://v4.daisyui.com/docs/cdn/). For production, run a real\n"
+    '     Tailwind build and set CF_UI_DAISY_CDN = "off". -->'
+)
 _DEFAULTS = {
     "bulma": "1.0.2",
     "bootstrap": "5.3.3",
@@ -52,7 +64,16 @@ def cf_ui_head() -> str:
     v = _versions()
     parts = []
 
-    if theme in _CDN_CSS:
+    if theme == "daisy":
+        daisy_cdn = resolve_daisy_cdn(getattr(settings, "CF_UI_DAISY_CDN", None))
+        if daisy_cdn == "play":
+            url = _CDN_CSS["daisy"].format(v=v.get("daisy", ""))
+            parts.append(_DAISY_PLAY_COMMENT)
+            parts.append(f'<link rel="stylesheet" href="{url}">')
+            parts.append(_TAILWIND_PLAY_CDN)
+        # "off": a real Tailwind build supplies both the stylesheet and the
+        # utility layer, so cf-ui emits neither tag.
+    elif theme in _CDN_CSS:
         url = _CDN_CSS[theme].format(v=v.get(theme, ""))
         parts.append(f'<link rel="stylesheet" href="{url}">')
 

@@ -7,7 +7,7 @@ from cf_ui.axes import (
     merge_value_sets,
     resolve_composition,
 )
-from cf_ui.themes import ThemeError, resolve_theme
+from cf_ui.themes import ThemeError, resolve_daisy_cdn, resolve_theme
 
 
 def axis_value_sets() -> dict:
@@ -53,6 +53,11 @@ class CfUiConfig(AppConfig):
             resolve_theme(getattr(settings, "CF_UI_THEME", None))
         except ThemeError as exc:
             raise ImproperlyConfigured(f"cf-ui: {exc}. Check CF_UI_THEME in settings.") from exc
+
+        try:
+            resolve_daisy_cdn(getattr(settings, "CF_UI_DAISY_CDN", None))
+        except ThemeError as exc:
+            raise ImproperlyConfigured(f"cf-ui: {exc}. Check CF_UI_DAISY_CDN in settings.") from exc
 
         try:
             resolve_composition(
