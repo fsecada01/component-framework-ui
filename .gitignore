@@ -26,3 +26,6 @@ uv.lock
 
 # mkdocs build output
 site/
+
+# Agent worktrees, created by isolated subagent runs.
+.claude/worktrees/
