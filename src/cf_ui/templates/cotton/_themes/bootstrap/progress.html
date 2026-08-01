@@ -1,15 +1,21 @@
-{# Bootstrap's bar is a div sized in percent, not a native <progress>, so the
-   width has to be computed from value/max rather than emitted verbatim.
-   `widthratio` returns "0" on a zero max rather than raising. #}
+{% comment %}
+Bootstrap's bar is a div sized in percent, not a native <progress>, so the
+width has to be computed from value/max rather than emitted verbatim.
+`widthratio` returns "0" on a zero max rather than raising.
+{% endcomment %}
 <div class="{{ class }}">
   {% if label %}<p class="text-center mb-1">{{ label }}</p>{% endif %}
-  <div class="progress"
-       role="progressbar"
-       aria-label="{% if label %}{{ label }}{% else %}progress{% endif %}"
-       aria-valuenow="{{ value }}"
-       aria-valuemin="0"
-       aria-valuemax="{{ max }}">
-    <div class="progress-bar {% if type == 'danger' or type == 'error' %}bg-danger{% elif type == 'success' %}bg-success{% elif type == 'warning' %}bg-warning{% elif type == 'info' %}bg-info{% else %}bg-primary{% endif %}"
-         style="width: {% widthratio value max 100 %}%"></div>
+  <div
+    class="progress"
+    role="progressbar"
+    aria-label="{% if label %}{{ label }}{% else %}progress{% endif %}"
+    aria-valuenow="{{ value }}"
+    aria-valuemin="0"
+    aria-valuemax="{{ max }}"
+  >
+    <div
+      class="progress-bar {% if type == 'danger' or type == 'error' %}bg-danger{% elif type == 'success' %}bg-success{% elif type == 'warning' %}bg-warning{% elif type == 'info' %}bg-info{% else %}bg-primary{% endif %}"
+      style="width: {% widthratio value max 100 %}%"
+    ></div>
   </div>
 </div>

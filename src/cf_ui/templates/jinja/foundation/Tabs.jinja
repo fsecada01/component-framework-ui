@@ -1,11 +1,11 @@
 {#def tabs=[], hx_target="tab-content", active="", content="", extra_class="" #}
 {% autoescape true %}
-{% set tabs = tabs if tabs is defined else [] %}
-{% set content = content if content is defined else "" %}
-{% set active = active if active is defined else "" %}
-{% set hx_target = hx_target if hx_target is defined else "tab-content" %}
-{% set extra_class = extra_class if extra_class is defined else "" %}
-{# `.tabs-title > a[aria-selected=true]` is what actually restyles the selected
+  {% set tabs = tabs if tabs is defined else [] %}
+  {% set content = content if content is defined else "" %}
+  {% set active = active if active is defined else "" %}
+  {% set hx_target = hx_target if hx_target is defined else "tab-content" %}
+  {% set extra_class = extra_class if extra_class is defined else "" %}
+  {# `.tabs-title > a[aria-selected=true]` is what actually restyles the selected
    tab — `.is-active` on the `<li>` alone changes nothing visually — so the
    aria attribute is load-bearing for appearance here, not only for the reader.
    Both are rendered server-side and both keep their Alpine binding.
@@ -13,28 +13,34 @@
    The panel is `.tabs-content` rather than `.tabs-panel`: this widget has one
    panel that is always shown and HTMX-swapped, whereas `.tabs-panel` is
    `display: none` until `.is-active` picks one of several siblings. #}
-<div class="{{ extra_class }}"
-     x-data="cfTabs"
-     x-init="initTabs()"
-     data-cf-active="{{ active }}">
-  <ul class="tabs" role="tablist" @keydown="onKeydown($event)">
-    {% for tab in tabs %}
-    <li class="tabs-title{% if tab.id == active %} is-active{% endif %}"
-        data-cf-tab="{{ tab.id }}"
-        :class="{ 'is-active': active === $el.dataset.cfTab }">
-      <a role="tab"
-         data-cf-tab="{{ tab.id }}"
-         aria-controls="{{ hx_target }}"
-         aria-selected="{% if tab.id == active %}true{% else %}false{% endif %}"
-         tabindex="{% if tab.id == active or (not active and loop.first) %}0{% else %}-1{% endif %}"
-         :aria-selected="active === $el.dataset.cfTab"
-         :tabindex="tabIndexFor($el.dataset.cfTab)"
-         @click.prevent="setActive($el.dataset.cfTab)"
-         hx-get="{{ tab.url }}"
-         hx-target="#{{ hx_target }}">{{ tab.id }}</a>
-    </li>
-    {% endfor %}
-  </ul>
-  <div id="{{ hx_target }}" class="tabs-content" role="tabpanel">{{ content }}</div>
-</div>
+  <div
+    class="{{ extra_class }}"
+    x-data="cfTabs"
+    x-init="initTabs()"
+    data-cf-active="{{ active }}"
+  >
+    <ul class="tabs" role="tablist" @keydown="onKeydown($event)">
+      {% for tab in tabs %}
+        <li
+          class="tabs-title{% if tab.id == active %} is-active{% endif %}"
+          data-cf-tab="{{ tab.id }}"
+          :class="{ 'is-active': active === $el.dataset.cfTab }"
+        >
+          <a
+            role="tab"
+            data-cf-tab="{{ tab.id }}"
+            aria-controls="{{ hx_target }}"
+            aria-selected="{% if tab.id == active %}true{% else %}false{% endif %}"
+            tabindex="{% if tab.id == active or (not active and loop.first) %}0{% else %}-1{% endif %}"
+            :aria-selected="active === $el.dataset.cfTab"
+            :tabindex="tabIndexFor($el.dataset.cfTab)"
+            @click.prevent="setActive($el.dataset.cfTab)"
+            hx-get="{{ tab.url }}"
+            hx-target="#{{ hx_target }}"
+          >{{ tab.id }}</a>
+        </li>
+      {% endfor %}
+    </ul>
+    <div id="{{ hx_target }}" class="tabs-content" role="tabpanel">{{ content }}</div>
+  </div>
 {% endautoescape %}

@@ -1,31 +1,38 @@
 {#def title, id="panel", content="", open=false, extra_class="" #}
 {% autoescape true %}
-{% set content = content if content is defined else "" %}
-{% set id = id if id is defined else "panel" %}
-{% set open = open if open is defined else false %}
-<div class="card {{ extra_class }}"
-     x-data="cfPanel"
-     x-init="initPanel()"
-     data-cf-open="{% if open %}true{% else %}false{% endif %}">
-  <header class="card-header" style="cursor:pointer" @click="toggle()">
-    <p class="card-header-title">{{ title }}</p>
-    <button type="button"
-            class="card-header-icon"
-            aria-label="toggle panel"
-            aria-controls="{{ id }}-body"
-            aria-expanded="{% if open %}true{% else %}false{% endif %}"
-            :aria-expanded="open">
-      <span class="icon">
-        <span :style="open ? 'transform:rotate(90deg)' : 'transform:rotate(0deg)'"
-              style="display:inline-block;transition:transform 200ms">▶</span>
-      </span>
-    </button>
-  </header>
-  <div id="{{ id }}-body"
-       class="card-content"
-       x-show="open"
-       {% if not open %}x-cloak{% endif %}>
-    {{ content }}
+  {% set content = content if content is defined else "" %}
+  {% set id = id if id is defined else "panel" %}
+  {% set open = open if open is defined else false %}
+  <div
+    class="card {{ extra_class }}"
+    x-data="cfPanel"
+    x-init="initPanel()"
+    data-cf-open="{% if open %}true{% else %}false{% endif %}"
+  >
+    <header class="card-header" style="cursor:pointer" @click="toggle()">
+      <p class="card-header-title">{{ title }}</p>
+      <button
+        type="button"
+        class="card-header-icon"
+        aria-label="toggle panel"
+        aria-controls="{{ id }}-body"
+        aria-expanded="{% if open %}true{% else %}false{% endif %}"
+        :aria-expanded="open"
+      >
+        <span class="icon">
+          <span
+            :style="open ? 'transform:rotate(90deg)' : 'transform:rotate(0deg)'"
+            style="display:inline-block;
+                   transition:transform 200ms"
+          >▶</span>
+        </span>
+      </button>
+    </header>
+    <div
+      id="{{ id }}-body"
+      class="card-content"
+      x-show="open"
+      {% if not open %}x-cloak{% endif %}
+    >{{ content }}</div>
   </div>
-</div>
 {% endautoescape %}

@@ -1,12 +1,12 @@
 {#def id="modal", header="", content="", footer="", label="Dialog", extra_class="" #}
 {% autoescape true %}
-{% set id = id if id is defined else "modal" %}
-{% set header = header if header is defined else "" %}
-{% set content = content if content is defined else "" %}
-{% set footer = footer if footer is defined else "" %}
-{% set label = label if label is defined and label else "Dialog" %}
-{% set extra_class = extra_class if extra_class is defined else "" %}
-{# Foundation ships no open-state class for Reveal. Both `.reveal` and
+  {% set id = id if id is defined else "modal" %}
+  {% set header = header if header is defined else "" %}
+  {% set content = content if content is defined else "" %}
+  {% set footer = footer if footer is defined else "" %}
+  {% set label = label if label is defined and label else "Dialog" %}
+  {% set extra_class = extra_class if extra_class is defined else "" %}
+  {# Foundation ships no open-state class for Reveal. Both `.reveal` and
    `.reveal-overlay` are `display: none` in the stylesheet, and the jQuery
    plugin opens them by writing an inline `display` — there is no `.is-active`
    to bind. `x-show` cannot stand in either: it *removes* the inline property
@@ -18,24 +18,31 @@
    — it is only centred and scrollable because the fixed, full-screen overlay
    is its container. The plugin injects that wrapper at runtime; here it is
    just markup. #}
-<div id="{{ id }}"
-     class="reveal-overlay {{ extra_class }}"
-     role="dialog"
-     aria-modal="true"
-     {% if header %}aria-labelledby="{{ id }}-title"{% else %}aria-label="{{ label }}"{% endif %}
-     x-data="cfModal"
-     x-init="initModal()"
-     :style="open ? 'display: block' : 'display: none'"
-     @click.self="close()">
-  <div class="reveal" style="display: block">
-    <button type="button" class="close-button" aria-label="close" @click="close()">
-      <span aria-hidden="true">&times;</span>
-    </button>
-    {% if header %}<h2 id="{{ id }}-title">{{ header }}</h2>{% endif %}
-    <div>{{ content }}</div>
-    {% if footer %}
-    <div class="text-right">{{ footer }}</div>
-    {% endif %}
+  <div
+    id="{{ id }}"
+    class="reveal-overlay {{ extra_class }}"
+    role="dialog"
+    aria-modal="true"
+    {% if header %}aria-labelledby="{{ id }}-title"{% else %}aria-label="{{ label }}"{% endif %}
+    x-data="cfModal"
+    x-init="initModal()"
+    :style="open ? 'display: block' : 'display: none'"
+    @click.self="close()"
+  >
+    <div class="reveal" style="display: block">
+      <button
+        type="button"
+        class="close-button"
+        aria-label="close"
+        @click="close()"
+      >
+        <span aria-hidden="true">&times;</span>
+      </button>
+      {% if header %}<h2 id="{{ id }}-title">{{ header }}</h2>{% endif %}
+      <div>{{ content }}</div>
+      {% if footer %}
+        <div class="text-right">{{ footer }}</div>
+      {% endif %}
+    </div>
   </div>
-</div>
 {% endautoescape %}

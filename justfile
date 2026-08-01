@@ -15,6 +15,17 @@ lint:
 lint-fix:
     ruff check --fix src tests
 
+# Templates. Two invocations because `profile` is one global setting and the
+# cotton tree is Django template language while the jinja tree is Jinja2.
+# Settings live in `[tool.djlint]`; `prek` runs the same thing on commit.
+format-templates:
+    djlint src/cf_ui/templates/cotton --profile=django --reformat
+    djlint src/cf_ui/templates/jinja --profile=jinja --extension=jinja --reformat
+
+lint-templates:
+    djlint src/cf_ui/templates/cotton --profile=django
+    djlint src/cf_ui/templates/jinja --profile=jinja --extension=jinja
+
 test:
     pytest tests/unit -q --tb=short
 
@@ -35,6 +46,9 @@ test-tailwind:
 axes:
     python -m cf_ui.axes
 
+primitives:
+    python -m cf_ui.primitives
+
 test-integration:
     pytest tests/integration -q --tb=short
 
@@ -44,7 +58,7 @@ test-e2e:
 test-all:
     pytest tests/ -q --tb=short
 
-check: lint test
+check: lint lint-templates test
 
 # Serve the docs site with live reload at http://127.0.0.1:8000
 docs:

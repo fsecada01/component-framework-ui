@@ -92,8 +92,18 @@ def test_every_component_template_carries_its_own_autoescape_block(template: Pat
 
 
 def test_the_template_count_is_what_the_guard_thinks_it_is():
-    """14 components × registered themes. A guard over an empty glob passes."""
-    assert len(_all_component_templates()) == 14 * len(THEMES)
+    """Every registered component × every registered theme.
+
+    Derived from ``themes.COMPONENTS`` rather than a literal, so adding a
+    primitive does not mean editing a number in four files (#52) — but a
+    guard over an empty glob passes, so the registry is asserted non-empty
+    first. ``test_theme_dispatch`` pins ``COMPONENTS`` itself against an
+    independent literal list, which is what keeps this from circling.
+    """
+    from cf_ui.themes import COMPONENTS
+
+    assert COMPONENTS, "the component registry is empty — this guard would pass over nothing"
+    assert len(_all_component_templates()) == len(COMPONENTS) * len(THEMES)
 
 
 # The guard's own behaviour, pinned — a lint that stops matching reports clean

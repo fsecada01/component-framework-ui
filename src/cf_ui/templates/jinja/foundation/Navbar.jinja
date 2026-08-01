@@ -1,10 +1,10 @@
 {#def brand="", start="", end="", extra_class="" #}
 {% autoescape true %}
-{% set brand = brand if brand is defined else "" %}
-{% set start = start if start is defined else "" %}
-{% set end = end if end is defined else "" %}
-{% set extra_class = extra_class if extra_class is defined else "" %}
-{# `hide-for-small-only`, not `hide`. `.hide` is `display: none !important` at
+  {% set brand = brand if brand is defined else "" %}
+  {% set start = start if start is defined else "" %}
+  {% set end = end if end is defined else "" %}
+  {% set extra_class = extra_class if extra_class is defined else "" %}
+  {# `hide-for-small-only`, not `hide`. `.hide` is `display: none !important` at
    every width, so binding it to `!menuOpen` would collapse the desktop menu
    too; the breakpoint-scoped class reproduces what Foundation's own responsive
    toggle does. With Alpine off no class is emitted at all, so the menu is
@@ -12,23 +12,33 @@
 
    Foundation's `data-responsive-toggle` / `data-toggle` are inert without
    `foundation.responsiveToggle.js`, so the burger is wired to cfNavbar. #}
-<nav class="top-bar {{ extra_class }}" role="navigation" aria-label="main navigation"
-     x-data="cfNavbar">
-  <div class="top-bar-left">
-    {% if brand %}
-    <ul class="menu">
-      <li class="menu-text">{{ brand }}</li>
-    </ul>
-    {% endif %}
-    <button type="button"
-            class="menu-icon dark hide-for-medium"
-            aria-label="menu"
-            :aria-expanded="menuOpen"
-            @click="toggle()"></button>
-    <ul class="menu" :class="{ 'hide-for-small-only': !menuOpen }">{{ start }}</ul>
-  </div>
-  <div class="top-bar-right" :class="{ 'hide-for-small-only': !menuOpen }">
-    <ul class="menu">{{ end }}</ul>
-  </div>
-</nav>
+  <nav
+    class="top-bar {{ extra_class }}"
+    role="navigation"
+    aria-label="main navigation"
+    x-data="cfNavbar"
+  >
+    <div class="top-bar-left">
+      {% if brand %}
+        <ul class="menu">
+          <li class="menu-text">{{ brand }}</li>
+        </ul>
+      {% endif %}
+      <button
+        type="button"
+        class="menu-icon dark hide-for-medium"
+        aria-label="menu"
+        :aria-expanded="menuOpen"
+        @click="toggle()"
+      ></button>
+      <ul class="menu" :class="{ 'hide-for-small-only': !menuOpen }">
+        {{ start }}
+      </ul>
+    </div>
+    <div class="top-bar-right" :class="{ 'hide-for-small-only': !menuOpen }">
+      <ul class="menu">
+        {{ end }}
+      </ul>
+    </div>
+  </nav>
 {% endautoescape %}

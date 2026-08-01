@@ -1,6 +1,6 @@
 # Components
 
-Fourteen components, identical prop names across every theme. Names are
+Identical prop names across every theme. Names are
 theme-agnostic — the same tag renders Bulma, Bootstrap, Foundation, Fomantic,
 or DaisyUI depending on `CF_UI_THEME` / `theme=`.
 
@@ -17,6 +17,63 @@ or DaisyUI depending on `CF_UI_THEME` / `theme=`.
 Every component accepts `extra_class` for consumer CSS overrides. Form
 components additionally accept `input_class` (and `CheckboxGroup`,
 `control_class`) so you can style the control without restyling the wrapper.
+
+## Primitives
+
+Small, high-frequency elements whose `variant`/`size`/`state` values come from
+closed vocabularies. See [Primitives](primitives.md) for the shared contract,
+how they compose, and the disabled-link rule.
+
+### `Cf:Button` / `<c-cf.button>`
+
+| Prop | Default | Notes |
+|---|---|---|
+| `variant` | `"neutral"` | `primary` `secondary` `success` `warning` `danger` `info` `neutral` |
+| `size` | `"normal"` | `small` `normal` `large` |
+| `state` | `"normal"` | `normal` `loading` `disabled` |
+| `href` | `""` | Non-empty renders an `<a>` instead of a `<button>` |
+| `type` | `"button"` | `button` `submit` `reset`. `<button>` form only |
+| `full_width` | `false` | |
+| `extra_class` | `""` | |
+
+An out-of-vocabulary value raises `PrimitiveConfigError` rather than rendering
+an unstyled element.
+
+### `Cf:Badge` / `<c-cf.badge>`
+
+| Prop | Default | Notes |
+|---|---|---|
+| `variant` | `"neutral"` | |
+| `size` | `"normal"` | Inert on Bootstrap and Foundation |
+| `extra_class` | `""` | |
+
+### `Cf:Heading` / `<c-cf.heading>`
+
+| Prop | Default | Notes |
+|---|---|---|
+| `level` | `"2"` | `1`–`6`. Picks the tag; semantics only. Cannot be empty |
+| `size` | `"normal"` | Visual size, independent of `level` |
+| `emphasis` | `"normal"` | `normal` `subtle` |
+| `extra_class` | `""` | |
+
+### `Cf:Label` / `<c-cf.label>`
+
+| Prop | Default | Notes |
+|---|---|---|
+| `size` | `"normal"` | No `small` step on Foundation |
+| `for_id` | `""` | Becomes `for`. Spelling it `for` raises — `for` is a Python keyword |
+| `required` | `false` | Renders an indicator announced as "required" |
+| `extra_class` | `""` | |
+
+### `Cf:Icon` / `<c-cf.icon>`
+
+| Prop | Default | Notes |
+|---|---|---|
+| `size` | `"normal"` | Inert on Foundation |
+| `label` | `""` | Empty ⇒ `aria-hidden`. Non-empty ⇒ `role="img"` + that name |
+| `extra_class` | `""` | |
+
+cf-ui ships no icons — put your own `<i>` or `<svg>` in the slot.
 
 ## Forms
 

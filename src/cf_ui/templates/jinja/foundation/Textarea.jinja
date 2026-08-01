@@ -1,19 +1,21 @@
 {#def name, label, value="", error="", rows=4, extra_class="", input_class="" #}
 {% autoescape true %}
-{% set value = value if value is defined else "" %}
-{% set error = error if error is defined else "" %}
-{% set rows = rows if rows is defined else 4 %}
-{% set extra_class = extra_class if extra_class is defined else "" %}
-{% set input_class = input_class if input_class is defined else "" %}
-<div class="{{ extra_class }}">
-  <label for="{{ name }}"{% if error %} class="is-invalid-label"{% endif %}>{{ label }}</label>
-  <textarea class="{% if error %}is-invalid-input{% endif %}{% if input_class %} {{ input_class }}{% endif %}"
-            id="{{ name }}"
-            name="{{ name }}"
-            rows="{{ rows }}"
-            {% if error %}aria-invalid="true" aria-describedby="{{ name }}-error"{% endif %}>{{ value }}</textarea>
-  {% if error %}
-  <span class="form-error is-visible" id="{{ name }}-error">{{ error }}</span>
-  {% endif %}
-</div>
+  {% set value = value if value is defined else "" %}
+  {% set error = error if error is defined else "" %}
+  {% set rows = rows if rows is defined else 4 %}
+  {% set extra_class = extra_class if extra_class is defined else "" %}
+  {% set input_class = input_class if input_class is defined else "" %}
+  <div class="{{ extra_class }}">
+    <label for="{{ name }}"{% if error %} class="is-invalid-label"{% endif %}>{{ label }}</label>
+    <textarea
+      class="{% if error %}is-invalid-input{% endif %}{% if input_class %} {{ input_class }}{% endif %}"
+      id="{{ name }}"
+      name="{{ name }}"
+      rows="{{ rows }}"
+      {% if error %}aria-invalid="true" aria-describedby="{{ name }}-error"{% endif %}
+    >{{ value }}</textarea>
+    {% if error %}
+      <span class="form-error is-visible" id="{{ name }}-error">{{ error }}</span>
+    {% endif %}
+  </div>
 {% endautoescape %}

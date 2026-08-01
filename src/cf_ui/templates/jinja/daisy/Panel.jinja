@@ -1,28 +1,35 @@
 {#def title, id="panel", content="", open=false, extra_class="" #}
 {% autoescape true %}
-{% set content = content if content is defined else "" %}
-{% set id = id if id is defined else "panel" %}
-{% set open = open if open is defined else false %}
-{% set extra_class = extra_class if extra_class is defined else "" %}
-<div class="card bg-base-100 shadow-xl {{ extra_class }}"
-     x-data="cfPanel"
-     x-init="initPanel()"
-     data-cf-open="{% if open %}true{% else %}false{% endif %}">
-  <button type="button"
-          class="btn btn-ghost justify-between w-full"
-          aria-controls="{{ id }}-body"
-          aria-expanded="{% if open %}true{% else %}false{% endif %}"
-          :aria-expanded="open"
-          @click="toggle()">
-    <span class="card-title text-base">{{ title }}</span>
-    <span :style="open ? 'transform:rotate(90deg)' : 'transform:rotate(0deg)'"
-          style="display:inline-block;transition:transform 200ms">&#9654;</span>
-  </button>
-  <div id="{{ id }}-body"
-       class="card-body pt-0"
-       x-show="open"
-       {% if not open %}x-cloak{% endif %}>
-    {{ content }}
+  {% set content = content if content is defined else "" %}
+  {% set id = id if id is defined else "panel" %}
+  {% set open = open if open is defined else false %}
+  {% set extra_class = extra_class if extra_class is defined else "" %}
+  <div
+    class="card bg-base-100 shadow-xl {{ extra_class }}"
+    x-data="cfPanel"
+    x-init="initPanel()"
+    data-cf-open="{% if open %}true{% else %}false{% endif %}"
+  >
+    <button
+      type="button"
+      class="btn btn-ghost justify-between w-full"
+      aria-controls="{{ id }}-body"
+      aria-expanded="{% if open %}true{% else %}false{% endif %}"
+      :aria-expanded="open"
+      @click="toggle()"
+    >
+      <span class="card-title text-base">{{ title }}</span>
+      <span
+        :style="open ? 'transform:rotate(90deg)' : 'transform:rotate(0deg)'"
+        style="display:inline-block;
+               transition:transform 200ms"
+      >&#9654;</span>
+    </button>
+    <div
+      id="{{ id }}-body"
+      class="card-body pt-0"
+      x-show="open"
+      {% if not open %}x-cloak{% endif %}
+    >{{ content }}</div>
   </div>
-</div>
 {% endautoescape %}

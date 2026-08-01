@@ -1,0 +1,26 @@
+{#def content="", size="normal", for_id="", required=false, extra_class="" #}
+{% autoescape true %}
+  {% set content = content if content is defined else "" %}
+  {% set size = size if size is defined else "normal" %}
+  {% set for_id = for_id if for_id is defined else "" %}
+  {% set required = required if required is defined else false %}
+  {% set extra_class = extra_class if extra_class is defined else "" %}
+  {{ cf_ui_validate("label", size=size) }}
+  {# The label itself carries no base class: Fomantic's only rule for it is
+   `.ui.form .field > label`, so the styling comes from the ancestry, not from
+   a class. `.ui.label` is the *badge* element and would render a grey pill.
+
+   Hence the two wrappers, exactly as `FormField.jinja` carries them — a bare
+   `<label>` outside `.ui.form .field` is completely unstyled, and the pair
+   nests harmlessly inside a consumer's own `<form class="ui form">`.
+
+   Size therefore lands on the form, not the label: `.ui.small.form` and
+   `.ui.large.form` set the root font-size and `.field > label` is sized in
+   `em`, so it scales with them. #}
+  <div
+    class="ui{% if size == 'small' %} small{% elif size == 'large' %} large{% endif %} form"
+  ><div class="field"><label
+  class="{{ extra_class }}"
+  {% if for_id %} for="{{ for_id }}"{% endif %}
+>{{ content }}{% if required %} <span class="ui red text" role="img" aria-label="required">*</span>{% endif %}</label></div></div>
+{% endautoescape %}

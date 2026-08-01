@@ -1,32 +1,34 @@
 {#def id="modal", header="", content="", footer="", label="Dialog", extra_class="" #}
 {% autoescape true %}
-{% set id = id if id is defined else "modal" %}
-{% set header = header if header is defined else "" %}
-{% set content = content if content is defined else "" %}
-{% set footer = footer if footer is defined else "" %}
-{% set label = label if label is defined and label else "Dialog" %}
-{% set extra_class = extra_class if extra_class is defined else "" %}
-{# Fomantic's modal is normally positioned and revealed by
+  {% set id = id if id is defined else "modal" %}
+  {% set header = header if header is defined else "" %}
+  {% set content = content if content is defined else "" %}
+  {% set footer = footer if footer is defined else "" %}
+  {% set label = label if label is defined and label else "Dialog" %}
+  {% set extra_class = extra_class if extra_class is defined else "" %}
+  {# Fomantic's modal is normally positioned and revealed by
    `$('.ui.modal').modal('show')`, which also injects the `.ui.dimmer` wrapper.
    cf-ui loads no Fomantic JS, so the dimmer is part of the markup and both
    `.ui.dimmer` and `.ui.modal` — each `display:none` until `.active` — get the
    class from the same Alpine `open`. #}
-<div id="{{ id }}"
-     class="ui page dimmer {{ extra_class }}"
-     role="dialog"
-     aria-modal="true"
-     {% if header %}aria-labelledby="{{ id }}-title"{% else %}aria-label="{{ label }}"{% endif %}
-     x-data="cfModal"
-     x-init="initModal()"
-     :class="{ 'active': open }"
-     @click.self="close()">
-  <div class="ui modal" :class="{ 'active': open }">
-    <button type="button" class="close" aria-label="close" @click="close()">&times;</button>
-    {% if header %}<div class="header" id="{{ id }}-title">{{ header }}</div>{% endif %}
-    <div class="content">{{ content }}</div>
-    {% if footer %}
-    <div class="actions">{{ footer }}</div>
-    {% endif %}
+  <div
+    id="{{ id }}"
+    class="ui page dimmer {{ extra_class }}"
+    role="dialog"
+    aria-modal="true"
+    {% if header %}aria-labelledby="{{ id }}-title"{% else %}aria-label="{{ label }}"{% endif %}
+    x-data="cfModal"
+    x-init="initModal()"
+    :class="{ 'active': open }"
+    @click.self="close()"
+  >
+    <div class="ui modal" :class="{ 'active': open }">
+      <button type="button" class="close" aria-label="close" @click="close()">&times;</button>
+      {% if header %}<div class="header" id="{{ id }}-title">{{ header }}</div>{% endif %}
+      <div class="content">{{ content }}</div>
+      {% if footer %}
+        <div class="actions">{{ footer }}</div>
+      {% endif %}
+    </div>
   </div>
-</div>
 {% endautoescape %}

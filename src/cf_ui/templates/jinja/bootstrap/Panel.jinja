@@ -1,32 +1,38 @@
 {#def title, id="panel", content="", open=false, extra_class="" #}
 {% autoescape true %}
-{% set content = content if content is defined else "" %}
-{% set id = id if id is defined else "panel" %}
-{% set open = open if open is defined else false %}
-{% set extra_class = extra_class if extra_class is defined else "" %}
-{# The body deliberately carries no `.collapse`: that class is display:none
+  {% set content = content if content is defined else "" %}
+  {% set id = id if id is defined else "panel" %}
+  {% set open = open if open is defined else false %}
+  {% set extra_class = extra_class if extra_class is defined else "" %}
+  {# The body deliberately carries no `.collapse`: that class is display:none
    without `.show`, which would hide a server-open panel permanently once
    Alpine is off. `x-show` owns display here, seeded from `data-cf-open`. #}
-<div class="accordion {{ extra_class }}"
-     x-data="cfPanel"
-     x-init="initPanel()"
-     data-cf-open="{% if open %}true{% else %}false{% endif %}">
-  <div class="accordion-item">
-    <h2 class="accordion-header">
-      <button type="button"
-              class="accordion-button{% if not open %} collapsed{% endif %}"
-              aria-controls="{{ id }}-body"
-              aria-expanded="{% if open %}true{% else %}false{% endif %}"
-              :aria-expanded="open"
-              :class="{ 'collapsed': !open }"
-              @click="toggle()">{{ title }}</button>
-    </h2>
-    <div id="{{ id }}-body"
-         class="accordion-collapse"
-         x-show="open"
-         {% if not open %}x-cloak{% endif %}>
-      <div class="accordion-body">{{ content }}</div>
+  <div
+    class="accordion {{ extra_class }}"
+    x-data="cfPanel"
+    x-init="initPanel()"
+    data-cf-open="{% if open %}true{% else %}false{% endif %}"
+  >
+    <div class="accordion-item">
+      <h2 class="accordion-header">
+        <button
+          type="button"
+          class="accordion-button{% if not open %} collapsed{% endif %}"
+          aria-controls="{{ id }}-body"
+          aria-expanded="{% if open %}true{% else %}false{% endif %}"
+          :aria-expanded="open"
+          :class="{ 'collapsed': !open }"
+          @click="toggle()"
+        >{{ title }}</button>
+      </h2>
+      <div
+        id="{{ id }}-body"
+        class="accordion-collapse"
+        x-show="open"
+        {% if not open %}x-cloak{% endif %}
+      >
+        <div class="accordion-body">{{ content }}</div>
+      </div>
     </div>
   </div>
-</div>
 {% endautoescape %}

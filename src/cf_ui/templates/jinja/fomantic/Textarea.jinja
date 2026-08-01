@@ -1,17 +1,20 @@
 {#def name, label, value="", error="", rows=4, extra_class="", input_class="" #}
 {% autoescape true %}
-{% set value = value if value is defined else "" %}
-{% set error = error if error is defined else "" %}
-{% set rows = rows if rows is defined else 4 %}
-{% set extra_class = extra_class if extra_class is defined else "" %}
-{% set input_class = input_class if input_class is defined else "" %}
-<div class="ui form {{ extra_class }}">
-  <div class="field{% if error %} error{% endif %}">
-    <label for="{{ name }}">{{ label }}</label>
-    <textarea id="{{ name }}"
-              name="{{ name }}"
-              rows="{{ rows }}"{% if input_class %} class="{{ input_class }}"{% endif %}>{{ value }}</textarea>
-    {% if error %}<div class="ui basic red pointing prompt label">{{ error }}</div>{% endif %}
+  {% set value = value if value is defined else "" %}
+  {% set error = error if error is defined else "" %}
+  {% set rows = rows if rows is defined else 4 %}
+  {% set extra_class = extra_class if extra_class is defined else "" %}
+  {% set input_class = input_class if input_class is defined else "" %}
+  <div class="ui form {{ extra_class }}">
+    <div class="field{% if error %} error{% endif %}">
+      <label for="{{ name }}">{{ label }}</label>
+      <textarea
+        id="{{ name }}"
+        name="{{ name }}"
+        rows="{{ rows }}"
+        {% if input_class %} class="{{ input_class }}"{% endif %}
+      >{{ value }}</textarea>
+      {% if error %}<div class="ui basic red pointing prompt label">{{ error }}</div>{% endif %}
+    </div>
   </div>
-</div>
 {% endautoescape %}

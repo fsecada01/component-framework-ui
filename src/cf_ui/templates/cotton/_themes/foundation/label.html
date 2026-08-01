@@ -1,0 +1,8 @@
+{% comment %}No base class: Foundation styles form labels off the element, and
+its `.label` class is the badge component. `lead` (125%) is the only real
+font-size class outside the button scale; there is no smaller counterpart, so
+`small` maps to nothing.{% endcomment %}
+<label
+  class="{% if size == 'large' %}lead {% endif %}{{ class }}"
+  {% if for_id %} for="{{ for_id }}"{% endif %}
+>{{ slot }}{% if required %} <span role="img" aria-label="required">*</span>{% endif %}</label>

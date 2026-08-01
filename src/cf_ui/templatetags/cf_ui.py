@@ -5,6 +5,7 @@ from django.utils.safestring import mark_safe
 
 from cf_ui.axes import root_attrs, style_element
 from cf_ui.django import axis_value_sets
+from cf_ui.primitives import validate as validate_primitive
 from cf_ui.themes import cotton_partial
 
 register = template.Library()
@@ -93,6 +94,25 @@ def cf_ui_theme_path(component: str) -> str:
     props and ``{{ slot }}`` reach the partial without being re-declared.
     """
     return cotton_partial(component, getattr(settings, "CF_UI_THEME", None))
+
+
+@register.simple_tag
+def cf_ui_validate(component: str, **axes) -> str:
+    """Reject an out-of-vocabulary primitive prop, loudly.
+
+    Used by the primitive wrappers at ``cotton/cf/<name>.html``::
+
+        {% cf_ui_validate "button" variant=variant size=size state=state %}
+
+    The theme partials spell every class literally — they have to, or
+    Tailwind's scanner never sees them — which means an unrecognised value
+    matches no branch and renders an unstyled element. This turns that silence
+    into a ``PrimitiveConfigError`` naming the value and the ones that would
+    have worked.
+
+    Returns the empty string; it is called for its exception.
+    """
+    return validate_primitive(component, **axes)
 
 
 @register.simple_tag

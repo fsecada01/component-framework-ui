@@ -1,0 +1,3 @@
+<span
+  class="ui label{% if variant == 'primary' %} primary{% elif variant == 'secondary' %} secondary{% elif variant == 'success' %} green{% elif variant == 'warning' %} yellow{% elif variant == 'danger' %} red{% elif variant == 'info' %} teal{% endif %}{% if size == 'small' %} small{% elif size == 'large' %} large{% endif %}{% if class %} {{ class }}{% endif %}"
+>{{ slot }}</span>

@@ -1,29 +1,34 @@
 {#def name, label, value="", error="", type="text", required=false, extra_class="", input_class="" #}
 {% autoescape true %}
-{% set value = value if value is defined else "" %}
-{% set error = error if error is defined else "" %}
-{% set type = type if type is defined else "text" %}
-{% set required = required if required is defined else false %}
-{% set extra_class = extra_class if extra_class is defined else "" %}
-{% set input_class = input_class if input_class is defined else "" %}
-{# Every Fomantic form rule is scoped `.ui.form .field`, so a standalone field
+  {% set value = value if value is defined else "" %}
+  {% set error = error if error is defined else "" %}
+  {% set type = type if type is defined else "text" %}
+  {% set required = required if required is defined else false %}
+  {% set extra_class = extra_class if extra_class is defined else "" %}
+  {% set input_class = input_class if input_class is defined else "" %}
+  {# Every Fomantic form rule is scoped `.ui.form .field`, so a standalone field
    with no `.ui.form` ancestor is unstyled. The component carries its own,
    which nests harmlessly inside a consumer's `<form class="ui form">`.
    `input_class` lands on the `.ui.input` wrapper because that is where
    Fomantic's size and state modifiers live (`ui mini input`, `ui icon input`). #}
-<div class="ui form {{ extra_class }}">
-  <div class="field{% if error %} error{% endif %}">
-    <label for="{{ name }}">{{ label }}</label>
-    <div class="ui fluid input{% if input_class %} {{ input_class }}{% endif %}">
-      <input id="{{ name }}"
-             type="{{ type }}"
-             name="{{ name }}"
-             value="{{ value }}"{% if required %} required{% endif %}>
-    </div>
-    {# Not `<div class="ui error message">`: `.ui.form .error.message` is
+  <div class="ui form {{ extra_class }}">
+    <div class="field{% if error %} error{% endif %}">
+      <label for="{{ name }}">{{ label }}</label>
+      <div
+        class="ui fluid input{% if input_class %} {{ input_class }}{% endif %}"
+      >
+        <input
+          id="{{ name }}"
+          type="{{ type }}"
+          name="{{ name }}"
+          value="{{ value }}"
+          {% if required %} required{% endif %}
+        >
+      </div>
+      {# Not `<div class="ui error message">`: `.ui.form .error.message` is
        display:none until the *form* itself carries `.error`. The prompt label
        is what Fomantic actually shows for a single field. #}
-    {% if error %}<div class="ui basic red pointing prompt label">{{ error }}</div>{% endif %}
+      {% if error %}<div class="ui basic red pointing prompt label">{{ error }}</div>{% endif %}
+    </div>
   </div>
-</div>
 {% endautoescape %}

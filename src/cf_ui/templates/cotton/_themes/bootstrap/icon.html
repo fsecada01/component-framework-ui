@@ -1,0 +1,4 @@
+<span
+  class="{% if size == 'small' %}small{% elif size == 'large' %}fs-4{% endif %}{% if class %} {{ class }}{% endif %}"
+  {% if label %} role="img" aria-label="{{ label }}"{% else %} aria-hidden="true"{% endif %}
+>{{ slot }}</span>

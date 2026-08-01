@@ -140,7 +140,13 @@ def test_no_fomantic_template_reaches_for_jquery_or_fomantic_js(path):
 def test_the_fomantic_template_set_is_complete():
     """Without this, the scan above could silently degrade to zero cases."""
     found = [*FOMANTIC_DIR.glob("*.jinja"), *COTTON_FOMANTIC_DIR.glob("*.html")]
-    assert len(found) == 28, f"expected 14 jinja + 14 cotton, got {sorted(p.name for p in found)}"
+    from cf_ui.themes import COMPONENTS
+
+    assert COMPONENTS, "the component registry is empty"
+    assert len(found) == 2 * len(COMPONENTS), (
+        f"expected {len(COMPONENTS)} jinja + {len(COMPONENTS)} cotton, "
+        f"got {sorted(p.name for p in found)}"
+    )
 
 
 # --- Forms -----------------------------------------------------------------

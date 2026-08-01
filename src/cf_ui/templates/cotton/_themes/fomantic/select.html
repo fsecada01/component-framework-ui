@@ -2,17 +2,20 @@
    at runtime by a jQuery module cf-ui does not load, over a hidden select;
    reproducing its DOM by hand would be a combobox nobody can drive. The
    component's contract is a form control, and `select.ui.dropdown` /
-   `.ui.selection.dropdown` style a native select acceptably with no JS. {% endcomment %}
+`.ui.selection.dropdown` style a native select acceptably with no JS. {% endcomment %}
 <div class="ui form {{ class }}">
   <div class="field{% if error %} error{% endif %}">
     <label for="{{ name }}">{{ label }}</label>
-    <select class="ui fluid selection dropdown{% if input_class %} {{ input_class }}{% endif %}"
-            id="{{ name }}"
-            name="{{ name }}">
+    <select
+      class="ui fluid selection dropdown{% if input_class %} {{ input_class }}{% endif %}"
+      id="{{ name }}"
+      name="{{ name }}"
+    >
       {% for opt in options %}
-      <option value="{{ opt.value }}"{% if opt.value|stringformat:"s" == value|stringformat:"s" %} selected{% endif %}>
-        {{ opt.label }}
-      </option>
+        <option
+          value="{{ opt.value }}"
+          {% if opt.value|stringformat:"s" == value|stringformat:"s" %} selected{% endif %}
+        >{{ opt.label }}</option>
       {% endfor %}
     </select>
     {% if error %}<div class="ui basic red pointing prompt label">{{ error }}</div>{% endif %}

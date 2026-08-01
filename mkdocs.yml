@@ -51,6 +51,7 @@ nav:
       - DaisyUI: daisyui.md
   - Reference:
       - Components: components.md
+      - Primitives: primitives.md
       - Escaping: escaping.md
 
 markdown_extensions:

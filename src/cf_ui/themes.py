@@ -31,11 +31,22 @@ THEMES = ("bulma", "daisy", "bootstrap", "foundation", "fomantic")
 DEFAULT_THEME = "bulma"
 
 #: django-cotton file stems, as used by ``<c-cf.form-field>``.
+#:
+#: A name here must have a partial under every theme in :data:`THEMES` —
+#: ``cotton_partial`` validates the name, not the file, so an unbacked entry
+#: trades a clear ``ThemeError`` for a ``TemplateDoesNotExist`` at first
+#: render. ``tests/unit/test_primitives.py`` holds this tuple against the
+#: primitives that actually ship.
 COMPONENTS = (
+    "badge",
     "breadcrumb",
+    "button",
     "card",
     "checkbox-group",
     "form-field",
+    "heading",
+    "icon",
+    "label",
     "modal",
     "navbar",
     "notification",

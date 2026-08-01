@@ -1,24 +1,28 @@
 {#def name, label, choices=[], selected=[], error="", extra_class="", control_class="" #}
 {% autoescape true %}
-{% set choices = choices if choices is defined else [] %}
-{% set selected = selected if selected is defined else [] %}
-{% set error = error if error is defined else "" %}
-{% set extra_class = extra_class if extra_class is defined else "" %}
-{% set control_class = control_class if control_class is defined else "" %}
-<div class="form-control {{ extra_class }}">
-  <label class="label"><span class="label-text">{{ label }}</span></label>
-  <div class="flex flex-wrap gap-4{% if control_class %} {{ control_class }}{% endif %}">
-    {% for choice in choices %}
-    <label class="label cursor-pointer gap-2">
-      <input type="checkbox"
-             class="checkbox"
-             name="{{ name }}"
-             value="{{ choice.value }}"
-             {% if choice.value in selected %}checked{% endif %}>
-      <span class="label-text">{{ choice.label }}</span>
-    </label>
-    {% endfor %}
+  {% set choices = choices if choices is defined else [] %}
+  {% set selected = selected if selected is defined else [] %}
+  {% set error = error if error is defined else "" %}
+  {% set extra_class = extra_class if extra_class is defined else "" %}
+  {% set control_class = control_class if control_class is defined else "" %}
+  <div class="form-control {{ extra_class }}">
+    <label class="label"><span class="label-text">{{ label }}</span></label>
+    <div
+      class="flex flex-wrap gap-4{% if control_class %} {{ control_class }}{% endif %}"
+    >
+      {% for choice in choices %}
+        <label class="label cursor-pointer gap-2">
+          <input
+            type="checkbox"
+            class="checkbox"
+            name="{{ name }}"
+            value="{{ choice.value }}"
+            {% if choice.value in selected %}checked{% endif %}
+          >
+          <span class="label-text">{{ choice.label }}</span>
+        </label>
+      {% endfor %}
+    </div>
+    {% if error %}<span class="label-text-alt text-error">{{ error }}</span>{% endif %}
   </div>
-  {% if error %}<span class="label-text-alt text-error">{{ error }}</span>{% endif %}
-</div>
 {% endautoescape %}

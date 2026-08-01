@@ -21,10 +21,15 @@ COTTON_DIR = TEMPLATES_DIR / "cotton"
 
 # Cotton file stems (hyphenated), as used by <c-cf.form-field>.
 COMPONENT_STEMS = [
+    "badge",
     "breadcrumb",
+    "button",
     "card",
     "checkbox-group",
     "form-field",
+    "heading",
+    "icon",
+    "label",
     "modal",
     "navbar",
     "notification",
@@ -237,6 +242,23 @@ def test_switching_the_setting_switches_the_rendered_markup(settings, stem):
         # DaisyUI both spell a plain info alert `alert alert-info`, and the
         # themes only diverge once the dismiss control is rendered.
         "dismissible": "true",
+        # Same reason, for the primitives (#52). Their whole point is that a
+        # bare element is theme-neutral and the *axes* carry the framework's
+        # vocabulary — so with no props several themes coincide legitimately:
+        # Bulma and Foundation both call a button's base class `button`,
+        # daisyUI mirrors Bootstrap's `btn`, and an icon's base is empty in
+        # both Bootstrap and Foundation. They diverge once an axis is set,
+        # which is what this dict now does.
+        "state": "loading",
+        "variant": "danger",
+        "size": "large",
+        "emphasis": "subtle",
+        # These two are not merely restated defaults: `level` becomes the tag
+        # name and `type` an attribute value, so an empty one is malformed
+        # rather than unstyled and the guard rejects it (#52 review, F1/F2).
+        # Without the compiler to apply <c-vars>, they have to come from here.
+        "level": "3",
+        "type": "submit",
     }
 
     rendered = {}

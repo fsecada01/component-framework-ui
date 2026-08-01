@@ -5,23 +5,33 @@
    simply visible — which is the right no-JS answer.
 
    Foundation's `data-responsive-toggle` / `data-toggle` are inert without
-   `foundation.responsiveToggle.js`, so the burger is wired to cfNavbar. {% endcomment %}
-<nav class="top-bar {{ class }}" role="navigation" aria-label="main navigation"
-     x-data="cfNavbar">
+`foundation.responsiveToggle.js`, so the burger is wired to cfNavbar. {% endcomment %}
+<nav
+  class="top-bar {{ class }}"
+  role="navigation"
+  aria-label="main navigation"
+  x-data="cfNavbar"
+>
   <div class="top-bar-left">
     {% if brand %}
-    <ul class="menu">
-      <li class="menu-text">{{ brand }}</li>
-    </ul>
+      <ul class="menu">
+        <li class="menu-text">{{ brand }}</li>
+      </ul>
     {% endif %}
-    <button type="button"
-            class="menu-icon dark hide-for-medium"
-            aria-label="menu"
-            :aria-expanded="menuOpen"
-            @click="toggle()"></button>
-    <ul class="menu" :class="{ 'hide-for-small-only': !menuOpen }">{{ start }}</ul>
+    <button
+      type="button"
+      class="menu-icon dark hide-for-medium"
+      aria-label="menu"
+      :aria-expanded="menuOpen"
+      @click="toggle()"
+    ></button>
+    <ul class="menu" :class="{ 'hide-for-small-only': !menuOpen }">
+      {{ start }}
+    </ul>
   </div>
   <div class="top-bar-right" :class="{ 'hide-for-small-only': !menuOpen }">
-    <ul class="menu">{{ end }}</ul>
+    <ul class="menu">
+      {{ end }}
+    </ul>
   </div>
 </nav>

@@ -1,13 +1,19 @@
-<nav class="navbar {{ class }}" role="navigation" aria-label="main navigation"
-     x-data="cfNavbar">
+<nav
+  class="navbar {{ class }}"
+  role="navigation"
+  aria-label="main navigation"
+  x-data="cfNavbar"
+>
   <div class="navbar-brand">
     {{ brand }}
-    <a role="button"
-       class="navbar-burger"
-       aria-label="menu"
-       :aria-expanded="menuOpen"
-       @click="toggle()"
-       :class="{ 'is-active': menuOpen }">
+    <a
+      role="button"
+      class="navbar-burger"
+      aria-label="menu"
+      :aria-expanded="menuOpen"
+      @click="toggle()"
+      :class="{ 'is-active': menuOpen }"
+    >
       <span aria-hidden="true"></span>
       <span aria-hidden="true"></span>
       <span aria-hidden="true"></span>

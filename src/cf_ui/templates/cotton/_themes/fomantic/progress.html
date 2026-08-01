@@ -9,17 +9,25 @@
    report `aria-valuenow="150"` against a max of 100. Django has no min/max
    filter, so the clamp is three `widthratio` branches: `1 1 100` is 100 and
    `0 1 100` is 0. The ARIA is stated in percent so it agrees with the visible
-   "40%" text. {% endcomment %}
+"40%" text. {% endcomment %}
 {% widthratio value max 100 as cf_raw %}
-{% if cf_raw|add:"0" > 100 %}{% widthratio 1 1 100 as cf_pct %}{% elif cf_raw|add:"0" < 0 %}{% widthratio 0 1 100 as cf_pct %}{% else %}{% widthratio value max 100 as cf_pct %}{% endif %}
+{% if cf_raw|add:"0" > 100 %}
+  {% widthratio 1 1 100 as cf_pct %}
+{% elif cf_raw|add:"0" < 0 %}
+  {% widthratio 0 1 100 as cf_pct %}
+{% else %}
+  {% widthratio value max 100 as cf_pct %}
+{% endif %}
 <div class="{{ class }}">
-  <div class="ui {% if type == 'danger' or type == 'error' %}error{% elif type == 'success' %}success{% elif type == 'warning' %}warning{% elif type == 'info' %}teal{% else %}blue{% endif %} progress"
-       data-percent="{{ cf_pct }}"
-       role="progressbar"
-       aria-valuenow="{{ cf_pct }}"
-       aria-valuemin="0"
-       aria-valuemax="100"
-       {% if label %}aria-label="{{ label }}"{% endif %}>
+  <div
+    class="ui {% if type == 'danger' or type == 'error' %}error{% elif type == 'success' %}success{% elif type == 'warning' %}warning{% elif type == 'info' %}teal{% else %}blue{% endif %} progress"
+    data-percent="{{ cf_pct }}"
+    role="progressbar"
+    aria-valuenow="{{ cf_pct }}"
+    aria-valuemin="0"
+    aria-valuemax="100"
+    {% if label %}aria-label="{{ label }}"{% endif %}
+  >
     <div class="bar" style="width: {{ cf_pct }}%">
       <div class="progress">{{ cf_pct }}%</div>
     </div>

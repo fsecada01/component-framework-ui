@@ -1,0 +1,17 @@
+{#def content="", level="2", size="normal", emphasis="normal", extra_class="" #}
+{% autoescape true %}
+  {% set content = content if content is defined else "" %}
+  {% set level = level if level is defined else "2" %}
+  {% set size = size if size is defined else "normal" %}
+  {% set emphasis = emphasis if emphasis is defined else "normal" %}
+  {% set extra_class = extra_class if extra_class is defined else "" %}
+  {{ cf_ui_validate("heading", level=level, size=size, emphasis=emphasis) }}
+  {# `title` and `subtitle` are Bulma alternatives, not additive — `.subtitle` is
+   defined after `.title` at equal specificity, so an element carrying both
+   renders as a subtitle with the title rules dead underneath. The emphasis
+   axis therefore carries the base class, and this branch is an `else` rather
+   than an `elif` so exactly one of the two is always emitted: an `emphasis`
+   that reached here empty would otherwise produce a heading with no Bulma
+   class at all, which is a broken render rather than a missing modifier. #}
+  <h{{ level }} class="{% if emphasis == 'subtle' %}subtitle{% else %}title{% endif %}{% if size == 'small' %} is-6{% elif size == 'normal' %} is-4{% elif size == 'large' %} is-2{% endif %}{% if extra_class %} {{ extra_class }}{% endif %}">{{ content }}</h{{ level }}>
+{% endautoescape %}

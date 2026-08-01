@@ -1,25 +1,32 @@
-<div class="card {{ class }}"
-     x-data="cfPanel"
-     x-init="initPanel()"
-     data-cf-open="{% if open and open != 'false' %}true{% else %}false{% endif %}">
+<div
+  class="card {{ class }}"
+  x-data="cfPanel"
+  x-init="initPanel()"
+  data-cf-open="{% if open and open != 'false' %}true{% else %}false{% endif %}"
+>
   <header class="card-header" style="cursor:pointer" @click="toggle()">
     <p class="card-header-title">{{ title }}</p>
-    <button type="button"
-            class="card-header-icon"
-            aria-label="toggle panel"
-            aria-controls="{{ id }}-body"
-            aria-expanded="{% if open and open != 'false' %}true{% else %}false{% endif %}"
-            :aria-expanded="open">
+    <button
+      type="button"
+      class="card-header-icon"
+      aria-label="toggle panel"
+      aria-controls="{{ id }}-body"
+      aria-expanded="{% if open and open != 'false' %}true{% else %}false{% endif %}"
+      :aria-expanded="open"
+    >
       <span class="icon">
-        <span :style="open ? 'transform:rotate(90deg)' : ''"
-              style="display:inline-block;transition:transform 200ms">▶</span>
+        <span
+          :style="open ? 'transform:rotate(90deg)' : ''"
+          style="display:inline-block;
+                 transition:transform 200ms"
+        >▶</span>
       </span>
     </button>
   </header>
-  <div id="{{ id }}-body"
-       class="card-content"
-       x-show="open"
-       {% if not open or open == 'false' %}x-cloak{% endif %}>
-    {{ slot }}
-  </div>
+  <div
+    id="{{ id }}-body"
+    class="card-content"
+    x-show="open"
+    {% if not open or open == 'false' %}x-cloak{% endif %}
+  >{{ slot }}</div>
 </div>

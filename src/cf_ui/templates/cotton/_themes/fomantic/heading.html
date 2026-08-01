@@ -1,0 +1,13 @@
+{% comment %} `emphasis="subtle"` is `grey`, not Fomantic's own `sub` header, and that is
+   deliberate. `.ui.sub.header` sets `font-size: .85714286em` and is defined *after* every
+   size variation (`.ui.small.header` … `.ui.massive.header`) at identical specificity
+   (0,3,0), so source order hands it the cascade and the `size` axis silently stops doing
+   anything — an h2 carrying `ui header massive sub` renders at .857em, the same as a tiny
+   one. `.ui.grey.header` only sets `color`, so emphasis and size stay independent, which
+   is the whole point of this component.
+
+   `size` also has no `medium` step to map `normal` onto: Fomantic ships mini, tiny, small,
+   large, big, huge and massive, with nothing between small and large. Emitting no size
+   class would fall back to the *tag's* size and re-couple size to level, so `normal` takes
+`large` (1.71em) — the token reads oddly, the rendered size does not. {% endcomment %}
+<h{{ level }} class="ui header{% if size == 'small' %} small{% elif size == 'normal' %} large{% elif size == 'large' %} massive{% endif %}{% if emphasis == 'subtle' %} grey{% endif %}{% if class %} {{ class }}{% endif %}">{{ slot }}</h{{ level }}>

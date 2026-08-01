@@ -23,7 +23,9 @@ just test-all                     # full suite
 just lint                         # ruff check
 just lint-fix                     # ruff check --fix
 just format                       # ruff format
-just check                        # lint + unit tests
+just format-templates             # djlint --reformat, both template trees
+just lint-templates               # djlint check, both template trees
+just check                        # lint + lint-templates + unit tests
 just build                        # hatch build wheel
 
 pytest tests/unit/ -v                          # unit tests
@@ -73,10 +75,22 @@ Templates live **inside** the Python package so hatchling includes them automati
 - Use `<c-vars>` for variable declarations, NOT `<c-props>` — the rename landed in django-cotton **0.9.6**, not 2.x as this file long claimed. That is why the `[django]` extra floors at `>=2.0` (the tested series) and why `>=0.9` was a bug: it resolved 0.9.0–0.9.5, where the wrappers install and silently drop every prop (#47)
 - `COTTON_DIR` (singular, string) sets the component root directory, not `COTTON_DIRS`
 - Unit tests using `render_to_string` bypass the django-cotton compiler — only E2E tests exercise real Cotton compilation
+- **The Django template language has no whitespace-control syntax.** Jinja's `{%- ... -%}` is a `TemplateSyntaxError` there (`Invalid block tag: '-'`), so a cotton partial that needs no stray whitespace has to keep the whole tag on one physical line
+- **Django has no multi-line `{# #}` comment.** `{#` … `#}` is single-line only; open it on one line and close it on another and every line in between renders as literal text into the page. Use `{% comment %}…{% endcomment %}` for anything longer than one line
+- `{% cf_ui_validate %}` (#52) is how a primitive wrapper rejects a bad prop. It returns `""`, so it must sit somewhere its output is *rendered* — inside `{% if %}` that never runs, or assigned via `as`, and the guard silently never fires
 - Consumer Django projects must add `"libraries": {"cf_ui": "cf_ui.templatetags.cf_ui"}` to `TEMPLATES[0]["OPTIONS"]` — the `cf_ui.django` app name prevents templatetag autodiscovery
 
 **Django AppConfig:**
 - Register as `"cf_ui.django.CfUiConfig"` (full class path), NOT `"cf_ui.django"` — `default_app_config` is removed in Django 4.2+
+
+**Primitives (`primitives.py`):**
+- `AXIS_KINDS` says what an axis's value *becomes* — `"class"`, `"tag"` or `"attribute"` — and that one fact decides both whether the axis needs a per-theme class map and whether an empty value is benign. Django resolves a missing variable to `""` and the wrappers forward props unconditionally, so an empty class-valued axis **must** pass (unstyled is the correct outcome); an empty tag/attribute one raises, because it renders malformed markup. `CLASS_VALUED` is derived from it — never hand-maintain the two
+- `ALIASES` holds props whose HTML spelling cf-ui cannot use (`for` → `for_id`). The wrapper forwards the HTML spelling into the guard *purely to reject it*, because django-cotton silently discards attributes a component does not declare. It catches declared confusions only — a plain typo is still dropped without a word
+- A `test_*_calls_the_guard` test that only asserts the string `cf_ui_validate` appears is vacuous. Assert every declared axis is *passed* in the call — two guards silently lost an axis before that check existed
+
+**djLint:**
+- `prek` reformats both template trees with `single_attribute_per_line`. It is layout inside the opening tag only — never let it near a `class="…"` value, where added whitespace changes the rendered bytes and breaks substring assertions
+- Because of it, no test may assume attribute ordering or adjacency. `"required>" in html` was such an assertion; anchor to the element (`<input\b[^>]*\brequired\b`) instead
 
 **Theme axes / Tailwind plugin:**
 - `axes.py` is the single source of truth; `cf_ui_axes.css` **and** `cf_ui_axes.json`

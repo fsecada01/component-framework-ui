@@ -8,6 +8,7 @@ arrive as plain context), which is why the E2E tier still matters — but the
 fully exercised here.
 """
 
+import re
 from pathlib import Path
 
 import pytest
@@ -80,18 +81,27 @@ def test_form_field_error_uses_bootstrap_validation_classes(bootstrap_render):
     assert "Required" in html
 
 
+#: The bare ``required`` attribute, *on the input*.
+#:
+#: A plain ``"required" in html`` would pass on the uncompiled ``<c-vars>``
+#: line, which ``render_to_string`` emits verbatim and which carries
+#: ``required="false"``. This used to be spelled ``"required>" in html``,
+#: relying on the attribute being the last thing before the closing bracket —
+#: which stopped being true the moment djLint put one attribute per line.
+#: Anchoring to the ``<input>`` tag says what was always meant and does not
+#: depend on attribute layout.
+REQUIRED_ON_INPUT = re.compile(r"<input\b[^>]*\brequired\b[^>]*>", re.S)
+
+
 def test_form_field_required_flag(bootstrap_render):
-    """`required>` rather than `required` — the uncompiled <c-vars> line the
-    wrapper emits under ``render_to_string`` contains ``required="false"``,
-    so a bare substring check passes either way."""
     html = bootstrap_render("cf/form-field.html", name="email", label="Email", required="true")
-    assert "required>" in html
+    assert REQUIRED_ON_INPUT.search(html)
 
 
 def test_form_field_not_required_by_default(bootstrap_render):
     """<c-vars required="false"> arrives as the *string* "false"."""
     html = bootstrap_render("cf/form-field.html", name="email", label="Email", required="false")
-    assert "required>" not in html
+    assert not REQUIRED_ON_INPUT.search(html)
 
 
 def test_form_field_input_class_still_applied(bootstrap_render):

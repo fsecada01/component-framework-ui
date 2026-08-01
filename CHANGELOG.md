@@ -2,6 +2,115 @@
 
 ## [Unreleased]
 
+### Added — a primitives layer: button, badge, heading, label, icon (#52)
+
+- **Five new components, on all five themes, in both template sets.**
+  `<Cf:Button>` / `<c-cf.button>`, and the same for `Badge`, `Heading`,
+  `Label`, `Icon`. cf-ui shipped 14 *structural* components and no primitives,
+  which is why adoption stalled: measured against a real consumer, `button`
+  was the single most-used CSS-framework class in the codebase (204 uses) and
+  cf-ui had nothing for it, while `modal`, `tabs`, `panel` and `breadcrumb`
+  had zero uses between them.
+
+- **`src/cf_ui/primitives.py` is the closed vocabulary and the class map.**
+  `variant`, `size`, `state`, `level`, `emphasis` and `type` are fixed sets; a
+  value outside one raises `PrimitiveConfigError` naming the values that would
+  have worked. Which primitive accepts which axis is declared, so
+  `<Cf:Badge state="loading">` raises rather than rendering a badge with no
+  loading state.
+
+- **Every axis declares what its value *becomes*: a class, a tag, or an
+  attribute.** `AXIS_KINDS` is that declaration, and it is what makes the
+  empty-value rule derivable rather than case-by-case. Django resolves a
+  missing context variable to `""` and the cotton wrappers forward props
+  unconditionally, so an absent class-valued axis has to be benign — it yields
+  an unstyled element, which is exactly what a missing `variant` should do. An
+  absent *tag*- or *attribute*-valued one does not: an empty `level` has no
+  `<h?>` to render, so it raises and the message says which kind of thing was
+  missing and what to pass. `CLASS_VALUED` is derived from `AXIS_KINDS`, no
+  theme may map a non-class axis, and both are enforced by tests — which is
+  also how `type` (`button` / `submit` / `reset`, the HTML default being
+  `submit` inside a form) got a vocabulary and a guard instead of passing
+  through unchecked.
+
+- **`ALIASES` names the props whose HTML spelling cf-ui cannot use.**
+  `<c-cf.label for="email">` used to render valid HTML with no `for` attribute
+  at all: `for` is a Python reserved word so the prop is `for_id`, and
+  django-cotton silently discards attributes a component does not declare. The
+  wrapper now forwards the HTML spelling into the guard purely so it can be
+  rejected, and the error names `for_id`. This catches the *declared*
+  confusions, not arbitrary typos — `docs/primitives.md` says so plainly.
+
+- **The classes are spelled out longhand in the templates, on purpose.**
+  daisyUI compiles through Tailwind, whose scanner reads source *text* — a
+  class assembled at render time (`btn-{{ variant }}`, or one returned from
+  Python) is tree-shaken out of the build with no error and an unstyled
+  element as the only symptom. So `primitives.py` and the templates hold the
+  same knowledge twice, and a bidirectional parity test in
+  `tests/unit/test_primitives.py` fails the build the moment they disagree —
+  in either direction. `classes_for()` exists for tests, docs and
+  outside-the-templates consumers; nothing in the shipped templates calls it.
+
+- **`static/cf_ui/cf_ui_primitives.json`** is generated from the module by
+  `just primitives`, the way `cf_ui_axes.json` is generated from `axes.py`,
+  and a drift test fails if the committed copy is stale.
+
+- **Escaping and accessibility are decided once, in the component.** A
+  disabled `<a>` renders `aria-disabled="true"` and *no* `href` — an anchor
+  without one is not focusable or activatable, so this is the only spelling
+  where "disabled" is more than cosmetic. An icon is either decorative
+  (`aria-hidden="true"`) or named (`role="img"` plus `aria-label`), never
+  both, and `role="img"` makes it a leaf so the caller's glyph markup is not
+  descended into. Primitives take slot content rather than markup props, so
+  `docs/escaping.md` needs no new rule.
+
+- **`docs/primitives.md`** documents the shared contract, composition, the
+  per-theme places an axis is legitimately inert, and why the classes are
+  longhand. Tier 2 (`box`/`surface`, `prose`) and Tier 3 (`grid`) are tracked
+  separately so this could ship on its own.
+
+### Added — djLint formats both template trees, one attribute per line
+
+- **`prek` now reformats and lints `templates/cotton/**.html` and
+  `templates/jinja/**.jinja`.** Four hooks pinned at djLint v1.43.1, two per
+  tree, because `profile` is one global setting and the two trees are
+  different languages. Settings live in `[tool.djlint]`; `just
+  format-templates` and `just lint-templates` run the same thing by hand, and
+  `just check` now includes the lint pass.
+
+- **`single_attribute_per_line = true` is the point of the exercise.** A
+  cf-ui template's entire contract lives in its opening tag — `<c-vars>`
+  declares every prop, and a theme partial's element carries a literal
+  `{% if %}` chain per axis. Authored on one line, because Django has no
+  whitespace-control syntax and the safe default was "emit no whitespace", a
+  wrapper's prop list was a 100-character run read character by character.
+  107 cotton and 95 jinja templates were reformatted.
+
+- **Checked rather than assumed.** Whitespace *between* attributes is
+  insignificant in HTML; whitespace *inside* a `class` value is not — it
+  changes the rendered bytes and defeats every substring assertion in the
+  suite — so djLint is not allowed near the class chains. All 190 primitive
+  renders (5 themes × 19 components × 2 engines) came out byte-identical with
+  whitespace stripped, and the parsed DOM matched except for djLint adding a
+  space after `;` in inline `style` attributes. One assertion did depend on
+  layout — `"required>" in html`, which relied on the attribute being last
+  before the bracket — and is now anchored to the `<input>` tag itself, which
+  is what it always meant.
+
+### Fixed — multi-line `{# #}` comments rendered into the page
+
+- **Six shipped cotton partials leaked their own source comments as page
+  text.** Django's comment regex is `\{#.*?#\}` without `DOTALL`: `{# #}` is
+  single-line only, so a comment opened on one line and closed on another
+  never forms a comment token and every line in between is emitted verbatim.
+  Five bootstrap partials and one daisy partial were affected —
+  `checkbox-group`, `modal`, `navbar`, `panel`, `progress` and
+  `daisy/navbar` — each shipping a paragraph of rationale prose about z-index
+  stacking or Tailwind layer ordering straight into the consumer's HTML. All
+  six now use `{% comment %}`, and
+  `tests/unit/cotton/test_comment_syntax.py` fails the build on a recurrence.
+  Found while writing a primitives wrapper that made the same mistake.
+
 ### Changed — dependencies resolve from PyPI, not from git (#50)
 
 - **Dropped the `[tool.uv.sources]` git pin for `component-framework`.** It

@@ -1,0 +1,16 @@
+<c-vars size="normal" for_id="" required="" class="" />
+{% comment %}
+`for=for` forwards the HTML spelling into the guard so it can be rejected
+rather than dropped. It is not a prop: the attribute is `for_id`, because
+`for` is a Python reserved word and JinjaX cannot express it. django-cotton
+accepts `for` happily and discards it, so <c-cf.label for="email"> would
+render valid HTML with no `for` attribute and a silently broken label/control
+association. `primitives.ALIASES` declares the mapping and validate() raises
+naming `for_id`; an absent one resolves to "" and is skipped.
+
+`{% comment %}`, not `{# #}`: Django's `{# #}` is single-line only, and a
+multi-line one renders every line in between as literal text into the page.
+{% endcomment %}
+{% load cf_ui %}
+{% cf_ui_validate "label" size=size for=for %}{% cf_ui_theme_path "label" as cf_ui_partial %}
+{% include cf_ui_partial %}

@@ -1,0 +1,4 @@
+<label
+  class="label{% if size == 'small' %} is-small{% elif size == 'large' %} is-large{% endif %}{% if class %} {{ class }}{% endif %}"
+  {% if for_id %} for="{{ for_id }}"{% endif %}
+>{{ slot }}{% if required %} <span class="has-text-danger" role="img" aria-label="required">*</span>{% endif %}</label>

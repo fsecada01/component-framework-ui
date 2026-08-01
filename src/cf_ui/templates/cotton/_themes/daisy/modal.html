@@ -1,20 +1,24 @@
-<div id="{{ id }}"
-     class="modal {{ class }}"
-     role="dialog"
-     aria-modal="true"
-     {% if header %}aria-labelledby="{{ id }}-title"{% else %}aria-label="{{ label|default:'Dialog' }}"{% endif %}
-     x-data="cfModal"
-     x-init="initModal()"
-     :class="{ 'modal-open': open }">
+<div
+  id="{{ id }}"
+  class="modal {{ class }}"
+  role="dialog"
+  aria-modal="true"
+  {% if header %}aria-labelledby="{{ id }}-title"{% else %}aria-label="{{ label|default:'Dialog' }}"{% endif %}
+  x-data="cfModal"
+  x-init="initModal()"
+  :class="{ 'modal-open': open }"
+>
   <div class="modal-box">
-    <button type="button"
-            class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-            aria-label="close"
-            @click="close()">&times;</button>
+    <button
+      type="button"
+      class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+      aria-label="close"
+      @click="close()"
+    >&times;</button>
     {% if header %}<h3 class="text-lg font-bold" id="{{ id }}-title">{{ header }}</h3>{% endif %}
     <div class="py-4">{{ slot }}</div>
     {% if footer %}
-    <div class="modal-action">{{ footer }}</div>
+      <div class="modal-action">{{ footer }}</div>
     {% endif %}
   </div>
   <div class="modal-backdrop" @click="close()"></div>

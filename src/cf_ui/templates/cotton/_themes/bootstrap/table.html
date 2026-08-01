@@ -4,17 +4,17 @@
     <thead>
       <tr>
         {% for col in columns %}
-        <th scope="col">{{ col.label }}</th>
+          <th scope="col">{{ col.label }}</th>
         {% endfor %}
       </tr>
     </thead>
     <tbody>
       {% for row in rows %}
-      <tr>
-        {% for col in columns %}
-        <td>{{ row|get_item:col.key }}</td>
-        {% endfor %}
-      </tr>
+        <tr>
+          {% for col in columns %}
+            <td>{{ row|get_item:col.key }}</td>
+          {% endfor %}
+        </tr>
       {% endfor %}
     </tbody>
   </table>

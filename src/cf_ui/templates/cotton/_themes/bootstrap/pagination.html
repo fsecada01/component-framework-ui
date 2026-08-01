@@ -2,37 +2,40 @@
 <nav class="{{ class }}" role="navigation" aria-label="pagination">
   <ul class="pagination">
     {% if page|add:"0" > 1 %}
-    <li class="page-item">
-      <a class="page-link"
-         hx-get="{{ hx_url }}?page={{ page|add:"-1" }}"
-         hx-target="{{ hx_target }}">Previous</a>
-    </li>
+      <li class="page-item">
+        <a
+          class="page-link"
+          hx-get="{{ hx_url }}?page={{ page|add:"-1" }}"
+          hx-target="{{ hx_target }}"
+        >Previous</a>
+      </li>
     {% else %}
-    <li class="page-item disabled">
-      <a class="page-link" aria-disabled="true">Previous</a>
-    </li>
+      <li class="page-item disabled">
+        <a class="page-link" aria-disabled="true">Previous</a>
+      </li>
     {% endif %}
     {% for p in total_pages|make_list_1_to_n %}
-    <li class="page-item{% if p == page|add:'0' %} active{% endif %}">
-      <a class="page-link"
-         {% if p != page|add:"0" %}
-         hx-get="{{ hx_url }}?page={{ p }}"
-         hx-target="{{ hx_target }}"
-         {% endif %}
-         aria-label="Page {{ p }}"
-         {% if p == page|add:'0' %}aria-current="page"{% endif %}>{{ p }}</a>
-    </li>
+      <li class="page-item{% if p == page|add:'0' %} active{% endif %}">
+        <a
+          class="page-link"
+          {% if p != page|add:"0" %} hx-get="{{ hx_url }}?page={{ p }}" hx-target="{{ hx_target }}" {% endif %}
+          aria-label="Page {{ p }}"
+          {% if p == page|add:'0' %}aria-current="page"{% endif %}
+        >{{ p }}</a>
+      </li>
     {% endfor %}
     {% if page|add:"0" < total_pages|add:"0" %}
-    <li class="page-item">
-      <a class="page-link"
-         hx-get="{{ hx_url }}?page={{ page|add:"1" }}"
-         hx-target="{{ hx_target }}">Next</a>
-    </li>
+      <li class="page-item">
+        <a
+          class="page-link"
+          hx-get="{{ hx_url }}?page={{ page|add:"1" }}"
+          hx-target="{{ hx_target }}"
+        >Next</a>
+      </li>
     {% else %}
-    <li class="page-item disabled">
-      <a class="page-link" aria-disabled="true">Next</a>
-    </li>
+      <li class="page-item disabled">
+        <a class="page-link" aria-disabled="true">Next</a>
+      </li>
     {% endif %}
   </ul>
 </nav>

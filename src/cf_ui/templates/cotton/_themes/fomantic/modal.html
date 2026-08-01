@@ -2,22 +2,24 @@
    `$('.ui.modal').modal('show')`, which also injects the `.ui.dimmer` wrapper.
    cf-ui loads no Fomantic JS, so the dimmer is part of the markup and both
    `.ui.dimmer` and `.ui.modal` — each `display:none` until `.active` — get the
-   class from the same Alpine `open`. {% endcomment %}
-<div id="{{ id }}"
-     class="ui page dimmer {{ class }}"
-     role="dialog"
-     aria-modal="true"
-     {% if header %}aria-labelledby="{{ id }}-title"{% else %}aria-label="{{ label|default:'Dialog' }}"{% endif %}
-     x-data="cfModal"
-     x-init="initModal()"
-     :class="{ 'active': open }"
-     @click.self="close()">
+class from the same Alpine `open`. {% endcomment %}
+<div
+  id="{{ id }}"
+  class="ui page dimmer {{ class }}"
+  role="dialog"
+  aria-modal="true"
+  {% if header %}aria-labelledby="{{ id }}-title"{% else %}aria-label="{{ label|default:'Dialog' }}"{% endif %}
+  x-data="cfModal"
+  x-init="initModal()"
+  :class="{ 'active': open }"
+  @click.self="close()"
+>
   <div class="ui modal" :class="{ 'active': open }">
     <button type="button" class="close" aria-label="close" @click="close()">&times;</button>
     {% if header %}<div class="header" id="{{ id }}-title">{{ header }}</div>{% endif %}
     <div class="content">{{ slot }}</div>
     {% if footer %}
-    <div class="actions">{{ footer }}</div>
+      <div class="actions">{{ footer }}</div>
     {% endif %}
   </div>
 </div>

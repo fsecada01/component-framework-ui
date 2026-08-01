@@ -18,3 +18,31 @@ repos:
       - id: ruff
         args: [--fix]
       - id: ruff-format
+
+  # Two invocations because `profile` is a single global setting and the two
+  # template sets are different languages: `templates/cotton/**` is Django
+  # template language, `templates/jinja/**` is Jinja2. Running one profile
+  # over both misreads the other's syntax.
+  #
+  # `--reformat` rather than `--check`: this is a formatter, and a hook that
+  # only complains leaves the author to reproduce the fix by hand. Everything
+  # it does is layout inside an opening tag — see the rationale on
+  # `[tool.djlint]` in pyproject.toml, including the render-equivalence check
+  # behind the claim that this is safe.
+  - repo: https://github.com/djlint/djLint
+    rev: v1.43.1
+    hooks:
+      - id: djlint-reformat-django
+        name: djlint-reformat (cotton)
+        files: ^src/cf_ui/templates/cotton/.*\.html$
+      - id: djlint-django
+        name: djlint (cotton)
+        files: ^src/cf_ui/templates/cotton/.*\.html$
+      - id: djlint-reformat-jinja
+        name: djlint-reformat (jinja)
+        files: ^src/cf_ui/templates/jinja/.*\.jinja$
+        args: [--extension=jinja]
+      - id: djlint-jinja
+        name: djlint (jinja)
+        files: ^src/cf_ui/templates/jinja/.*\.jinja$
+        args: [--extension=jinja]
