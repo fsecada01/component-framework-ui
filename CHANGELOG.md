@@ -2,6 +2,34 @@
 
 ## [Unreleased]
 
+### Decided — layout is out of scope; cf-ui ships no grid (#55)
+
+- **Tier 3 (`grid`) is closed as won't-do, and `docs/primitives.md` now says
+  so with the reasoning** so the question does not come back as a bug report.
+
+- **The premise it was raised on was false.** #55 assumed four of five themes
+  ship a 12-column grid and only daisyUI was the odd one out. Checked against
+  upstream: **Fomantic's grid is 16 columns**, so `span="6"` would mean half
+  the row on four themes and three-eighths of it on Fomantic — a different
+  idea, not a different spelling, and the failure would be silent. And
+  **Bulma's `mobile` tier is a max-width cap** while every other framework's
+  ladder is min-width, so `at="mobile"` would have to mean "from here up" on
+  four themes and "below here" on the fifth. Every other axis cf-ui absorbs
+  maps *n* names onto one concept; this one has no single concept underneath.
+
+- **The reduced (non-responsive) version is not a fallback.** A three-column
+  layout that stays three columns on a phone is broken rather than simpler, so
+  consumers would immediately reach for the responsive axis — the part that
+  does not work. And Fomantic's column count breaks the reduced version just
+  as thoroughly, because it is not the responsive axis. The Tailwind
+  literal-class cost (60 spelled-out branches per template, duplicated in
+  `primitives.py`) is the third strike, not the first.
+
+- **The cost is stated rather than hidden.** "Switching frameworks means
+  changing `CF_UI_THEME` in one place" now carries a named exception: layout
+  does not switch. The docs say what to do instead — the framework's own
+  vocabulary, or plain CSS Grid / flexbox for theme-independent layout.
+
 ### Added — primitives Tier 2: `box` and `prose` (#54)
 
 - **Two container primitives, on all five themes, in both template sets.**

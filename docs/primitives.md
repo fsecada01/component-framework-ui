@@ -559,17 +559,106 @@ just primitives
 
 and commit both. A drift test fails the build otherwise.
 
-## Not yet implemented
+## The primitives layer is complete
 
 Every primitive registered in `PRIMITIVES` — `button`, `badge`, `heading`,
 `label`, `icon`, `box`, `prose` — ships templates on all five themes in both
-engines as of #54. Tier 1 (`badge`, `heading`, `label`, `icon`) landed in
-#53; Tier 2 (`box`, `prose`), documented above, is #54.
+engines. Tier 1 (`badge`, `heading`, `label`, `icon`) landed in #53; Tier 2
+(`box`, `prose`), documented above, is #54. Tier 3 was `grid`, and the
+decision on it is below: cf-ui does not ship one.
 
-What's left is Tier 3 — `grid` — tracked in #55, and it is not a settled
-question the way Tier 1 and 2 were. Bootstrap, Bulma, Foundation, and
-Fomantic all ship 12-column systems with different vocabularies, while
-daisyUI ships none and defers to Tailwind utilities — so a daisy `grid`
-would emit raw utility classes while the other four emit framework classes.
-That is a genuine asymmetry rather than a thin adapter, and it is being
-decided on its own rather than inside this layer.
+## Layout is out of scope
+
+**cf-ui does not ship a grid, and will not.** Decided in #55; this section
+is the reasoning, so it does not have to be re-litigated.
+
+### Why not
+
+The premise the ticket was written on turned out to be false. It assumed
+four of the five themes ship a 12-column grid and only daisyUI is the odd
+one out. Checked against upstream documentation, the frameworks do not
+agree on the two things a shared grid vocabulary would have to fix:
+
+| Theme | Columns | Breakpoint model | Tiers |
+|---|---|---|---|
+| Bootstrap 5.3 | 12 | min-width | (none) · sm 576 · md 768 · lg 992 · xl 1200 · xxl 1400 |
+| Bulma 1.0 | 12 | `mobile` is **max**-width, the rest min-width | mobile <768 · tablet 769 · desktop 1024 · widescreen 1216 · fullhd 1408 |
+| Foundation 6.7 | 12 | min-width | small 0 · medium 640 · large 1024 · xlarge 1200 · xxlarge 1440 |
+| Fomantic 2.9 | **16** | min-width | mobile 320 · tablet 768 · computer 992 · large monitor 1200 · widescreen 1920 |
+| Tailwind 3 (daisy) | 12 utilities | min-width | sm 640 · md 768 · lg 1024 · xl 1280 · 2xl 1536 |
+
+Two facts in that table kill the abstraction on their own.
+
+**Fomantic's grid is 16 columns.** Not a different spelling of the same
+idea — a different idea. A column asking for a span of 6 would mean half
+the row on four themes and three-eighths of it on Fomantic. There is no span
+vocabulary that is correct on both, and the failure is silent: the page
+still renders, just at the wrong width. Every other axis cf-ui absorbs
+maps *n* names onto *n* spellings of one concept. This one does not have
+one concept underneath it.
+
+**Bulma's `mobile` is a max-width cap, not a rung on a min-width ladder.**
+So a canonical breakpoint set is not merely a numbers problem where cf-ui
+picks the least-wrong value. It is a shape problem: `at="mobile"` means
+"from here up" on four themes and "below here" on Bulma, and a mapping
+that inverts a condition is not a mapping.
+
+The numbers themselves are also not as tidy as "everyone disagrees" would
+suggest — Bootstrap's `md` and Tailwind's `md` are both 768px, and Bulma's
+tablet lands one pixel away. That incidental overlap is worth stating
+because it is the strongest thing the build case had, and it is not
+enough: agreement at one tier out of five, between two of five themes,
+does not make the ladders interchangeable.
+
+daisyUI's asymmetry, which the ticket led with, is real but is the least
+of it. daisyUI ships no grid at all and defers to Tailwind utilities, so a
+daisy `grid` would emit `grid-cols-12` and `col-span-6` — utility classes,
+not framework component classes, and inert for any consumer who installed
+daisyUI's compiled CSS without a Tailwind build.
+
+### Why not a reduced version either
+
+The obvious retreat is a non-responsive grid: a fixed set of column counts,
+no breakpoint axis. It covers most of the measured uses in the reference
+repo and sidesteps the breakpoint disagreement entirely.
+
+It is still the wrong thing to ship, for two reasons that point the same
+way. A three-column layout that stays three columns on a phone is not a
+simpler grid, it is a broken one — so nobody would use the reduced version
+as-is; they would reach for the responsive escape hatch immediately, which
+is the part that does not work. And Fomantic's 16 columns break the
+reduced version just as thoroughly as the full one, because the column
+count is not the responsive axis. Cutting responsiveness removes the
+smaller problem and leaves the larger one.
+
+The Tailwind literal-class constraint is the third strike rather than the
+first: 12 spans × 5 breakpoints is 60 spelled-out branches per template,
+duplicated in `primitives.py` for the parity test, for a component whose
+semantics are wrong on one theme in five.
+
+### What this costs, stated plainly
+
+cf-ui's design principle is that switching CSS frameworks means changing
+`CF_UI_THEME` in one place. **Layout is the exception.** A consumer who
+writes `<div class="columns"><div class="column is-6">` has written Bulma
+into their templates, and flipping `CF_UI_THEME` to `bootstrap` leaves
+every component correct and every page's layout broken.
+
+That is a real limit and cf-ui would rather name it than paper over it
+with a component that is silently wrong on Fomantic.
+
+### What to do instead
+
+- **Write layout in the framework's own vocabulary.** It is the one place
+  a direct dependency is cheaper than an adapter, because the adapter
+  cannot be correct.
+- **If you need theme-switchable layout, use CSS Grid or flexbox
+  directly.** `display: grid; grid-template-columns: repeat(3, 1fr)` with
+  a media query is framework-independent, needs no build step, and is
+  about as much code as the component would have been at the call site.
+- **If you are migrating to Tailwind or daisyUI, write Tailwind
+  utilities.** That is what the reference-repo migration behind #52 does,
+  and a cf-ui grid would have been pure indirection on the far side of it.
+
+Layout being out of scope is a decision, not a gap. Please don't file it
+as a bug.
