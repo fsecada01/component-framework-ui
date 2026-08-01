@@ -1,41 +1,28 @@
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 from jinjax import Catalog
 from markupsafe import Markup
 
 from cf_ui import JINJA_TEMPLATES_DIR
 from cf_ui.fastapi import install_cf_ui
 
-_CF_UI_STATIC_DIR = JINJA_TEMPLATES_DIR.parent.parent / "static" / "cf_ui"
+_TEMPLATES_ROOT = JINJA_TEMPLATES_DIR.parent  # .../cf_ui/templates
+_CF_UI_STATIC_DIR = _TEMPLATES_ROOT.parent / "static" / "cf_ui"
 
-_THEME_CSS = {
-    "bulma": "https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css",
-    "daisy": "https://cdn.jsdelivr.net/npm/daisyui@4.7.2/dist/full.min.css",
-    "bootstrap": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css",
-    "foundation": (
-        "https://cdn.jsdelivr.net/npm/foundation-sites@6.7.5/dist/css/foundation.min.css"
-    ),
-    "fomantic": "https://cdn.jsdelivr.net/npm/fomantic-ui@2.9.3/dist/semantic.min.css",
-}
-
-# DaisyUI ships component classes but no Tailwind utilities. The components use
-# utilities for layout and responsive behavior (`hidden`, `lg:flex`), so without
-# a Tailwind build those classes resolve to nothing and the E2E tier cannot see
-# whether a toggle actually changes anything. The play CDN is a real in-browser
-# Tailwind JIT, which makes the gallery representative of a consuming app.
-_THEME_EXTRA_HEAD = {
-    "bulma": "",
-    "daisy": '<script src="https://cdn.tailwindcss.com"></script>',
-    # Bootstrap, Foundation and Fomantic all ship prebuilt CSS, and cf-ui
-    # deliberately loads none of their JavaScript — Alpine owns modal, tab and
-    # panel state in every theme, so no bootstrap.bundle.js, no foundation.js,
-    # and none of Fomantic's jQuery Modal/Tab/Accordion/Dropdown modules. The
-    # point of each theme is that the pages work without them.
-    "bootstrap": "",
-    "foundation": "",
-    "fomantic": "",
-}
+# The gallery's `<head>` is built through the real `cf_ui_head` macro rather
+# than a hand-maintained CDN URL table — see #56. It used to hand-roll its
+# own `_THEME_CSS` dict plus a `_THEME_EXTRA_HEAD["daisy"]` patch that
+# injected the Tailwind Play CDN script cf_ui_head itself failed to emit,
+# which meant this E2E tier was never exercising the shipped tag, only a
+# workaround for it. Routing through the actual macro is what makes deleting
+# that patch a real regression guard instead of a hope.
+_assets_env = Environment(
+    loader=FileSystemLoader(str(_TEMPLATES_ROOT)),
+    autoescape=select_autoescape(["html", "jinja"]),
+)
+_assets_module = _assets_env.get_template("cf_ui/assets.jinja").make_module()
 
 
 def make_app(theme: str = "bulma") -> FastAPI:
@@ -139,12 +126,13 @@ def make_app(theme: str = "bulma") -> FastAPI:
             _content="Initial content",
             extra_class="",
         )
+        head_html = _assets_module.cf_ui_head(
+            theme=theme, cf_axes_url="/static/cf_ui/cf_ui_axes.css"
+        )
         return f"""<!DOCTYPE html>
 <html>
 <head>
-  {_THEME_EXTRA_HEAD[theme]}
-  <link rel="stylesheet" href="{_THEME_CSS[theme]}">
-  <style>[x-cloak] {{ display: none !important; }}</style>
+  {head_html}
 </head>
 <body>
   <section class="section">

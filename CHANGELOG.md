@@ -66,6 +66,27 @@
   of the two, so the failure mode inverts — a primitive registered without
   templates fails loudly instead of quietly not being checked.
 
+### Fixed — daisyUI's CDN recipe was missing its utility layer (#56)
+
+- **`cf_ui_head(theme="daisy")` shipped half of daisyUI's own documented CDN
+  recipe, and that half silently drops every layout utility (#56).** DaisyUI
+  is a Tailwind *plugin* — its CDN stylesheet is the component layer only
+  (`.btn{`, `.card{`), never the utility layer (`.flex{`, `.w-full{`,
+  `.gap-4{`) that the shipped daisy templates depend on for layout. A
+  consumer following the quickstart with `CF_UI_THEME = "daisy"` got buttons
+  and cards that looked right sitting in a layout that did not work, with no
+  error to point at the cause. daisyUI's own CDN docs
+  (<https://v4.daisyui.com/docs/cdn/>) pair the stylesheet with Tailwind's
+  Play CDN script for exactly this reason; cf-ui was shipping only the first
+  tag. `cf_ui_head` / the `cf_ui_head` Jinja macro now emit both, in the
+  vendor's order, gated by a new `CF_UI_DAISY_CDN` setting (`"play"` default,
+  `"off"` for a consumer with a real Tailwind build supplying both layers
+  itself). An invalid value now fails at Django startup, matching
+  `CF_UI_THEME` and `CF_UI_COMPOSITION`. The other four themes are
+  unaffected — this only ever touched the daisy branch of `cf_ui_head`. See
+  [DaisyUI](docs/daisyui.md) for the full recipe and why `"play"` is the
+  default rather than `"off"`.
+
 ### Added — a primitives layer: button, badge, heading, label, icon (#52)
 
 - **Five new components, on all five themes, in both template sets.**
