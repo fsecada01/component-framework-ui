@@ -42,54 +42,58 @@ jobs:
       # them up with no explicit include, which is exactly what makes a
       # regression here quiet: a packaging change that drops them produces a
       # wheel that installs cleanly, imports cleanly, and renders nothing.
-      # The counts come from the same invariant the unit suite asserts —
-      # 14 components per theme, in both template sets.
-      - name: Wheel must contain the templates and generated assets
+      #
+      # This compares the wheel against the *source tree* rather than against
+      # hardcoded counts. The counts were the original design and they went
+      # stale the moment the primitives layer landed: the thresholds said
+      # ">= 14 per template set" while the real figures had grown to 21
+      # wrappers and 105 partials, so a regression dropping all seven
+      # primitives from all five themes would have left exactly 14 and passed.
+      # Deriving the expectation cannot drift, and it fails on one missing
+      # file instead of only on a missing fourteen.
+      - name: Wheel must contain every shipped template and asset
         run: |
           python - <<'PY'
           import pathlib, sys, zipfile
 
-          wheel = next(iter(sorted(pathlib.Path("dist").glob("*.whl"))))
-          names = zipfile.ZipFile(wheel).namelist()
-          print(f"{wheel.name}: {len(names)} entries")
+          SRC = pathlib.Path("src")
+          SHIPPED_SUFFIXES = {".jinja", ".html", ".js", ".mjs", ".css", ".json"}
 
-          def count(suffix: str, *parts: str) -> int:
-              return sum(
-                  1 for n in names
-                  if n.endswith(suffix) and all(p in n for p in parts)
+          # Wheel entries are src-relative (`cf_ui/templates/...`), so the
+          # relative path is directly comparable with no rewriting.
+          expected = {
+              p.relative_to(SRC).as_posix()
+              for p in SRC.rglob("*")
+              if p.is_file()
+              and p.suffix in SHIPPED_SUFFIXES
+              and ("templates" in p.parts or "static" in p.parts)
+          }
+
+          # The guard this replaces could not fail once its thresholds went
+          # stale. This one has the same hazard in a different place: if the
+          # source layout moves, `expected` silently becomes empty and every
+          # wheel passes. So assert the scan found something first — the
+          # floor is deliberately far below the real figure (237 at 0.3.0),
+          # low enough never to need editing, high enough that an empty or
+          # near-empty scan is caught.
+          if len(expected) < 100:
+              sys.exit(
+                  f"only {len(expected)} shipped files found under {SRC}/ — the "
+                  f"scan itself is broken, so this check proves nothing. Fix the "
+                  f"scan before trusting a pass."
               )
 
-          failures = []
+          wheel = next(iter(sorted(pathlib.Path("dist").glob("*.whl"))))
+          names = set(zipfile.ZipFile(wheel).namelist())
+          print(f"{wheel.name}: {len(names)} entries / {len(expected)} expected from {SRC}/")
 
-          jinja = count(".jinja", "cf_ui/templates/jinja/")
-          if jinja < 14:
-              failures.append(f"only {jinja} JinjaX component templates (expected >= 14)")
+          missing = sorted(expected - names)
+          if missing:
+              shown = "\n  ".join(missing[:20])
+              more = f"\n  ... and {len(missing) - 20} more" if len(missing) > 20 else ""
+              sys.exit(f"wheel is missing {len(missing)} shipped file(s):\n  {shown}{more}")
 
-          wrappers = count(".html", "cf_ui/templates/cotton/cf/")
-          if wrappers < 14:
-              failures.append(f"only {wrappers} cotton wrappers (expected >= 14)")
-
-          partials = count(".html", "cf_ui/templates/cotton/_themes/")
-          if partials < 14:
-              failures.append(f"only {partials} cotton theme partials (expected >= 14)")
-
-          # assets.jinja is a sibling of templates/jinja/, so it is the one a
-          # theme-shaped glob would miss — and Litestar's asset macros come
-          # from it (#42).
-          for required in [
-              "cf_ui/templates/cf_ui/assets.jinja",
-              "cf_ui/static/cf_ui/cf_ui_alpine.js",
-              "cf_ui/static/cf_ui/cf_ui_axes.css",
-              "cf_ui/static/cf_ui/cf_ui_axes.json",
-              "cf_ui/static/cf_ui/cf_ui_tailwind_plugin.mjs",
-          ]:
-              if not any(n.endswith(required) for n in names):
-                  failures.append(f"missing {required}")
-
-          if failures:
-              sys.exit("wheel is missing shipped content:\n  " + "\n  ".join(failures))
-
-          print(f"ok: {jinja} jinja, {wrappers} wrappers, {partials} partials, assets present")
+          print(f"ok: all {len(expected)} shipped templates and assets present")
           PY
 
       - uses: actions/upload-artifact@v4

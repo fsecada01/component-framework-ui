@@ -2,6 +2,41 @@
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-07-31
+
+The primitives layer. 0.2.0 shipped 14 *structural* components — card, modal,
+navbar, table — and nothing underneath them, which is the layer an app
+actually uses hundreds of times. This release adds it: seven primitives across
+five themes in both template sets, on one shared vocabulary.
+
+**Upgrading from 0.2.0 on the daisy theme:** `cf_ui_head` now emits Tailwind's
+Play CDN script alongside the daisyUI stylesheet (#56). If you already have a
+real Tailwind build supplying both layers, set `CF_UI_DAISY_CDN = "off"` to
+keep the previous single-tag output. Every other theme is unchanged.
+
+### Changed — the release wheel guard is derived, not counted (#63)
+
+- **`release.yml` checked the wheel against hardcoded floors and they had gone
+  stale.** It asserted `>= 14` JinjaX templates, cotton wrappers and cotton
+  partials — figures from 0.1.0, when 14 components in one set was the whole
+  package. By 0.3.0 the real counts are 21 wrappers and 105 partials, so a
+  packaging regression dropping all seven primitives from all five themes
+  would have left exactly 14 and **passed**. The list of required static
+  assets had also never picked up `cf_ui_primitives.json` from #52. The guard
+  now derives its expectation from the source tree and asserts the wheel
+  contains every shipped template and asset — it cannot go stale, and it fails
+  on one missing file rather than only on a missing fourteen. It also checks
+  that its own scan found something first, because a guard whose input
+  silently becomes empty passes vacuously, which is the failure being replaced.
+
+- **The version was declared twice with nothing comparing them.**
+  `pyproject.toml` and `src/cf_ui/_version.py` both carry it, and the tag-match
+  step reads only the former — so a bump that missed `_version.py` would
+  publish a correctly-named wheel whose `cf_ui.__version__` reported the
+  previous version, permanently, with every gate green. `tests/unit/test_version.py`
+  now asserts they agree, in the unit suite rather than at release time,
+  because the drift is introduced when the bump is written.
+
 ### Decided — layout is out of scope; cf-ui ships no grid (#55)
 
 - **Tier 3 (`grid`) is closed as won't-do, and `docs/primitives.md` now says
