@@ -20,8 +20,15 @@
     {# Body content wins over the scalar `message` — a caller who wrote children
        meant them. The two operands want opposite escaping and get it: JinjaX
        wraps slot content in `Markup`, so it passes through this block
-       untouched, while `message` is caller-supplied text and is escaped. #}
-    <p>{{ content if content|trim else message }}</p>
+       untouched, while `message` is caller-supplied text and is escaped.
+
+       The `<p>` wraps only `message`. A body is arbitrary markup, and the HTML
+       parser closes an open `<p>` on encountering block content:
+       `<p><ul>…</ul></p>` parses to `<p></p><ul>…</ul><p></p>`, reparenting the
+       body onto `.callout` and leaving two empty paragraphs behind for
+       `.callout > :last-child` to match. `message` is text, so its wrapper
+       renders byte-identically to before. #}
+    {% if content|trim %}{{ content }}{% else %}<p>{{ message }}</p>{% endif %}
     {% if dismissible %}
       <button
         type="button"

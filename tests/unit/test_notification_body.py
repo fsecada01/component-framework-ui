@@ -254,6 +254,66 @@ def test_cotton_body_markup_survives(settings, theme: str):
     assert "&lt;b&gt;" not in html
 
 
+# ── A body is arbitrary markup, so its wrapper must be able to hold it ────
+
+#: Themes whose scalar `message` sits in an element the HTML parser will not
+#: let hold block content. `<p>` is the only such wrapper in the set —
+#: fomantic's `<div class="content">` and bootstrap/daisy's `<span>` both keep
+#: a `<ul>` nested where it was written (verified in a real parser); `<p>` does
+#: not, and no attribute or CSS can change that.
+PARAGRAPH_WRAPPED = ["foundation"]
+
+
+@pytest.mark.parametrize("theme", PARAGRAPH_WRAPPED)
+def test_jinja_body_is_not_wrapped_in_a_paragraph(theme: str):
+    """`<p><ul>…</ul></p>` does not survive parsing — it is not a nesting error
+    the browser tolerates, it is a restructuring.
+
+    Chromium parses that markup to `<p></p><ul>…</ul><p></p>`: the body is
+    reparented onto `.callout` and two empty paragraphs are left behind, which
+    Foundation's own `.callout > :first-child` / `> :last-child` margin rules
+    then match instead of the content. Before #65 this could not happen — the
+    `<p>` only ever held a scalar string — so broadening the channel is what
+    makes the wrapper wrong.
+
+    The scalar keeps its `<p>`; only the body channel loses it.
+    """
+    body = _jinja(theme, content=Markup(f"<ul><li>{BODY}</li></ul>"), message="")
+    assert BODY in body
+    assert "<p>" not in body, f"{theme}: block-level body wrapped in <p>"
+
+    scalar = _jinja(theme, content="", message=MESSAGE)
+    assert f"<p>{MESSAGE}</p>" in scalar, f"{theme}: `message` lost its wrapper"
+
+
+@pytest.mark.parametrize("theme", PARAGRAPH_WRAPPED)
+def test_cotton_body_is_not_wrapped_in_a_paragraph(settings, theme: str):
+    settings.CF_UI_THEME = theme
+    body = render_to_string(
+        "cotton/cf/notification.html",
+        {**COTTON_BASE, "slot": mark_safe(f"<ul><li>{BODY}</li></ul>")},
+    )
+    assert BODY in body
+    assert "<p>" not in body, f"{theme}: block-level body wrapped in <p>"
+
+    scalar = render_to_string("cotton/cf/notification.html", {**COTTON_BASE, "message": MESSAGE})
+    assert f"<p>{MESSAGE}</p>" in scalar, f"{theme}: `message` lost its wrapper"
+
+
+def test_paragraph_wrapped_list_matches_what_the_templates_ship():
+    """Derived, not hand-maintained — a sixth theme choosing `<p>` must be caught.
+
+    The two tests above only cover what this list names, so the list going
+    stale silently disables them.
+    """
+    shipped = {
+        theme
+        for theme in _shipped_themes()
+        if "<p>" in (JINJA_TEMPLATES_DIR / theme / "Notification.jinja").read_text()
+    }
+    assert shipped == set(PARAGRAPH_WRAPPED)
+
+
 # ── Drift guard ───────────────────────────────────────────────────────────
 
 

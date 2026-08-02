@@ -11,8 +11,32 @@ precisely so the absolutely-positioned close button anchors to it. {% endcomment
   x-show="visible"
 >
   {% comment %} Body content wins over the scalar `message` — a caller who wrote children
-  meant them. `message` stays for the existing call form (#65). {% endcomment %}
-  <p>{% if slot.strip %}{{ slot }}{% else %}{{ message }}{% endif %}</p>
+  meant them. `message` stays for the existing call form (#65).
+
+  The `
+<p>
+` wraps only `message`. A body is arbitrary markup, and the HTML
+  parser closes an open `
+<p>
+` on encountering block content: `
+<p>
+<ul>
+…
+</ul>
+</p>
+`
+  parses to `
+<p>
+</p>
+<ul>
+…
+</ul>
+<p>
+</p>
+`, reparenting the body onto `.callout` and
+  leaving two empty paragraphs behind for `.callout > :last-child` to match.
+  `message` is text, so its wrapper renders byte-identically to before. {% endcomment %}
+  {% if slot.strip %}{{ slot }}{% else %}<p>{{ message }}</p>{% endif %}
   {% if dismissible == "true" %}
     <button
       type="button"

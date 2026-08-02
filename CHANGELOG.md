@@ -31,6 +31,16 @@
   `{% autoescape true %}` block untouched; `message` is caller-supplied text and
   is still escaped. Both halves are asserted per theme rather than left to
   autoescape semantics.
+- **Foundation's `<p>` now wraps only `message`, not the body.** A body is
+  arbitrary markup, and the HTML parser closes an open `<p>` on encountering
+  block content: `<p><ul>…</ul></p>` parses to `<p></p><ul>…</ul><p></p>`, which
+  reparents the body onto `.callout` and leaves two empty paragraphs for
+  Foundation's own `.callout > :first-child` / `> :last-child` margin rules to
+  match. Broadening the content channel is what made that reachable — before
+  this, the `<p>` only ever held a string. `message=` callers render
+  byte-identically to before. Fomantic's `<div class="content">` and
+  bootstrap/daisy's `<span>` hold block content without being restructured, and
+  are unchanged.
 - **Covered at the tier that could have caught it.** The bug survived three
   months because no tier that ran the django-cotton compiler looked at this
   component's content channel: the unit tier injects `slot` as raw context
