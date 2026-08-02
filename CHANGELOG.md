@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+## [0.3.1] — 2026-08-01
+
+A patch for one bug, shipped on its own because a real consumer needs it.
+`Notification` discarded body content in every theme and both engines, and
+RankedJobs — the only repo declaring cf-ui — uses the body form at all 17 of
+its call sites. Every notification in that application had been rendering an
+empty box since April.
+
+Nothing else changed. The JinjaX signature only loosens and the cotton wrapper
+only gains a default, so every existing `message=` call site renders
+byte-identically to 0.3.0. No migration.
+
 ### Fixed — `Notification` silently discarded its body content (#65)
 
 - **Every theme, both engines, rendered the scalar `message` prop and nothing
