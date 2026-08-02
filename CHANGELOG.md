@@ -31,6 +31,14 @@
   `{% autoescape true %}` block untouched; `message` is caller-supplied text and
   is still escaped. Both halves are asserted per theme rather than left to
   autoescape semantics.
+- **Covered at the tier that could have caught it.** The bug survived three
+  months because no tier that ran the django-cotton compiler looked at this
+  component's content channel: the unit tier injects `slot` as raw context
+  (`render_to_string` bypasses the compiler), and the integration tier does not
+  install `django_cotton` at all, so its `<c-cf.*>` tags reach the response as
+  literal text. The three cotton call forms — body, `message=`, and a
+  conditional body on its false branch — are now asserted in the E2E tier,
+  where `slot` is built by cotton itself.
 
 ## [0.3.0] — 2026-07-31
 

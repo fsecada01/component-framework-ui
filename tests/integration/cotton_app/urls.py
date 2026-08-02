@@ -8,4 +8,5 @@ urlpatterns = [
     path("card/", views.card_view),
     path("tabs/", views.tabs_view),
     path("panel/", views.panel_view),
+    path("notification/", views.notification_view),
 ]
