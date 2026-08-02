@@ -4,11 +4,15 @@
 
 ## [0.3.1] — 2026-08-01
 
-A patch for one bug, shipped on its own because a real consumer needs it.
-`Notification` discarded body content in every theme and both engines, and
-RankedJobs — the only repo declaring cf-ui — uses the body form at all 17 of
-its call sites. Every notification in that application had been rendering an
-empty box since April.
+A patch for one bug, shipped on its own because of how it fails. `Notification`
+discarded body content in every theme and both engines, and in django-cotton it
+did so **silently** — no error, no warning, and a call site that reads
+correctly. Anyone using the natural container form has been getting an empty
+box, and nothing in their own code or logs would say so. This predates 0.1.1,
+so every release to date is affected.
+
+Upgrade if you pass children to `<c-cf.notification>` or `<Cf:Notification>`.
+If every call site passes `message=`, nothing changes for you.
 
 Nothing else changed. The JinjaX signature only loosens and the cotton wrapper
 only gains a default, so every existing `message=` call site renders
