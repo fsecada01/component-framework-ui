@@ -1,0 +1,17 @@
+{% comment %} Three call forms on one page, because the unit tier cannot tell them
+  apart: render_to_string bypasses the cotton compiler, so `slot` is whatever
+  the test injected rather than whatever the compiler built (#65). Each form
+  gets its own `type` so the E2E test can select it — the partial renders no
+  `{{ attrs }}`, so an `id` here would be silently dropped. {% endcomment %}
+<c-cf.notification type="danger" dismissible="false">
+  <strong>Body form</strong>
+</c-cf.notification>
+
+<c-cf.notification message="Message form" type="info" dismissible="false" />
+
+{% comment %} The false branch of a conditional body. The compiler still hands the
+  partial the surrounding whitespace, so a naive truthiness test on `slot`
+  would drop `message` here and render an empty box. {% endcomment %}
+<c-cf.notification message="Fallback wins" type="warning" dismissible="false">
+  {% if error %}{{ error }}{% endif %}
+</c-cf.notification>

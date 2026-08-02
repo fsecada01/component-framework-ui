@@ -4,7 +4,9 @@
   x-data="{ visible: true }"
   x-show="visible"
 >
-  <span>{{ message }}</span>
+  {% comment %} Body content wins over the scalar `message` — a caller who wrote children
+  meant them. `message` stays for the existing call form (#65). {% endcomment %}
+  <span>{% if slot.strip %}{{ slot }}{% else %}{{ message }}{% endif %}</span>
   {% if dismissible == "true" %}
     <button
       type="button"

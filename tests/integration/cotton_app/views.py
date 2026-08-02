@@ -37,3 +37,9 @@ def tabs_view(request):
 
 def panel_view(request):
     return render(request, "cotton_gallery/panel.html", {})
+
+
+def notification_view(request):
+    # `error` deliberately absent, so the third component's conditional body
+    # renders to whitespace — the case that fooled a naive `{% if slot %}`.
+    return render(request, "cotton_gallery/notification.html", {})

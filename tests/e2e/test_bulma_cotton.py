@@ -53,6 +53,39 @@ def test_tabs_cotton_render_the_active_tab(cotton_page, cotton_server_url):
     expect(page.locator("[role='tab'][tabindex='0']")).to_have_count(1)
 
 
+# --- Body content through the real cotton compiler (#65) -------------------
+#
+# #65 survived three months because no tier that ran the compiler looked at
+# notification's content channel: the unit tier injects `slot` as raw context
+# (render_to_string bypasses the compiler), and the integration tier does not
+# install django_cotton at all, so its `<c-cf.*>` tags reach the browser as
+# literal text. Only here is `slot` built by cotton itself.
+
+
+def test_notification_cotton_renders_its_body(cotton_page, cotton_server_url):
+    page, _ = cotton_page
+    page.goto(f"{cotton_server_url}/notification/")
+    expect(page.locator(".notification.is-danger strong")).to_have_text("Body form")
+
+
+def test_notification_cotton_still_renders_the_message_form(cotton_page, cotton_server_url):
+    page, _ = cotton_page
+    page.goto(f"{cotton_server_url}/notification/")
+    expect(page.locator(".notification.is-info")).to_contain_text("Message form")
+
+
+def test_notification_cotton_falls_back_when_the_body_is_whitespace(cotton_page, cotton_server_url):
+    """A conditional body whose branch is false is not a body.
+
+    The compiler hands the partial the surrounding newlines regardless, so a
+    plain truthiness test on `slot` suppresses `message` and emits a correctly
+    styled, empty box — #65's own failure, one layer down.
+    """
+    page, _ = cotton_page
+    page.goto(f"{cotton_server_url}/notification/")
+    expect(page.locator(".notification.is-warning")).to_contain_text("Fallback wins")
+
+
 def test_panel_cotton_honors_its_open_prop(cotton_page, cotton_server_url):
     page, _ = cotton_page
     page.goto(f"{cotton_server_url}/panel/")

@@ -146,10 +146,14 @@ Focus trapping, focus restoration, and `Escape`-to-close live in
 
 | Prop | Default | Notes |
 |---|---|---|
-| `message` | *required* | |
+| `content` | `""` | Body — the slot in template position; wins over `message` |
+| `message` | `""` | Scalar alternative to the body, for a plain string |
 | `type` | `"info"` | `info`, `success`, `warning`, `danger` |
 | `dismissible` | `true` | Renders a close button |
 | `extra_class` | `""` | |
+
+Supply one or the other. A body passed as slot content is already-rendered
+markup and is not escaped again; `message` is caller-supplied text and is.
 
 ### `Cf:Progress` / `<c-cf.progress>`
 

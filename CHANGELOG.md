@@ -2,6 +2,54 @@
 
 ## [Unreleased]
 
+### Fixed — `Notification` silently discarded its body content (#65)
+
+- **Every theme, both engines, rendered the scalar `message` prop and nothing
+  else.** A caller writing the natural container form —
+  `<c-cf.notification type="danger">{{ error }}</c-cf.notification>` — got a
+  correctly styled, correctly coloured, **empty** box. In cotton this failed
+  silently: `<c-vars message ...>` carried no default, so `message` resolved to
+  the empty string and the box rendered anyway. In JinjaX it failed loudly but
+  wrongly — `message` was a required `{#def}` parameter, so a body-only call
+  raised `MissingRequiredArgument`. Both paths now render the body when one is
+  present and fall back to `message` when it is not. `message=` callers are
+  untouched; the JinjaX signature only loosens.
+- `Notification` was the single outlier among the container-shaped components.
+  `card`, `modal`, `panel`, `prose` and `box` have always accepted a body
+  alongside their scalar props; the bodiless components (`breadcrumb`,
+  `pagination`, `table`, `progress`) are all data-driven, where children would
+  be meaningless. `Notification` is a container that happened to expose only a
+  string.
+- **A body that renders to nothing is not a body.** django-cotton hands the
+  partial `nodelist.render(context)` verbatim, so a paired tag whose body
+  renders empty still supplies `"\n  "` — truthy. Without a guard, a `message=`
+  caller writing a conditional body would get an empty box on the false branch,
+  which is this same bug with a new trigger. Both engines now treat a
+  whitespace-only body as absent and fall back to `message`.
+- **The two operands want opposite escaping and now get it, under test.** JinjaX
+  wraps slot content in `Markup`, so a body passes through the template's
+  `{% autoescape true %}` block untouched; `message` is caller-supplied text and
+  is still escaped. Both halves are asserted per theme rather than left to
+  autoescape semantics.
+- **Foundation's `<p>` now wraps only `message`, not the body.** A body is
+  arbitrary markup, and the HTML parser closes an open `<p>` on encountering
+  block content: `<p><ul>…</ul></p>` parses to `<p></p><ul>…</ul><p></p>`, which
+  reparents the body onto `.callout` and leaves two empty paragraphs for
+  Foundation's own `.callout > :first-child` / `> :last-child` margin rules to
+  match. Broadening the content channel is what made that reachable — before
+  this, the `<p>` only ever held a string. `message=` callers render
+  byte-identically to before. Fomantic's `<div class="content">` and
+  bootstrap/daisy's `<span>` hold block content without being restructured, and
+  are unchanged.
+- **Covered at the tier that could have caught it.** The bug survived three
+  months because no tier that ran the django-cotton compiler looked at this
+  component's content channel: the unit tier injects `slot` as raw context
+  (`render_to_string` bypasses the compiler), and the integration tier does not
+  install `django_cotton` at all, so its `<c-cf.*>` tags reach the response as
+  literal text. The three cotton call forms — body, `message=`, and a
+  conditional body on its false branch — are now asserted in the E2E tier,
+  where `slot` is built by cotton itself.
+
 ## [0.3.0] — 2026-07-31
 
 The primitives layer. 0.2.0 shipped 14 *structural* components — card, modal,

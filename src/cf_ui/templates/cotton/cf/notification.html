@@ -1,4 +1,7 @@
-<c-vars message type="info" dismissible="true" class="" />
+{% comment %} `message` now carries a default. Without one, django-cotton resolved a
+  body-form call's `message` to the empty string and rendered a correctly
+styled, correctly coloured, empty box — silently (#65). {% endcomment %}
+<c-vars message="" type="info" dismissible="true" class="" />
 {% load cf_ui %}
 {% cf_ui_theme_path "notification" as cf_ui_partial %}
 {% include cf_ui_partial %}
