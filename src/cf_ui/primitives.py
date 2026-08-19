@@ -799,6 +799,20 @@ _ATTR_NAME_RE = re.compile(r"^[A-Za-z_:][A-Za-z0-9_.:-]*$")
 #: A primitive not listed here has not adopted ``attrs`` yet.
 RESERVED_ATTRS: dict[str, frozenset[str]] = {
     "button": frozenset({"class", "type", "href", "role", "aria-disabled", "disabled"}),
+    "select": frozenset({"id", "name", "class", "aria-invalid", "aria-describedby"}),
+    "textarea": frozenset({"id", "name", "class", "rows", "aria-invalid", "aria-describedby"}),
+    "form-field": frozenset(
+        {
+            "id",
+            "name",
+            "class",
+            "type",
+            "value",
+            "required",
+            "aria-invalid",
+            "aria-describedby",
+        }
+    ),
 }
 
 
@@ -850,6 +864,34 @@ def render_attrs(component: str, attrs: dict[str, str] | None) -> _SafeAttrs:
             character set, or one that collides with a name the component
             already renders.
     """
+    if hasattr(attrs, "as_dict"):
+        # A real JinjaX ``Catalog`` render reaches here with a JinjaX
+        # ``HTMLAttrs`` object, not the plain dict the rest of this function
+        # expects: JinjaX reserves the prop name ``attrs`` for its own
+        # extra-kwargs collector and overwrites whatever a component's own
+        # `{#def}` declared for it (jinjax's ``catalog.py``, unconditionally,
+        # for every component). ``.as_dict`` is JinjaX's own escape hatch for
+        # this, and cf-ui's validation/escaping below applies identically
+        # once it holds a plain dict.
+        attrs = attrs.as_dict
+
+    elif hasattr(attrs, "attrs_dict"):
+        # The real django-cotton compiler reaches here with cotton's own
+        # ``Attrs`` object, not the plain dict this function expects — and
+        # the same reserved-name collision as JinjaX's ``HTMLAttrs`` above,
+        # from the other engine: cotton unconditionally binds the context's
+        # ``attrs`` variable to its own bag of *every* attribute passed to
+        # the component tag (django_cotton/templatetags/_component.py,
+        # ``"attrs": component_data["attrs"]`` set last, after the
+        # `<c-vars attrs="{}">` default). Naive iteration (``.items()``) on
+        # that bag — a ``Mapping`` — would see every declared prop too
+        # (``name``, ``type``, ...), which then collides with
+        # ``RESERVED_ATTRS`` on every call, not just an explicit
+        # ``attrs={...}`` one. ``.attrs_dict()`` is cotton's own escape
+        # hatch, already filtered down to the attributes ``<c-vars>``
+        # excluded from string output — i.e. exactly the true passthrough.
+        attrs = attrs.attrs_dict()
+
     if not attrs:
         return _SafeAttrs("")
 

@@ -1,16 +1,18 @@
-{#def name, label, value="", error="", options=[], extra_class="", input_class="" #}
+{#def name, label, value="", error="", options=[], extra_class="", input_class="", attrs={} #}
 {% autoescape true %}
   {% set value = value if value is defined else "" %}
   {% set error = error if error is defined else "" %}
   {% set options = options if options is defined else [] %}
   {% set extra_class = extra_class if extra_class is defined else "" %}
   {% set input_class = input_class if input_class is defined else "" %}
+  {% set attrs = attrs if attrs is defined else {} %}
   <div class="form-control {{ extra_class }}">
     <label class="label" for="{{ name }}"><span class="label-text">{{ label }}</span></label>
     <select
       class="select select-bordered w-full{% if error %} select-error{% endif %}{% if input_class %} {{ input_class }}{% endif %}"
       id="{{ name }}"
       name="{{ name }}"
+      {{- cf_ui_render_attrs("select", attrs) }}
     >
       {% for opt in options %}
         <option

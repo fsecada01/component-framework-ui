@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 from jinja2 import Environment
 
+from cf_ui.primitives import build_primitive_globals
 from tests.jinja_env import make_env
 
 BULMA_DIR = (
@@ -20,7 +21,9 @@ def env() -> Environment:
     extension and so resolved to ``False`` for ``.jinja`` — the fixture read as
     though it escaped and did not (#36).
     """
-    return make_env(BULMA_DIR)
+    e = make_env(BULMA_DIR)
+    e.globals.update(build_primitive_globals())
+    return e
 
 
 @pytest.fixture

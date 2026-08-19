@@ -12,6 +12,8 @@ from pathlib import Path
 import pytest
 from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
 
+from cf_ui.primitives import build_primitive_globals
+
 DAISY_DIR = (
     Path(__file__).parent.parent.parent.parent / "src" / "cf_ui" / "templates" / "jinja" / "daisy"
 )
@@ -59,6 +61,7 @@ def render() -> Callable[..., str]:
         autoescape=select_autoescape(["html"]),
         undefined=StrictUndefined,
     )
+    env.globals.update(build_primitive_globals())
 
     def _render(template_name: str, **ctx: object) -> str:
         return env.get_template(template_name).render(**ctx)

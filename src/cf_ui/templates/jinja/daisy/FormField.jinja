@@ -1,4 +1,4 @@
-{#def name, label, value="", error="", type="text", required=false, extra_class="", input_class="" #}
+{#def name, label, value="", error="", type="text", required=false, extra_class="", input_class="", attrs={} #}
 {% autoescape true %}
   {% set value = value if value is defined else "" %}
   {% set error = error if error is defined else "" %}
@@ -6,6 +6,7 @@
   {% set required = required if required is defined else false %}
   {% set extra_class = extra_class if extra_class is defined else "" %}
   {% set input_class = input_class if input_class is defined else "" %}
+  {% set attrs = attrs if attrs is defined else {} %}
   <div class="form-control {{ extra_class }}">
     <label class="label" for="{{ name }}"><span class="label-text">{{ label }}</span></label>
     <input
@@ -15,6 +16,7 @@
       name="{{ name }}"
       value="{{ value }}"
       {% if required %} required{% endif %}
+      {{- cf_ui_render_attrs("form-field", attrs) }}
     >
     {% if error %}<span class="label-text-alt text-error">{{ error }}</span>{% endif %}
   </div>

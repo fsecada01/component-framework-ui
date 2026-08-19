@@ -1,3 +1,4 @@
+{% load cf_ui %}
 <div class="field {{ class }}">
   <label class="label" for="{{ name }}">{{ label }}</label>
   <div class="control">
@@ -8,6 +9,7 @@
       name="{{ name }}"
       value="{{ value }}"
       {% if required == "true" %}required{% endif %}
+      {% cf_ui_render_attrs "form-field" attrs %}
     >
   </div>
   {% if error %}<p class="help is-danger">{{ error }}</p>{% endif %}

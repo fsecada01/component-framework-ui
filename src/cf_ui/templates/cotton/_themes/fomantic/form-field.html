@@ -1,3 +1,4 @@
+{% load cf_ui %}
 {% comment %} Every Fomantic form rule is scoped `.ui.form .field`, so a standalone field
    with no `.ui.form` ancestor is unstyled. The component carries its own, which
    nests harmlessly inside a consumer's `
@@ -17,6 +18,7 @@ state modifiers live (`ui mini input`, `ui icon input`). {% endcomment %}
         name="{{ name }}"
         value="{{ value }}"
         {% if required == "true" %}required{% endif %}
+        {% cf_ui_render_attrs "form-field" attrs %}
       >
     </div>
     {% comment %} Not `<div class="ui error message">`: `.ui.form .error.message` is

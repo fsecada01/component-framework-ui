@@ -1,3 +1,4 @@
+{% load cf_ui %}
 <div class="form-control {{ class }}">
   <label class="label" for="{{ name }}"><span class="label-text">{{ label }}</span></label>
   <textarea
@@ -5,6 +6,7 @@
     id="{{ name }}"
     name="{{ name }}"
     rows="{{ rows }}"
+    {% cf_ui_render_attrs "textarea" attrs %}
   >{{ value }}</textarea>
   {% if error %}<span class="label-text-alt text-error">{{ error }}</span>{% endif %}
 </div>

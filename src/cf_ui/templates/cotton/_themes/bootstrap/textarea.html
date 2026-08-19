@@ -1,3 +1,4 @@
+{% load cf_ui %}
 <div class="mb-3 {{ class }}">
   <label class="form-label" for="{{ name }}">{{ label }}</label>
   <textarea
@@ -5,6 +6,7 @@
     id="{{ name }}"
     name="{{ name }}"
     rows="{{ rows }}"
+    {% cf_ui_render_attrs "textarea" attrs %}
   >{{ value }}</textarea>
   {% if error %}<div class="invalid-feedback d-block">{{ error }}</div>{% endif %}
 </div>

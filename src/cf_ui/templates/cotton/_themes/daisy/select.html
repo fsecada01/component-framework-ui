@@ -1,9 +1,11 @@
+{% load cf_ui %}
 <div class="form-control {{ class }}">
   <label class="label" for="{{ name }}"><span class="label-text">{{ label }}</span></label>
   <select
     class="select select-bordered w-full{% if error %} select-error{% endif %}{% if input_class %} {{ input_class }}{% endif %}"
     id="{{ name }}"
     name="{{ name }}"
+    {% cf_ui_render_attrs "select" attrs %}
   >
     {% for opt in options %}
       <option
