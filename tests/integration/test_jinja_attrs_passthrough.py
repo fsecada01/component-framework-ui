@@ -101,6 +101,21 @@ def test_attrs_collision_with_a_declared_prop_name_is_not_caught_by_the_guard(
     assert 'type="reset"' not in html
 
 
+def test_the_same_declared_prop_name_gap_holds_for_a_form_control(catalog: Catalog) -> None:
+    """Pins the same gap for a second component with a different prop
+    signature, not just Button — ``docs/primitives.md`` claims it for "the
+    form controls" generally, not for Button alone.
+
+    ``name`` is both RESERVED_ATTRS-listed and a declared ``FormField`` prop
+    (unlike Button's ``type``/``href``, it also has no default — a required
+    positional-style prop). The same bypass applies: the real ``name=`` prop
+    wins silently, no ``PrimitiveConfigError``.
+    """
+    html = catalog.render("Cf:FormField", name="email", label="Email", _attrs={"name": "hijacked"})
+    assert 'name="email"' in html
+    assert 'name="hijacked"' not in html
+
+
 def test_hostile_attrs_value_is_still_escaped(catalog: Catalog) -> None:
     html = catalog.render("Cf:Button", _content="Save", _attrs={"data-x": HOSTILE})
     assert 'onmouseover="window.cfPwned=true"' not in html

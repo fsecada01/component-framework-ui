@@ -265,8 +265,9 @@ JinjaX's own arg-filtering routes it straight into that prop before
 caller's real prop, if also passed, wins). This is a JinjaX-level gap, not
 a cf-ui one; never pass one of a component's own prop names through
 `attrs`/`_attrs` — pass it as that prop directly. See
-[Escaping](escaping.md). Currently `Button`-only; the same shape is expected
-to roll out to the rest of Tier 1 as separate follow-up work (#71, #72).
+[Escaping](escaping.md). Ships today on `Button`, `Select`, `Textarea` and
+`FormField` (#76, #77) — the same shape is expected to roll out to the rest
+of Tier 1 as separate follow-up work.
 
 ### Disabled links
 
