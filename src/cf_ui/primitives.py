@@ -42,7 +42,9 @@ Regenerate the JSON with::
 from __future__ import annotations
 
 import json
+import re
 from copy import deepcopy
+from html import escape as _html_escape
 from pathlib import Path
 from typing import Any
 
@@ -57,6 +59,7 @@ __all__ = [
     "LEVELS",
     "PRIMITIVES",
     "PRIMITIVE_DEFINITION_PATH",
+    "RESERVED_ATTRS",
     "SIZES",
     "STATES",
     "TYPES",
@@ -65,6 +68,7 @@ __all__ = [
     "PrimitiveConfigError",
     "classes_for",
     "primitive_definition",
+    "render_attrs",
     "validate",
 ]
 
@@ -776,6 +780,98 @@ def validate(component: str, **axes: Any) -> str:
     return ""
 
 
+#: Attribute names ``attrs`` may carry. HTML5 permits nearly any character in
+#: an attribute name, but no legitimate ``data-*``/``hx-*``/``x-*``/``aria-*``
+#: identifier needs that latitude, and the latitude itself is the hole: a
+#: space or ``=`` inside a key still forges a brand-new attribute even when
+#: the value is escaped, because HTML-entity escaping never touches either
+#: character. Restricting the character set closes that off structurally
+#: rather than trying to escape it.
+_ATTR_NAME_RE = re.compile(r"^[A-Za-z_:][A-Za-z0-9_.:-]*$")
+
+#: Attributes each primitive already renders itself, keyed like
+#: :data:`PRIMITIVES`. ``attrs`` cannot be used to set one of these: HTML
+#: keeps the *first* occurrence of a duplicate attribute, so a caller
+#: attempting to override ``type`` or ``class`` through ``attrs`` would not
+#: get an error and would not get the override either — the component's own
+#: value would silently win. Raising is what makes that attempt visible.
+#:
+#: A primitive not listed here has not adopted ``attrs`` yet.
+RESERVED_ATTRS: dict[str, frozenset[str]] = {
+    "button": frozenset({"class", "type", "href", "role", "aria-disabled", "disabled"}),
+}
+
+
+class _SafeAttrs(str):
+    """A pre-escaped string, safe under both template engines without either
+    engine's escaping library installed.
+
+    ``__html__`` is the protocol Jinja's escaping (via markupsafe) and
+    Django's ``conditional_escape`` both already check for — an object
+    carrying it is treated as already-safe HTML and is not re-escaped.
+    Implementing it directly, rather than returning a
+    :class:`markupsafe.Markup`, means this module — imported by the
+    Django-only templatetag path — never has to import Jinja2's escaping
+    library, which the ``django`` extra does not install.
+    """
+
+    def __html__(self) -> str:
+        return str(self)
+
+
+def render_attrs(component: str, attrs: dict[str, str] | None) -> _SafeAttrs:
+    """Render an ``attrs`` passthrough dict as literal ``key="value"`` pairs.
+
+    The one implementation every primitive's ``attrs`` prop calls through —
+    bound as the Jinja global ``cf_ui_render_attrs`` and as the Django
+    ``{% cf_ui_render_attrs %}`` tag — so the validation and escaping rules
+    live once, the way :func:`validate` already holds the axis vocabulary
+    once rather than per template.
+
+    Every key and value is escaped with :func:`html.escape` directly, rather
+    than relying on the surrounding template's autoescape state: the two
+    engines do not share one, and an already-safe result is correct whether
+    the caller's environment autoescapes or not — see ``docs/escaping.md``.
+
+    Args:
+        component: A key of :data:`RESERVED_ATTRS` — which attribute names
+            are off-limits because the primitive renders them itself.
+            Components with no entry accept every syntactically valid name.
+        attrs: The passthrough dict, or ``None``/empty for no extra
+            attributes.
+
+    Returns:
+        A leading-space-separated, HTML-safe string — empty when ``attrs``
+        is empty or ``None`` — ready to interpolate directly before the
+        element's closing ``>``.
+
+    Raises:
+        PrimitiveConfigError: On an attribute name outside the permitted
+            character set, or one that collides with a name the component
+            already renders.
+    """
+    if not attrs:
+        return _SafeAttrs("")
+
+    reserved = RESERVED_ATTRS.get(component, frozenset())
+    parts: list[str] = []
+    for name, value in attrs.items():
+        if not _ATTR_NAME_RE.match(name):
+            raise PrimitiveConfigError(
+                f"invalid attrs key {name!r} for {component} — attribute names "
+                "may contain only letters, digits, '_', '.', ':' and '-', and "
+                "must not start with a digit or '-'"
+            )
+        if name in reserved:
+            raise PrimitiveConfigError(
+                f"{component} takes no {name!r} in attrs — it collides with a "
+                f"prop {component} already renders as an attribute; pass it as "
+                "that prop instead"
+            )
+        parts.append(f' {_html_escape(name, quote=True)}="{_html_escape(str(value), quote=True)}"')
+    return _SafeAttrs("".join(parts))
+
+
 def build_primitive_globals() -> dict[str, Any]:
     """Jinja globals the primitive templates call.
 
@@ -784,7 +880,7 @@ def build_primitive_globals() -> dict[str, Any]:
     the missing piece, which is the same trade ``cf_ui_root_attrs()`` already
     makes.
     """
-    return {"cf_ui_validate": validate}
+    return {"cf_ui_validate": validate, "cf_ui_render_attrs": render_attrs}
 
 
 def classes_for(theme: str, component: str, **axes: Any) -> str:

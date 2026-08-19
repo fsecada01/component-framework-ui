@@ -31,4 +31,4 @@
     {{ class }}
   {% endif %}
 {% endcf_ui_class %}
-{% with cf_tag=href|yesno:"a,button" %}<{{ cf_tag }} class="{{ cf_class }}"{% if href %}{% if state == 'disabled' %} role="link" aria-disabled="true"{% else %} href="{{ href }}"{% endif %}{% else %} type="{{ type }}"{% if state == 'disabled' %} disabled{% endif %}{% endif %}>{% if state == 'loading' %}<span class="spinner-border spinner-border-sm" aria-hidden="true"></span> {% endif %}{{ slot }}</{{ cf_tag }}>{% endwith %}
+{% with cf_tag=href|yesno:"a,button" %}<{{ cf_tag }} class="{{ cf_class }}"{% if href %}{% if state == 'disabled' %} role="link" aria-disabled="true"{% else %} href="{{ href }}"{% endif %}{% else %} type="{{ type }}"{% if state == 'disabled' %} disabled{% endif %}{% endif %}{% cf_ui_render_attrs "button" attrs %}>{% if state == 'loading' %}<span class="spinner-border spinner-border-sm" aria-hidden="true"></span> {% endif %}{{ slot }}</{{ cf_tag }}>{% endwith %}

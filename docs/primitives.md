@@ -209,7 +209,46 @@ is built.
 | `type` | `"button"` | `button` `submit` `reset`. Only applies to the `<button>` form |
 | `full_width` | `false` | |
 | `extra_class` / `class` | `""` | `extra_class` in JinjaX, `class` in cotton — `class` is a Python reserved word |
+| `attrs` | `{}` | Arbitrary extra HTML attributes — `data-*`, `hx-*`, Alpine bindings. See below |
 | slot | — | The label |
+
+### Attribute passthrough
+
+`attrs` is a `dict[str, str]` of extra attributes rendered as literal
+`key="value"` pairs on the root element, for attributes no named prop covers
+— `data-event`, `hx-get`, `x-on:click`, `aria-controls`:
+
+=== "JinjaX"
+
+    ```jinja
+    <Cf:Button :attrs="{'data-event': 'submit', 'hx-post': '/orders'}">
+      Save
+    </Cf:Button>
+    ```
+
+=== "django-cotton"
+
+    ```html
+    <c-cf.button :attrs="{'data-event': 'submit', 'hx-post': '/orders'}">
+      Save
+    </c-cf.button>
+    ```
+
+Rendered by a single implementation, `cf_ui.primitives.render_attrs` — bound
+as the Jinja global `cf_ui_render_attrs` and the Django `{% cf_ui_render_attrs %}`
+tag — rather than inline per template, the way `cf_ui_validate` already
+centralizes the axis vocabulary. It escapes every key and value itself
+(`html.escape`), so it does not depend on the surrounding template's
+autoescape state, and it validates the **key**, not just the value: an
+attribute name may contain only letters, digits, `_`, `.`, `:` and `-`.
+That closes a hole plain HTML-entity escaping cannot — a key containing a
+space or `=` forges a brand-new attribute even when its value is fully
+escaped, because entity escaping never touches either character. A key that
+collides with a prop the component already renders (`type`, `class`,
+`href`, …) is rejected outright rather than silently losing to HTML's
+keep-the-first-duplicate rule. See [Escaping](escaping.md). Currently
+`Button`-only; the same shape is expected to roll out to the rest of Tier 1
+as separate follow-up work (#71, #72).
 
 ### Disabled links
 
