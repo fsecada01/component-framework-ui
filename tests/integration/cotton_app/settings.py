@@ -8,6 +8,7 @@ INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.auth",
     "django.contrib.staticfiles",
+    "django_cotton",
     "cf_ui.django.CfUiConfig",
 ]
 DATABASES = {"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": ":memory:"}}
@@ -23,5 +24,9 @@ TEMPLATES = [
     }
 ]
 CF_UI_THEME = "bulma"
+# django-cotton default COTTON_DIR="cotton" resolves <c-cf.card> ->
+# cotton/cf/card.html, picked up via APP_DIRS from cf_ui's package templates.
+# Allow hyphenated filenames (form-field.html, checkbox-group.html) — see #79.
+COTTON_SNAKE_CASED_NAMES = False
 ROOT_URLCONF = "tests.integration.cotton_app.urls"
 STATIC_URL = "/static/"
