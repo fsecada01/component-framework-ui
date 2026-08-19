@@ -31,6 +31,29 @@ def pytest_configure(config):
         django.setup()
 
 
+def pytest_collection_modifyitems(items):
+    """Fail fast if tests/unit and tests/integration get collected together.
+
+    A bare `pytest` (pyproject.toml's `testpaths = ["tests"]` default),
+    `pytest tests/`, or an IDE "run all tests" still collects both tiers
+    into one process — silently reintroducing the settings.TEMPLATES leak
+    this conftest's docstring describes, as hundreds of unrelated unit
+    failures rather than an obvious error. Catch it here instead.
+    """
+    has_unit = any(item.nodeid.startswith("tests/unit/") for item in items)
+    has_integration = any(item.nodeid.startswith("tests/integration/") for item in items)
+    if has_unit and has_integration:
+        raise pytest.UsageError(
+            "tests/unit and tests/integration were collected into the same "
+            "pytest process. django-cotton's AppConfig.ready() mutates "
+            "Django's global template settings once tests/integration "
+            "registers it, which silently breaks tests/unit's "
+            "render_to_string calls. Run the tiers separately — "
+            "`just test-all`, or `pytest tests/unit` then "
+            "`pytest tests/integration`."
+        )
+
+
 @pytest.fixture(scope="session", autouse=True)
 def _set_root_urlconf():
     """Ensure ROOT_URLCONF is set for integration URL routing."""
