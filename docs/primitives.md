@@ -209,7 +209,37 @@ is built.
 | `type` | `"button"` | `button` `submit` `reset`. Only applies to the `<button>` form |
 | `full_width` | `false` | |
 | `extra_class` / `class` | `""` | `extra_class` in JinjaX, `class` in cotton — `class` is a Python reserved word |
+| `attrs` | `{}` | Arbitrary extra HTML attributes — `data-*`, `hx-*`, Alpine bindings. See below |
 | slot | — | The label |
+
+### Attribute passthrough
+
+`attrs` is a `dict[str, str]` of extra attributes rendered as literal
+`key="value"` pairs on the root element, for attributes no named prop covers
+— `data-event`, `hx-get`, `x-on:click`, `aria-controls`:
+
+=== "JinjaX"
+
+    ```jinja
+    <Cf:Button :attrs="{'data-event': 'submit', 'hx-post': '/orders'}">
+      Save
+    </Cf:Button>
+    ```
+
+=== "django-cotton"
+
+    ```html
+    <c-cf.button :attrs="{'data-event': 'submit', 'hx-post': '/orders'}">
+      Save
+    </c-cf.button>
+    ```
+
+No new escaping mechanism was needed: `attrs` is rendered inside the same
+`{% autoescape true %}` block (JinjaX) / default Django auto-escaping
+(cotton) every other prop already goes through, so a hostile key or value is
+neutralized the same way a hostile `header` string is — see
+[Escaping](escaping.md). Currently `Button`-only; the same shape is expected
+to roll out to the rest of Tier 1 as separate follow-up work (#71, #72).
 
 ### Disabled links
 
