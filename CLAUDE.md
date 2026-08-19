@@ -118,7 +118,7 @@ Three tiers:
 2. **Integration** (`tests/integration/`) — FastAPI `TestClient` + Django test `Client`. Real HTTP, no browser.
 3. **E2E** (`tests/e2e/`) — Playwright against live servers. Django E2E server runs as a subprocess with isolated settings to avoid Django singleton conflicts. Parameterized over `["js_on", "js_off"]`.
 
-The Cotton unit tests pass even when cotton is not in INSTALLED_APPS (variables injected as raw context). Only E2E actually exercises `<c-vars>` compilation. Keep this in mind when debugging Cotton rendering issues.
+The Cotton unit tests pass even when cotton is not in INSTALLED_APPS (variables injected as raw context) — that tier still doesn't exercise the django-cotton compiler. Integration and E2E both do: `tests/integration/cotton_app/settings.py` and `tests/e2e/_e2e_django_settings.py` both register `django_cotton`, so both exercise real `<c-vars>` compilation (each in its own process — see `tests/integration/conftest.py` for why that isolation matters). Keep this in mind when debugging Cotton rendering issues.
 
 ## Component Naming Convention
 

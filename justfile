@@ -55,8 +55,17 @@ test-integration:
 test-e2e:
     pytest tests/e2e -q --tb=short
 
+# Separate pytest invocations, not `pytest tests/` — django-cotton's
+# AppConfig.ready() mutates settings.TEMPLATES in place and resets Django's
+# global template-engine cache the moment it's in INSTALLED_APPS (see
+# tests/integration/cotton_app/settings.py), so any single process that
+# combines the integration tier with the unit tier leaks real cotton
+# compilation into the unit tier's render_to_string calls. Matches how
+# .github/workflows/ci.yml already runs each tier as its own step.
 test-all:
-    pytest tests/ -q --tb=short
+    pytest tests/unit -q --tb=short
+    pytest tests/integration -q --tb=short
+    pytest tests/e2e -q --tb=short
 
 check: lint lint-templates test
 
