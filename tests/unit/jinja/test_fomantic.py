@@ -25,6 +25,8 @@ from pathlib import Path
 import pytest
 from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
 
+from cf_ui.primitives import build_primitive_globals
+
 TEMPLATES_DIR = Path(__file__).parent.parent.parent.parent / "src" / "cf_ui" / "templates"
 FOMANTIC_DIR = TEMPLATES_DIR / "jinja" / "fomantic"
 COTTON_FOMANTIC_DIR = TEMPLATES_DIR / "cotton" / "_themes" / "fomantic"
@@ -72,6 +74,7 @@ def render() -> Callable[..., str]:
         autoescape=select_autoescape(["html"]),
         undefined=StrictUndefined,
     )
+    env.globals.update(build_primitive_globals())
 
     def _render(template_name: str, **ctx: object) -> str:
         return env.get_template(template_name).render(**ctx)

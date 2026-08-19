@@ -1,5 +1,6 @@
-{#def name, label, value="", error="", rows=4, extra_class="", input_class="" #}
+{#def name, label, value="", error="", rows=4, extra_class="", input_class="", attrs={} #}
 {% autoescape true %}
+  {% set attrs = attrs if attrs is defined else {} %}
   <div class="field {{ extra_class }}">
     <label class="label" for="{{ name }}">{{ label }}</label>
     <div class="control">
@@ -8,6 +9,7 @@
         id="{{ name }}"
         name="{{ name }}"
         rows="{{ rows }}"
+        {{- cf_ui_render_attrs("textarea", attrs) }}
       >{{ value }}</textarea>
     </div>
     {% if error %}<p class="help is-danger">{{ error }}</p>{% endif %}

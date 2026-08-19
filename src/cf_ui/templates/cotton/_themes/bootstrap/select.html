@@ -1,9 +1,11 @@
+{% load cf_ui %}
 <div class="mb-3 {{ class }}">
   <label class="form-label" for="{{ name }}">{{ label }}</label>
   <select
     class="form-select{% if error %} is-invalid{% endif %}{% if input_class %} {{ input_class }}{% endif %}"
     id="{{ name }}"
     name="{{ name }}"
+    {% cf_ui_render_attrs "select" attrs %}
   >
     {% for opt in options %}
       <option

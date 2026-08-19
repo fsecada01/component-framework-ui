@@ -1,3 +1,4 @@
+{% load cf_ui %}
 <div class="form-control {{ class }}">
   <label class="label" for="{{ name }}"><span class="label-text">{{ label }}</span></label>
   <input
@@ -7,6 +8,7 @@
     name="{{ name }}"
     value="{{ value }}"
     {% if required == "true" %}required{% endif %}
+    {% cf_ui_render_attrs "form-field" attrs %}
   >
   {% if error %}<span class="label-text-alt text-error">{{ error }}</span>{% endif %}
 </div>

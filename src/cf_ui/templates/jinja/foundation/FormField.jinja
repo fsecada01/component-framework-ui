@@ -1,4 +1,4 @@
-{#def name, label, value="", error="", type="text", required=false, extra_class="", input_class="" #}
+{#def name, label, value="", error="", type="text", required=false, extra_class="", input_class="", attrs={} #}
 {% autoescape true %}
   {% set value = value if value is defined else "" %}
   {% set error = error if error is defined else "" %}
@@ -6,6 +6,7 @@
   {% set required = required if required is defined else false %}
   {% set extra_class = extra_class if extra_class is defined else "" %}
   {% set input_class = input_class if input_class is defined else "" %}
+  {% set attrs = attrs if attrs is defined else {} %}
   {# `.form-error` is `display: none` until `.is-visible` joins it — emitting the
    text without it renders an error nobody can see. These three classes are the
    whole of what Foundation's Abide plugin does at runtime, so rendering them
@@ -20,6 +21,7 @@
       value="{{ value }}"
       {% if error %}aria-invalid="true" aria-describedby="{{ name }}-error"{% endif %}
       {% if required %}required{% endif %}
+      {{- cf_ui_render_attrs("form-field", attrs) }}
     >
     {% if error %}
       <span class="form-error is-visible" id="{{ name }}-error">{{ error }}</span>

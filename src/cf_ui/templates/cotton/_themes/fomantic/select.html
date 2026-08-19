@@ -1,3 +1,4 @@
+{% load cf_ui %}
 {% comment %} A real `<select>`, not Fomantic's `ui dropdown` widget. That widget is built
    at runtime by a jQuery module cf-ui does not load, over a hidden select;
    reproducing its DOM by hand would be a combobox nobody can drive. The
@@ -10,6 +11,7 @@
       class="ui fluid selection dropdown{% if input_class %} {{ input_class }}{% endif %}"
       id="{{ name }}"
       name="{{ name }}"
+      {% cf_ui_render_attrs "select" attrs %}
     >
       {% for opt in options %}
         <option

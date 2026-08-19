@@ -799,6 +799,9 @@ _ATTR_NAME_RE = re.compile(r"^[A-Za-z_:][A-Za-z0-9_.:-]*$")
 #: A primitive not listed here has not adopted ``attrs`` yet.
 RESERVED_ATTRS: dict[str, frozenset[str]] = {
     "button": frozenset({"class", "type", "href", "role", "aria-disabled", "disabled"}),
+    "select": frozenset({"id", "name", "class"}),
+    "textarea": frozenset({"id", "name", "class", "rows"}),
+    "form-field": frozenset({"id", "name", "class", "type", "value", "required"}),
 }
 
 
@@ -850,6 +853,17 @@ def render_attrs(component: str, attrs: dict[str, str] | None) -> _SafeAttrs:
             character set, or one that collides with a name the component
             already renders.
     """
+    if hasattr(attrs, "as_dict"):
+        # A real JinjaX ``Catalog`` render reaches here with a JinjaX
+        # ``HTMLAttrs`` object, not the plain dict the rest of this function
+        # expects: JinjaX reserves the prop name ``attrs`` for its own
+        # extra-kwargs collector and overwrites whatever a component's own
+        # `{#def}` declared for it (jinjax's ``catalog.py``, unconditionally,
+        # for every component). ``.as_dict`` is JinjaX's own escape hatch for
+        # this, and cf-ui's validation/escaping below applies identically
+        # once it holds a plain dict.
+        attrs = attrs.as_dict
+
     if not attrs:
         return _SafeAttrs("")
 

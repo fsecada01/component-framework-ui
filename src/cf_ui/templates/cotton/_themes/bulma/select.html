@@ -1,3 +1,4 @@
+{% load cf_ui %}
 <div class="field {{ class }}">
   <label class="label" for="{{ name }}">{{ label }}</label>
   <div class="control">
@@ -6,6 +7,7 @@
         id="{{ name }}"
         name="{{ name }}"
         {% if input_class %} class="{{ input_class }}"{% endif %}
+        {% cf_ui_render_attrs "select" attrs %}
       >
         {% for opt in options %}
           <option

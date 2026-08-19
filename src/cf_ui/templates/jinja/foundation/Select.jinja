@@ -1,10 +1,11 @@
-{#def name, label, value="", error="", options=[], extra_class="", input_class="" #}
+{#def name, label, value="", error="", options=[], extra_class="", input_class="", attrs={} #}
 {% autoescape true %}
   {% set value = value if value is defined else "" %}
   {% set error = error if error is defined else "" %}
   {% set options = options if options is defined else [] %}
   {% set extra_class = extra_class if extra_class is defined else "" %}
   {% set input_class = input_class if input_class is defined else "" %}
+  {% set attrs = attrs if attrs is defined else {} %}
   <div class="{{ extra_class }}">
     <label for="{{ name }}"{% if error %} class="is-invalid-label"{% endif %}>{{ label }}</label>
     <select
@@ -12,6 +13,7 @@
       id="{{ name }}"
       name="{{ name }}"
       {% if error %}aria-invalid="true" aria-describedby="{{ name }}-error"{% endif %}
+      {{- cf_ui_render_attrs("select", attrs) }}
     >
       {% for opt in options %}
         <option

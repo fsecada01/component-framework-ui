@@ -1,3 +1,4 @@
+{% load cf_ui %}
 <div class="{{ class }}">
   <label for="{{ name }}"{% if error %} class="is-invalid-label"{% endif %}>{{ label }}</label>
   <select
@@ -5,6 +6,7 @@
     id="{{ name }}"
     name="{{ name }}"
     {% if error %}aria-invalid="true" aria-describedby="{{ name }}-error"{% endif %}
+    {% cf_ui_render_attrs "select" attrs %}
   >
     {% for opt in options %}
       <option
