@@ -1,1 +1,34 @@
-{% with cf_tag=href|yesno:"a,button" %}<{{ cf_tag }} class="btn{% if variant == 'primary' %} btn-primary{% elif variant == 'secondary' %} btn-secondary{% elif variant == 'success' %} btn-success{% elif variant == 'warning' %} btn-warning{% elif variant == 'danger' %} btn-error{% elif variant == 'info' %} btn-info{% elif variant == 'neutral' %} btn-neutral{% endif %}{% if size == 'small' %} btn-sm{% elif size == 'large' %} btn-lg{% endif %}{% if state == 'disabled' %} btn-disabled{% endif %}{% if full_width %} btn-block{% endif %}{% if class %} {{ class }}{% endif %}"{% if href %}{% if state == 'disabled' %} role="link" aria-disabled="true"{% else %} href="{{ href }}"{% endif %}{% else %} type="{{ type }}"{% if state == 'disabled' %} disabled{% endif %}{% endif %}>{% if state == 'loading' %}<span class="loading loading-spinner"></span> {% endif %}{{ slot }}</{{ cf_tag }}>{% endwith %}
+{% load cf_ui %}
+{% cf_ui_class as cf_class %}
+  btn
+  {% if variant == 'primary' %}
+    btn-primary
+  {% elif variant == 'secondary' %}
+    btn-secondary
+  {% elif variant == 'success' %}
+    btn-success
+  {% elif variant == 'warning' %}
+    btn-warning
+  {% elif variant == 'danger' %}
+    btn-error
+  {% elif variant == 'info' %}
+    btn-info
+  {% elif variant == 'neutral' %}
+    btn-neutral
+  {% endif %}
+  {% if size == 'small' %}
+    btn-sm
+  {% elif size == 'large' %}
+    btn-lg
+  {% endif %}
+  {% if state == 'disabled' %}
+    btn-disabled
+  {% endif %}
+  {% if full_width %}
+    btn-block
+  {% endif %}
+  {% if class %}
+    {{ class }}
+  {% endif %}
+{% endcf_ui_class %}
+{% with cf_tag=href|yesno:"a,button" %}<{{ cf_tag }} class="{{ cf_class }}"{% if href %}{% if state == 'disabled' %} role="link" aria-disabled="true"{% else %} href="{{ href }}"{% endif %}{% else %} type="{{ type }}"{% if state == 'disabled' %} disabled{% endif %}{% endif %}>{% if state == 'loading' %}<span class="loading loading-spinner"></span> {% endif %}{{ slot }}</{{ cf_tag }}>{% endwith %}
