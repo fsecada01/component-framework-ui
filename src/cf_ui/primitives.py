@@ -875,6 +875,23 @@ def render_attrs(component: str, attrs: dict[str, str] | None) -> _SafeAttrs:
         # once it holds a plain dict.
         attrs = attrs.as_dict
 
+    elif hasattr(attrs, "attrs_dict"):
+        # The real django-cotton compiler reaches here with cotton's own
+        # ``Attrs`` object, not the plain dict this function expects — and
+        # the same reserved-name collision as JinjaX's ``HTMLAttrs`` above,
+        # from the other engine: cotton unconditionally binds the context's
+        # ``attrs`` variable to its own bag of *every* attribute passed to
+        # the component tag (django_cotton/templatetags/_component.py,
+        # ``"attrs": component_data["attrs"]`` set last, after the
+        # `<c-vars attrs="{}">` default). Naive iteration (``.items()``) on
+        # that bag — a ``Mapping`` — would see every declared prop too
+        # (``name``, ``type``, ...), which then collides with
+        # ``RESERVED_ATTRS`` on every call, not just an explicit
+        # ``attrs={...}`` one. ``.attrs_dict()`` is cotton's own escape
+        # hatch, already filtered down to the attributes ``<c-vars>``
+        # excluded from string output — i.e. exactly the true passthrough.
+        attrs = attrs.attrs_dict()
+
     if not attrs:
         return _SafeAttrs("")
 
