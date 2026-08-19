@@ -11,7 +11,23 @@
   {% set attrs = attrs if attrs is defined else {} %}
   {{ cf_ui_validate("button", variant=variant, size=size, state=state, type=type) }}
   {%- set cf_tag = "a" if href else "button" -%}
-  <{{ cf_tag }} class="button{% if variant == 'primary' %} is-primary{% elif variant == 'secondary' %} is-link{% elif variant == 'success' %} is-success{% elif variant == 'warning' %} is-warning{% elif variant == 'danger' %} is-danger{% elif variant == 'info' %} is-info{% endif %}{% if size == 'small' %} is-small{% elif size == 'large' %} is-large{% endif %}{% if state == 'loading' %} is-loading{% endif %}{% if full_width %} is-fullwidth{% endif %}{% if extra_class %} {{ extra_class }}{% endif %}"
+  <{{ cf_tag }} class="button
+  {%- if variant == 'primary' %} is-primary
+  {%- elif variant == 'secondary' %} is-link
+  {%- elif variant == 'success' %} is-success
+  {%- elif variant == 'warning' %} is-warning
+  {%- elif variant == 'danger' %} is-danger
+  {%- elif variant == 'info' %} is-info
+  {%- endif -%}
+  {%- if size == 'small' %} is-small
+  {%- elif size == 'large' %} is-large
+  {%- endif -%}
+  {%- if state == 'loading' %} is-loading
+  {%- endif -%}
+  {%- if full_width %} is-fullwidth
+  {%- endif -%}
+  {%- if extra_class %} {{ extra_class }}
+  {%- endif -%}"
   {%- if href %}{% if state == 'disabled' %} role="link" aria-disabled="true"{% else %} href="{{ href }}"{% endif %}
 {%- else %} type="{{ type }}"{% if state == 'disabled' %} disabled{% endif %}{% endif %}{{ cf_ui_render_attrs("button", attrs) }}>{{ content }}</{{ cf_tag }}>
 {% endautoescape %}
