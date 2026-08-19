@@ -353,17 +353,31 @@ def test_every_theme_has_a_base_class_entry(theme: str):
 # ── Templates and the map agree ───────────────────────────────────────────
 
 
+#: A cotton ``{% cf_ui_class %}...{% endcf_ui_class %}`` block (cf_ui.py) — the
+#: readable, multi-line stand-in for a one-line ``class="..."`` chain. Its
+#: contents are still ordinary source text, so Tailwind's scanner reads them
+#: the same way it reads an attribute value; this regex matches both the
+#: bare and ``as <varname>`` forms of the opening tag.
+_CF_UI_CLASS_BLOCK_RE = re.compile(
+    r"\{%\s*cf_ui_class\b[^%]*%\}(.*?)\{%\s*endcf_ui_class\s*%\}", re.S
+)
+
+
 def _literal_classes(text: str) -> set[str]:
-    """Every class token spelled literally in a ``class="..."`` attribute.
+    """Every class token spelled literally in the template's source text.
 
     Deliberately naive: it reads source text, which is exactly what Tailwind's
-    scanner does. Jinja/Django expressions inside the attribute are dropped, so
-    what is left is what survives tree-shaking.
+    scanner does. Jinja/Django expressions are dropped, so what is left is
+    what survives tree-shaking. Two regions carry class tokens: a
+    ``class="..."`` attribute, and — for cotton, which has no ``{%- -%}`` trim
+    markers to reformat that attribute directly — a ``{% cf_ui_class %}``
+    capture block.
     """
     tokens: set[str] = set()
-    for attr in re.findall(r'class="([^"]*)"', text):
-        attr = re.sub(r"\{\{.*?\}\}|\{%.*?%\}", " ", attr, flags=re.S)
-        tokens.update(t for t in attr.split() if t)
+    regions = re.findall(r'class="([^"]*)"', text) + _CF_UI_CLASS_BLOCK_RE.findall(text)
+    for region in regions:
+        region = re.sub(r"\{\{.*?\}\}|\{%.*?%\}", " ", region, flags=re.S)
+        tokens.update(t for t in region.split() if t)
     return tokens
 
 

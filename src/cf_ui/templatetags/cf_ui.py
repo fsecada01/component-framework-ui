@@ -1,3 +1,5 @@
+import re
+
 from django import template
 from django.conf import settings
 from django.templatetags.static import static
@@ -10,6 +12,8 @@ from cf_ui.primitives import validate as validate_primitive
 from cf_ui.themes import cotton_partial, resolve_daisy_cdn
 
 register = template.Library()
+
+_WHITESPACE_RE = re.compile(r"\s+")
 
 _CDN_CSS = {
     "bulma": "https://cdn.jsdelivr.net/npm/bulma@{v}/css/bulma.min.css",
@@ -135,6 +139,59 @@ def cf_ui_validate(component: str, **axes) -> str:
     Returns the empty string; it is called for its exception.
     """
     return validate_primitive(component, **axes)
+
+
+class ClassCaptureNode(template.Node):
+    def __init__(self, nodelist, target_var=None):
+        self.nodelist = nodelist
+        self.target_var = target_var
+
+    def render(self, context) -> str:
+        collapsed = _WHITESPACE_RE.sub(" ", self.nodelist.render(context)).strip()
+        if self.target_var:
+            context[self.target_var] = mark_safe(collapsed)
+            return ""
+        return mark_safe(collapsed)
+
+
+@register.tag("cf_ui_class")
+def cf_ui_class(parser, token):
+    """Collapse a multi-line ``{% if %}`` class chain to a single-space string.
+
+    Django has no Jinja-style ``{%- -%}`` trim markers, so a chained
+    ``{% if %}...{% elif %}...{% endif %}`` class attribute has to stay on one
+    physical line — a literal newline anywhere in the block becomes literal
+    whitespace in the rendered ``class`` attribute. This tag lets the same
+    chain be written readably, one branch per line, by rendering its nodelist
+    normally (inheriting ambient autoescape — a hostile ``{{ class }}`` is
+    escaped exactly as it already was) and then collapsing every run of
+    whitespace between tokens to one space and stripping the ends::
+
+        <button class="{% cf_ui_class %}
+          button
+          {% if variant == 'primary' %}is-primary{% endif %}
+        {% endcf_ui_class %}">
+
+    ``as <varname>`` stores the result in the context and renders nothing
+    inline, for keeping the multi-line block out of the attribute value::
+
+        {% cf_ui_class as cf_class %}
+          button
+          {% if variant == 'primary' %}is-primary{% endif %}
+        {% endcf_ui_class %}
+        <button class="{{ cf_class }}">
+    """
+    bits = token.split_contents()
+    target_var = None
+    if len(bits) == 3 and bits[1] == "as":
+        target_var = bits[2]
+    elif len(bits) != 1:
+        raise template.TemplateSyntaxError(
+            f"{bits[0]!r} takes either no arguments or 'as <varname>'"
+        )
+    nodelist = parser.parse(("endcf_ui_class",))
+    parser.delete_first_token()
+    return ClassCaptureNode(nodelist, target_var=target_var)
 
 
 @register.simple_tag

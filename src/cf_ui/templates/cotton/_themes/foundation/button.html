@@ -1,2 +1,32 @@
 {% load cf_ui %}
-{% with cf_tag=href|yesno:"a,button" %}<{{ cf_tag }} class="button{% if variant == 'primary' %} primary{% elif variant == 'secondary' %} secondary{% elif variant == 'success' %} success{% elif variant == 'warning' %} warning{% elif variant == 'danger' %} alert{% elif variant == 'info' %} secondary{% endif %}{% if size == 'small' %} small{% elif size == 'large' %} large{% endif %}{% if state == 'disabled' %} disabled{% endif %}{% if full_width %} expanded{% endif %}{% if class %} {{ class }}{% endif %}"{% if href %}{% if state == 'disabled' %} role="link" aria-disabled="true"{% else %} href="{{ href }}"{% endif %}{% else %} type="{{ type }}"{% if state == 'disabled' %} disabled{% endif %}{% endif %}{% cf_ui_render_attrs "button" attrs %}>{{ slot }}</{{ cf_tag }}>{% endwith %}
+{% cf_ui_class as cf_class %}
+  button
+  {% if variant == 'primary' %}
+    primary
+  {% elif variant == 'secondary' %}
+    secondary
+  {% elif variant == 'success' %}
+    success
+  {% elif variant == 'warning' %}
+    warning
+  {% elif variant == 'danger' %}
+    alert
+  {% elif variant == 'info' %}
+    secondary
+  {% endif %}
+  {% if size == 'small' %}
+    small
+  {% elif size == 'large' %}
+    large
+  {% endif %}
+  {% if state == 'disabled' %}
+    disabled
+  {% endif %}
+  {% if full_width %}
+    expanded
+  {% endif %}
+  {% if class %}
+    {{ class }}
+  {% endif %}
+{% endcf_ui_class %}
+{% with cf_tag=href|yesno:"a,button" %}<{{ cf_tag }} class="{{ cf_class }}"{% if href %}{% if state == 'disabled' %} role="link" aria-disabled="true"{% else %} href="{{ href }}"{% endif %}{% else %} type="{{ type }}"{% if state == 'disabled' %} disabled{% endif %}{% endif %}{% cf_ui_render_attrs "button" attrs %}>{{ slot }}</{{ cf_tag }}>{% endwith %}
