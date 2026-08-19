@@ -154,6 +154,19 @@ def test_rejects_attrs_colliding_with_name(render: Callable[..., str]) -> None:
         render(attrs={"name": "override"})
 
 
+def test_rejects_attrs_colliding_with_aria_invalid(render: Callable[..., str]) -> None:
+    """The reservation is static, not conditioned on ``error`` — only
+    Foundation renders ``aria-invalid`` itself, but the guard must reject the
+    collision for every theme, since it fires before the template runs."""
+    with pytest.raises(PrimitiveConfigError):
+        render(attrs={"aria-invalid": "false"})
+
+
+def test_rejects_attrs_colliding_with_aria_describedby(render: Callable[..., str]) -> None:
+    with pytest.raises(PrimitiveConfigError):
+        render(attrs={"aria-describedby": "custom-hint"})
+
+
 def test_attrs_do_not_land_on_the_field_wrapper(render: Callable[..., str]) -> None:
     """The passthrough belongs on the control, not the outer ``.field`` div —
     the design question #70 raised for every multi-element primitive."""

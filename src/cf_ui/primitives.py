@@ -799,9 +799,20 @@ _ATTR_NAME_RE = re.compile(r"^[A-Za-z_:][A-Za-z0-9_.:-]*$")
 #: A primitive not listed here has not adopted ``attrs`` yet.
 RESERVED_ATTRS: dict[str, frozenset[str]] = {
     "button": frozenset({"class", "type", "href", "role", "aria-disabled", "disabled"}),
-    "select": frozenset({"id", "name", "class"}),
-    "textarea": frozenset({"id", "name", "class", "rows"}),
-    "form-field": frozenset({"id", "name", "class", "type", "value", "required"}),
+    "select": frozenset({"id", "name", "class", "aria-invalid", "aria-describedby"}),
+    "textarea": frozenset({"id", "name", "class", "rows", "aria-invalid", "aria-describedby"}),
+    "form-field": frozenset(
+        {
+            "id",
+            "name",
+            "class",
+            "type",
+            "value",
+            "required",
+            "aria-invalid",
+            "aria-describedby",
+        }
+    ),
 }
 
 

@@ -111,6 +111,20 @@ def test_cotton_rejects_attrs_colliding_with_name(render: Callable[..., str]) ->
         render(attrs={"name": "override"})
 
 
+def test_cotton_rejects_attrs_colliding_with_aria_invalid(render: Callable[..., str]) -> None:
+    """Static reservation — only Foundation renders ``aria-invalid`` itself,
+    but the guard must reject the collision for every theme regardless."""
+    with pytest.raises(PrimitiveConfigError):
+        render(attrs={"aria-invalid": "false"})
+
+
+def test_cotton_rejects_attrs_colliding_with_aria_describedby(
+    render: Callable[..., str],
+) -> None:
+    with pytest.raises(PrimitiveConfigError):
+        render(attrs={"aria-describedby": "custom-hint"})
+
+
 def test_cotton_attrs_do_not_land_on_the_field_wrapper(render: Callable[..., str]) -> None:
     html = render(attrs={"data-marker": "control-only"})
     wrapper_open, _, rest = html.partition(">")
