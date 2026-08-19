@@ -153,6 +153,11 @@ indent-style = "space"
 profile = "django"
 indent = 2
 single_attribute_per_line = true
+# {% cf_ui_class %}...{% endcf_ui_class %} is a custom block tag (cf_ui.py)
+# that lets a cotton theme partial write its class="..." if/elif chain one
+# branch per line — Django has no {%- -%} trim markers, so without this the
+# tag looks like an unmatched end tag (T038) to djlint's own parser.
+custom_blocks = "cf_ui_class"
 # Both extensions are formatted. The Jinja tree is passed `--profile=jinja`
 # on its own hook invocation; this file-level setting cannot vary per path.
 extension = "html"
