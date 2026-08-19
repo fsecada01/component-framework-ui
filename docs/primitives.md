@@ -234,12 +234,21 @@ is built.
     </c-cf.button>
     ```
 
-No new escaping mechanism was needed: `attrs` is rendered inside the same
-`{% autoescape true %}` block (JinjaX) / default Django auto-escaping
-(cotton) every other prop already goes through, so a hostile key or value is
-neutralized the same way a hostile `header` string is — see
-[Escaping](escaping.md). Currently `Button`-only; the same shape is expected
-to roll out to the rest of Tier 1 as separate follow-up work (#71, #72).
+Rendered by a single implementation, `cf_ui.primitives.render_attrs` — bound
+as the Jinja global `cf_ui_render_attrs` and the Django `{% cf_ui_render_attrs %}`
+tag — rather than inline per template, the way `cf_ui_validate` already
+centralizes the axis vocabulary. It escapes every key and value itself
+(`html.escape`), so it does not depend on the surrounding template's
+autoescape state, and it validates the **key**, not just the value: an
+attribute name may contain only letters, digits, `_`, `.`, `:` and `-`.
+That closes a hole plain HTML-entity escaping cannot — a key containing a
+space or `=` forges a brand-new attribute even when its value is fully
+escaped, because entity escaping never touches either character. A key that
+collides with a prop the component already renders (`type`, `class`,
+`href`, …) is rejected outright rather than silently losing to HTML's
+keep-the-first-duplicate rule. See [Escaping](escaping.md). Currently
+`Button`-only; the same shape is expected to roll out to the rest of Tier 1
+as separate follow-up work (#71, #72).
 
 ### Disabled links
 

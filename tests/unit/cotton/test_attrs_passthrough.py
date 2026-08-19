@@ -14,12 +14,19 @@ django-cotton compiler per this repo's CLAUDE.md — props arrive as plain
 context, not via ``<c-vars>`` defaulting. That means ``attrs`` must be passed
 explicitly as a real ``dict`` here; the ``<c-vars attrs="{}" />`` default is
 only exercised by the E2E tier.
+
+Post-review addendum (PR #73 review): validation and escaping now live once,
+in :func:`cf_ui.primitives.render_attrs`, called through the
+``{% cf_ui_render_attrs %}`` tag — not inline per theme partial. See
+``tests/unit/jinja/test_attrs_passthrough.py`` for the full addendum
+rationale; the cases below mirror it for the cotton side.
 """
 
 from collections.abc import Callable
 
 import pytest
 
+from cf_ui.primitives import PrimitiveConfigError
 from cf_ui.themes import THEMES
 
 
@@ -58,11 +65,34 @@ def test_button_cotton_passthrough_attrs_coexist_with_named_props(
     assert "js-cta" in html
 
 
+def test_button_cotton_renders_with_attrs_explicitly_none(
+    render: Callable[..., str],
+) -> None:
+    html = render(attrs=None)
+    assert "<button" in html or "<a" in html
+
+
 def test_button_cotton_escapes_a_hostile_attr_value(render: Callable[..., str]) -> None:
     html = render(attrs={"data-x": '" onmouseover="alert(1)" x="'})
     assert 'onmouseover="alert(1)"' not in html
 
 
-def test_button_cotton_escapes_a_hostile_attr_name(render: Callable[..., str]) -> None:
-    html = render(attrs={'x" onmouseover="alert(1)': "y"})
-    assert 'onmouseover="alert(1)"' not in html
+def test_button_cotton_rejects_a_quote_based_hostile_attr_name(
+    render: Callable[..., str],
+) -> None:
+    with pytest.raises(PrimitiveConfigError):
+        render(attrs={'x" onmouseover="alert(1)': "y"})
+
+
+def test_button_cotton_rejects_a_whitespace_and_equals_hostile_attr_name(
+    render: Callable[..., str],
+) -> None:
+    with pytest.raises(PrimitiveConfigError):
+        render(attrs={"x onmouseover=alert(1)//": "y"})
+
+
+def test_button_cotton_rejects_attrs_colliding_with_a_reserved_prop(
+    render: Callable[..., str],
+) -> None:
+    with pytest.raises(PrimitiveConfigError):
+        render(attrs={"type": "submit"})

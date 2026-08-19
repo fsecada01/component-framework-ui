@@ -5,6 +5,7 @@ from django.utils.safestring import mark_safe
 
 from cf_ui.axes import root_attrs, style_element
 from cf_ui.django import axis_value_sets
+from cf_ui.primitives import render_attrs as render_attrs_primitive
 from cf_ui.primitives import validate as validate_primitive
 from cf_ui.themes import cotton_partial, resolve_daisy_cdn
 
@@ -134,6 +135,21 @@ def cf_ui_validate(component: str, **axes) -> str:
     Returns the empty string; it is called for its exception.
     """
     return validate_primitive(component, **axes)
+
+
+@register.simple_tag
+def cf_ui_render_attrs(component: str, attrs: dict | None) -> str:
+    """Render an ``attrs`` passthrough dict as literal ``key="value"`` pairs.
+
+    Used by the theme partials::
+
+        {% cf_ui_render_attrs "button" attrs %}
+
+    The one implementation the Jinja global ``cf_ui_render_attrs`` also
+    calls — see :func:`cf_ui.primitives.render_attrs` for the validation and
+    escaping rules.
+    """
+    return mark_safe(str(render_attrs_primitive(component, attrs)))
 
 
 @register.simple_tag

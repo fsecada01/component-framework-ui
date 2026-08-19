@@ -24,6 +24,17 @@ These tests render straight off disk with autoescape *off* at the harness
 level (see ``tests/jinja_env.py``) so a passing escaping test can only mean
 the template's own block did the work — the same discipline #36 established
 for every other prop.
+
+Post-review addendum (PR #73 review): the first cut escaped values but not
+*names*, so a key containing a space or ``=`` — ``'x onmouseover=alert(1)//'``
+— forged a brand-new attribute; HTML-entity escaping never touches either
+character. ``attrs`` is now rendered through
+:func:`cf_ui.primitives.render_attrs`, which validates the key's character
+set and rejects a name that collides with a prop the primitive already
+renders, instead of the templates escaping inline. The tests below cover
+both classes of hostile name (quote-based, which was already caught, and
+whitespace/``=``-based, which was not), an explicit ``attrs=None``, and a
+reserved-name collision.
 """
 
 from collections.abc import Callable
@@ -32,7 +43,7 @@ from pathlib import Path
 import pytest
 from jinja2 import Environment
 
-from cf_ui.primitives import build_primitive_globals
+from cf_ui.primitives import PrimitiveConfigError, build_primitive_globals
 from cf_ui.themes import THEMES
 from tests.jinja_env import make_env
 
@@ -82,11 +93,38 @@ def test_button_passthrough_attrs_coexist_with_named_props(
     assert "js-cta" in html
 
 
+def test_button_renders_with_attrs_explicitly_none(render: Callable[..., str]) -> None:
+    """A caller passing a real ``None`` (not merely omitting the prop) — e.g.
+    a model field with no value set — must not crash the render."""
+    html = render(attrs=None)
+    assert "Go" in html
+
+
 def test_button_escapes_a_hostile_attr_value(render: Callable[..., str]) -> None:
     html = render(attrs={"data-x": '" onmouseover="alert(1)" x="'})
     assert 'onmouseover="alert(1)"' not in html
 
 
-def test_button_escapes_a_hostile_attr_name(render: Callable[..., str]) -> None:
-    html = render(attrs={'x" onmouseover="alert(1)': "y"})
-    assert 'onmouseover="alert(1)"' not in html
+def test_button_rejects_a_quote_based_hostile_attr_name(render: Callable[..., str]) -> None:
+    with pytest.raises(PrimitiveConfigError):
+        render(attrs={'x" onmouseover="alert(1)': "y"})
+
+
+def test_button_rejects_a_whitespace_and_equals_hostile_attr_name(
+    render: Callable[..., str],
+) -> None:
+    """Autoescaping never touches whitespace or ``=`` — a key smuggling
+    either forged a brand-new attribute in the pre-fix implementation even
+    though the value was fully escaped. The name must be rejected outright."""
+    with pytest.raises(PrimitiveConfigError):
+        render(attrs={"x onmouseover=alert(1)//": "y"})
+
+
+def test_button_rejects_attrs_colliding_with_a_reserved_prop(
+    render: Callable[..., str],
+) -> None:
+    """``attrs`` cannot be used to override a prop the component already
+    renders — HTML keeps the *first* duplicate attribute, so the override
+    would silently do nothing rather than error, absent this guard."""
+    with pytest.raises(PrimitiveConfigError):
+        render(type="button", attrs={"type": "submit"})
