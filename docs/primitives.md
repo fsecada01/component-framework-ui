@@ -221,10 +221,18 @@ is built.
 === "JinjaX"
 
     ```jinja
-    <Cf:Button :attrs="{'data-event': 'submit', 'hx-post': '/orders'}">
+    <Cf:Button :_attrs="{'data-event': 'submit', 'hx-post': '/orders'}">
       Save
     </Cf:Button>
     ```
+
+    JinjaX reserves the prop name `attrs` for its own extra-kwargs collector
+    and unconditionally overwrites whatever a component's `{#def}` declares
+    for it — `:attrs="{...}"` compiles, runs, and silently discards the
+    dict, with no error. `_attrs` (or `__attrs`) is JinjaX's own escape
+    hatch for this collision; use it instead. This applies only to the
+    JinjaX path — django-cotton has no equivalent reservation, so its own
+    `attrs` prop below is unaffected. See #78.
 
 === "django-cotton"
 
@@ -246,9 +254,20 @@ space or `=` forges a brand-new attribute even when its value is fully
 escaped, because entity escaping never touches either character. A key that
 collides with a prop the component already renders (`type`, `class`,
 `href`, …) is rejected outright rather than silently losing to HTML's
-keep-the-first-duplicate rule. See [Escaping](escaping.md). Currently
-`Button`-only; the same shape is expected to roll out to the rest of Tier 1
-as separate follow-up work (#71, #72).
+keep-the-first-duplicate rule — **on the django-cotton and unit-test paths.**
+Under a real JinjaX `Catalog`, that guard only reliably fires for a
+collision key that is *not* also one of the component's own declared prop
+names (`class`, `role`, `aria-disabled`, `disabled` for `Button`). A key
+that is both RESERVED_ATTRS-listed and a declared prop (`type`, `href` for
+`Button`; `name` for the form controls) never reaches the guard at all —
+JinjaX's own arg-filtering routes it straight into that prop before
+`render_attrs` runs, so it silently becomes the prop's value instead (the
+caller's real prop, if also passed, wins). This is a JinjaX-level gap, not
+a cf-ui one; never pass one of a component's own prop names through
+`attrs`/`_attrs` — pass it as that prop directly. See
+[Escaping](escaping.md). Ships today on `Button`, `Select`, `Textarea` and
+`FormField` (#76, #77) — the same shape is expected to roll out to the rest
+of Tier 1 as separate follow-up work.
 
 ### Disabled links
 
