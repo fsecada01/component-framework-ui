@@ -2,6 +2,83 @@
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-08-19
+
+Attribute passthrough. Until now, no component in either engine forwarded an
+attribute it did not itself declare — `hx-*`, `@click`, `x-*`, `data-*`,
+`aria-*`, a bare `id` all silently vanished. The component rendered, styled
+correctly, and read correctly at the call site; it just did not behave. On an
+interactive element that is the whole point, so this was tracked as a bug
+(#70), not a feature request, and #70 stays open — this release covers the
+"interactive set" (the eight components a caller is most likely to wire up
+with client-side behaviour), not all 21.
+
+**Upgrading:** fully additive. `attrs` defaults to `{}` everywhere it was
+added, so every existing call site renders byte-identically. No migration.
+
+### Added — `attrs` passthrough on `Button`, `Select`, `Textarea`,
+`FormField`, `Icon`, `Badge`, `Box` and `CheckboxGroup` (#70, #72, #73, #76,
+#77, #82)
+
+- **One mechanism, one implementation.** `attrs={}` on the `{#def}`/
+  `<c-vars>`, and a single `cf_ui_render_attrs(component, attrs)` call
+  (`{% cf_ui_render_attrs %}` in cotton) placed just before the target
+  element's closing `>`. Every component routes through the one
+  `cf_ui.primitives.render_attrs` implementation — there is no per-component
+  escaping or validation logic to drift.
+- **A declared per-component reserved set, not a blanket block-list.**
+  `RESERVED_ATTRS` in `primitives.py` lists the attribute names each
+  component already owns (`class` everywhere; `type`/`href` on `Button`;
+  `role`/`aria-label`/`aria-hidden` on `Icon`; `id`/`name` on the form
+  controls) and raises `PrimitiveConfigError` on a collision rather than
+  letting `attrs` silently overwrite a prop the component computed itself.
+- **`CheckboxGroup` is the one exception to "the control, not the wrapper."**
+  It renders N `<input type="checkbox">` elements from `choices`, so there is
+  no single control for `attrs` to target — it lands on the outer wrapper
+  element (`field` / `mb-3` / `form-control` / `ui form` / `fieldset`,
+  per theme) instead, and this is documented as a deliberate departure from
+  `Select`/`Textarea`/`FormField`'s convention, not an oversight.
+- **JinjaX's own reserved name for this is `_attrs`, not `attrs`** — the
+  bare `attrs=` kwarg is JinjaX's built-in extra-kwargs collector and gets
+  silently overwritten on every render under a real `Catalog`, no error. This
+  surfaced as a *docs* bug (#78): `docs/primitives.md` showed
+  `:attrs="{...}"` for JinjaX call sites, which compiles, runs, and discards
+  the dict — a call site that reads correctly and does nothing. Fixed to
+  `:_attrs="{...}"`, with a callout explaining the collision. The bug was
+  invisible at the unit tier, where `{#def}` is a plain Jinja2 comment
+  outside a real `Catalog` and `attrs` never actually collides with
+  anything — closing that blind spot needed integration-tier coverage
+  against a real `jinjax.Catalog`, which now exists for all eight
+  components.
+- **The collision guard has a known gap, documented rather than hidden.**
+  When a reserved name is *also* one of a component's own declared props
+  (`type`/`href` on `Button`, `name` on the form controls), JinjaX's own
+  argument filtering routes the value into that prop before
+  `render_attrs` ever runs — the guard never fires. This is a JinjaX-level
+  limitation, not a cf-ui defect to patch around, and both the docs and the
+  test suite say so explicitly rather than claiming coverage that doesn't
+  exist.
+
+### Fixed — the cotton integration tier asserted nothing about real Cotton
+compilation (#79)
+
+- **`tests/integration/cotton_app` never registered `django_cotton` in
+  `INSTALLED_APPS`.** Every `<c-cf.*>` tag in that tier reached the response
+  as literal, uncompiled text, so its assertions on rendered output were
+  checking a raw template string, not django-cotton's actual compiler
+  output — silently, with every test green. This is the same shape of gap
+  that let #65 (`Notification`'s dropped body) and #78 (the JinjaX `attrs`
+  collision) both survive past a full green suite: a tier that looks like it
+  exercises the real compiler but doesn't. Fixed by registering
+  `django_cotton` and re-verifying every existing integration assertion
+  still holds against real compiled output.
+
+### Notes
+
+- #70 remains open. The data-driven components — `Table`, `Pagination`,
+  `Breadcrumb`, `Progress` — and the remaining structural/content components
+  still drop undeclared attributes; a follow-up phase covers them.
+
 ## [0.3.1] — 2026-08-01
 
 A patch for one bug, shipped on its own because of how it fails. `Notification`
