@@ -813,6 +813,14 @@ RESERVED_ATTRS: dict[str, frozenset[str]] = {
             "aria-describedby",
         }
     ),
+    "icon": frozenset({"class", "role", "aria-label", "aria-hidden"}),
+    "badge": frozenset({"class"}),
+    "box": frozenset({"class"}),
+    # Rendered on the field wrapper, not a per-choice checkbox — see
+    # docs/primitives.md: unlike the other form controls, checkbox-group has
+    # no single control to target (it renders N inputs from `choices`), so
+    # `attrs` lands on the one element the call site actually identifies.
+    "checkbox-group": frozenset({"class"}),
 }
 
 

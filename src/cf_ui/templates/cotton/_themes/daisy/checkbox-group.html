@@ -1,4 +1,8 @@
-<div class="form-control {{ class }}">
+{% load cf_ui %}
+<div
+  class="form-control {{ class }}"
+  {% cf_ui_render_attrs "checkbox-group" attrs %}
+>
   <label class="label"><span class="label-text">{{ label }}</span></label>
   <div
     class="flex flex-wrap gap-4{% if control_class %} {{ control_class }}{% endif %}"

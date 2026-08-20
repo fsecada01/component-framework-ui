@@ -1,4 +1,8 @@
-<div class="ui form {{ class }}">
+{% load cf_ui %}
+<div
+  class="ui form {{ class }}"
+  {% cf_ui_render_attrs "checkbox-group" attrs %}
+>
   <div
     class="grouped fields{% if control_class %} {{ control_class }}{% endif %}{% if error %} error{% endif %}"
   >

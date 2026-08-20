@@ -46,6 +46,7 @@ an unstyled element.
 | `variant` | `"neutral"` | |
 | `size` | `"normal"` | Inert on Bootstrap and Foundation |
 | `extra_class` | `""` | |
+| `attrs` | `{}` | Extra HTML attributes — see [Attribute passthrough](primitives.md#attribute-passthrough) |
 
 ### `Cf:Heading` / `<c-cf.heading>`
 
@@ -72,6 +73,7 @@ an unstyled element.
 | `size` | `"normal"` | Inert on Foundation |
 | `label` | `""` | Empty ⇒ `aria-hidden`. Non-empty ⇒ `role="img"` + that name |
 | `extra_class` | `""` | |
+| `attrs` | `{}` | Extra HTML attributes — see [Attribute passthrough](primitives.md#attribute-passthrough) |
 
 cf-ui ships no icons — put your own `<i>` or `<svg>` in the slot.
 
@@ -124,6 +126,7 @@ A labelled input with error display.
 | `selected` | `[]` | List of checked values |
 | `error` | `""` | |
 | `extra_class` / `control_class` | `""` | |
+| `attrs` | `{}` | Extra HTML attributes, on the **wrapper** — not a per-choice `<input>`. See [Attribute passthrough](primitives.md#attribute-passthrough) |
 
 ## Feedback
 

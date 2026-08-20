@@ -1,11 +1,15 @@
-{#def name, label, choices=[], selected=[], error="", extra_class="", control_class="" #}
+{#def name, label, choices=[], selected=[], error="", extra_class="", control_class="", attrs={} #}
 {% autoescape true %}
   {% set choices = choices if choices is defined else [] %}
   {% set selected = selected if selected is defined else [] %}
   {% set error = error if error is defined else "" %}
   {% set extra_class = extra_class if extra_class is defined else "" %}
   {% set control_class = control_class if control_class is defined else "" %}
-  <div class="ui form {{ extra_class }}">
+  {% set attrs = attrs if attrs is defined else {} %}
+  <div
+    class="ui form {{ extra_class }}"
+    {{- cf_ui_render_attrs("checkbox-group", attrs) }}
+  >
     <div
       class="grouped fields{% if control_class %} {{ control_class }}{% endif %}{% if error %} error{% endif %}"
     >

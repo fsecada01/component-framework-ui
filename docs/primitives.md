@@ -265,9 +265,14 @@ JinjaX's own arg-filtering routes it straight into that prop before
 caller's real prop, if also passed, wins). This is a JinjaX-level gap, not
 a cf-ui one; never pass one of a component's own prop names through
 `attrs`/`_attrs` — pass it as that prop directly. See
-[Escaping](escaping.md). Ships today on `Button`, `Select`, `Textarea` and
-`FormField` (#76, #77) — the same shape is expected to roll out to the rest
-of Tier 1 as separate follow-up work.
+[Escaping](escaping.md). Ships today on `Button`, `Select`, `Textarea`,
+`FormField` (#76, #77), `Icon`, `Badge`, `Box` and `CheckboxGroup` (#70).
+
+`CheckboxGroup` is the one exception to "the control, not the wrapper": it
+renders N `<input type="checkbox">` elements from `choices`, so there is no
+single control to target. `attrs` lands on the outer wrapper element instead
+(the `field`/`mb-3`/`form-control`/`ui form`/`fieldset` container) — see its
+entry in [Components](components.md#cfcheckboxgroup-c-cfcheckbox-group).
 
 ### Disabled links
 
@@ -290,6 +295,7 @@ so it renders a real `<button disabled>`.
 | `variant` | `"neutral"` | |
 | `size` | `"normal"` | Inert on Bootstrap and Foundation |
 | `extra_class` / `class` | `""` | |
+| `attrs` | `{}` | See [Attribute passthrough](#attribute-passthrough) above |
 | slot | — | The badge text |
 
 Renders a `<span>` on every theme, with no `role` and no ARIA. `role="status"`
@@ -370,6 +376,7 @@ print and high-contrast stylesheets, and its announcement is inconsistent.
 | `size` | `"normal"` | Inert on Foundation; mixed scale on Bootstrap |
 | `label` | `""` | Empty ⇒ decorative. Non-empty ⇒ the accessible name |
 | `extra_class` / `class` | `""` | |
+| `attrs` | `{}` | See [Attribute passthrough](#attribute-passthrough) above. `role`, `aria-label` and `aria-hidden` are reserved — pass `label` instead |
 | slot | — | Your `<i>`, `<svg>`, or `<span>` |
 
 The accessibility decision is most of what this component buys you, and it is
@@ -401,6 +408,7 @@ choose its consumers' icon vendor.
 |---|---|---|
 | `variant` | `"neutral"` | Inert on Bulma — see below |
 | `extra_class` / `class` | `""` | |
+| `attrs` | `{}` | See [Attribute passthrough](#attribute-passthrough) above |
 | slot | — | Arbitrary content |
 
 `box` is a plain bordered or elevated container: one element, no imposed
