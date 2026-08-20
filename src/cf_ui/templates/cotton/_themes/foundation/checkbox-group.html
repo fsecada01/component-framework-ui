@@ -1,7 +1,11 @@
 {% comment %} Foundation groups checkboxes in a fieldset/legend and pairs a *sibling*
    `label[for]` with each input rather than wrapping it, so every box needs an
 id of its own — a shared one would point every label at the first input. {% endcomment %}
-<fieldset class="fieldset {{ class }}">
+{% load cf_ui %}
+<fieldset
+  class="fieldset {{ class }}"
+  {% cf_ui_render_attrs "checkbox-group" attrs %}
+>
   <legend>{{ label }}</legend>
   <div class="{{ control_class }}">
     {% for choice in choices %}

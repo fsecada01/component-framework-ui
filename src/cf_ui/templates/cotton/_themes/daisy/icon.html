@@ -1,4 +1,6 @@
+{% load cf_ui %}
 <span
   class="inline-flex items-center justify-center{% if size == 'small' %} text-[0.75em]{% elif size == 'large' %} text-[1.5em]{% endif %}{% if class %} {{ class }}{% endif %}"
   {% if label %} role="img" aria-label="{{ label }}"{% else %} aria-hidden="true"{% endif %}
+  {% cf_ui_render_attrs "icon" attrs %}
 >{{ slot }}</span>

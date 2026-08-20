@@ -1,8 +1,9 @@
-{#def content="", variant="neutral", extra_class="" #}
+{#def content="", variant="neutral", extra_class="", attrs={} #}
 {% autoescape true %}
   {% set content = content if content is defined else "" %}
   {% set variant = variant if variant is defined else "neutral" %}
   {% set extra_class = extra_class if extra_class is defined else "" %}
+  {% set attrs = attrs if attrs is defined else {} %}
   {{ cf_ui_validate("box", variant=variant) }}
   {# Real hues, not the literal words `primary` and `secondary`. Those two are
    Fomantic's *emphasis* variation on a segment rather than colours —
@@ -11,5 +12,6 @@
    one theme where the name happens to match. #}
   <div
     class="ui segment{% if variant == 'primary' %} blue{% elif variant == 'secondary' %} grey{% elif variant == 'success' %} green{% elif variant == 'warning' %} yellow{% elif variant == 'danger' %} red{% elif variant == 'info' %} teal{% endif %}{% if extra_class %} {{ extra_class }}{% endif %}"
+    {{- cf_ui_render_attrs("box", attrs) }}
   >{{ content }}</div>
 {% endautoescape %}

@@ -1,4 +1,8 @@
-<div class="mb-3 {{ class }}">
+{% load cf_ui %}
+<div
+  class="mb-3 {{ class }}"
+  {% cf_ui_render_attrs "checkbox-group" attrs %}
+>
   <label class="form-label">{{ label }}</label>
   <div{% if control_class %} class="{{ control_class }}"{% endif %}>
     {% for choice in choices %}

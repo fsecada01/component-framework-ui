@@ -1,3 +1,5 @@
+{% load cf_ui %}
 <span
   class="label{% if variant == 'primary' %} primary{% elif variant == 'secondary' %} secondary{% elif variant == 'success' %} success{% elif variant == 'warning' %} warning{% elif variant == 'danger' %} alert{% elif variant == 'info' %} secondary{% endif %}{% if class %} {{ class }}{% endif %}"
+  {% cf_ui_render_attrs "badge" attrs %}
 >{{ slot }}</span>

@@ -1,3 +1,4 @@
+{% load cf_ui %}
 {% comment %}The border colour lives entirely in the variant, `neutral` included.
 Splitting it — a default colour in the base and an override in the variant —
 puts two border-color utilities of equal specificity on one element, and which
@@ -5,4 +6,5 @@ one wins is then decided by Tailwind's emission order rather than by the class
 map.{% endcomment %}
 <div
   class="rounded-box border bg-base-100 p-4{% if variant == 'primary' %} border-primary{% elif variant == 'secondary' %} border-secondary{% elif variant == 'success' %} border-success{% elif variant == 'warning' %} border-warning{% elif variant == 'danger' %} border-error{% elif variant == 'info' %} border-info{% else %} border-base-300{% endif %}{% if class %} {{ class }}{% endif %}"
+  {% cf_ui_render_attrs "box" attrs %}
 >{{ slot }}</div>
