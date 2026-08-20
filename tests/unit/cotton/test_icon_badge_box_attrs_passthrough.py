@@ -40,11 +40,6 @@ def case(request: pytest.FixtureRequest) -> tuple[str, str, dict[str, object]]:
     return request.param
 
 
-@pytest.fixture
-def component(case: tuple[str, str, dict[str, object]]) -> str:
-    return case[0]
-
-
 @pytest.fixture(params=THEMES)
 def render(
     request: pytest.FixtureRequest,
@@ -107,28 +102,40 @@ def test_cotton_rejects_attrs_colliding_with_class(render: Callable[..., str]) -
         render(attrs={"class": "override"})
 
 
-def test_cotton_rejects_attrs_colliding_with_icon_role(
-    render: Callable[..., str], component: str
-) -> None:
-    if component != "icon":
-        pytest.skip("role is only reserved for icon")
+ICON_CASE = CASES[0]
+
+
+@pytest.fixture(params=THEMES)
+def icon_render(
+    request: pytest.FixtureRequest, settings: object, cotton_render: Callable[..., str]
+) -> Callable[..., str]:
+    """Icon-only render, independent of the ``case`` fixture — the
+    icon-reserved-name collision tests below have nothing to assert for
+    badge/box, so they must not be parametrized over ``CASES`` at all rather
+    than parametrized and then skipped 2/3 of the time."""
+    settings.CF_UI_THEME = request.param
+    _component, template_name, base_props = ICON_CASE
+
+    def _render(**ctx: object) -> str:
+        return cotton_render(template_name, **{**base_props, "attrs": {}, **ctx})
+
+    return _render
+
+
+def test_cotton_rejects_attrs_colliding_with_icon_role(icon_render: Callable[..., str]) -> None:
     with pytest.raises(PrimitiveConfigError):
-        render(attrs={"role": "override"})
+        icon_render(attrs={"role": "override"})
 
 
 def test_cotton_rejects_attrs_colliding_with_icon_aria_label(
-    render: Callable[..., str], component: str
+    icon_render: Callable[..., str],
 ) -> None:
-    if component != "icon":
-        pytest.skip("aria-label is only reserved for icon")
     with pytest.raises(PrimitiveConfigError):
-        render(attrs={"aria-label": "override"})
+        icon_render(attrs={"aria-label": "override"})
 
 
 def test_cotton_rejects_attrs_colliding_with_icon_aria_hidden(
-    render: Callable[..., str], component: str
+    icon_render: Callable[..., str],
 ) -> None:
-    if component != "icon":
-        pytest.skip("aria-hidden is only reserved for icon")
     with pytest.raises(PrimitiveConfigError):
-        render(attrs={"aria-hidden": "false"})
+        icon_render(attrs={"aria-hidden": "false"})

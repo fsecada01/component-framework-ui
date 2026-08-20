@@ -73,9 +73,21 @@ def render(env: Environment, case: tuple[str, str, dict[str, object]]) -> Callab
     return _render
 
 
+ICON_CASE = CASES[0]
+
+
 @pytest.fixture
-def component(case: tuple[str, str, dict[str, object]]) -> str:
-    return case[0]
+def icon_render(env: Environment) -> Callable[..., str]:
+    """Icon-only render, independent of the ``case`` fixture — the
+    icon-reserved-name collision tests below have nothing to assert for
+    badge/box, so they must not be parametrized over ``CASES`` at all rather
+    than parametrized and then skipped 2/3 of the time."""
+    _component, template_name, base_props = ICON_CASE
+
+    def _render(**ctx: object) -> str:
+        return env.get_template(template_name).render(**{**base_props, **ctx})
+
+    return _render
 
 
 def test_renders_with_no_attrs_prop_at_all(render: Callable[..., str]) -> None:
@@ -124,29 +136,19 @@ def test_rejects_attrs_colliding_with_class(render: Callable[..., str]) -> None:
         render(attrs={"class": "override"})
 
 
-def test_rejects_attrs_colliding_with_icon_role(render: Callable[..., str], component: str) -> None:
-    if component != "icon":
-        pytest.skip("role is only reserved for icon")
+def test_rejects_attrs_colliding_with_icon_role(icon_render: Callable[..., str]) -> None:
     with pytest.raises(PrimitiveConfigError):
-        render(attrs={"role": "override"})
+        icon_render(attrs={"role": "override"})
 
 
-def test_rejects_attrs_colliding_with_icon_aria_label(
-    render: Callable[..., str], component: str
-) -> None:
-    if component != "icon":
-        pytest.skip("aria-label is only reserved for icon")
+def test_rejects_attrs_colliding_with_icon_aria_label(icon_render: Callable[..., str]) -> None:
     with pytest.raises(PrimitiveConfigError):
-        render(attrs={"aria-label": "override"})
+        icon_render(attrs={"aria-label": "override"})
 
 
-def test_rejects_attrs_colliding_with_icon_aria_hidden(
-    render: Callable[..., str], component: str
-) -> None:
+def test_rejects_attrs_colliding_with_icon_aria_hidden(icon_render: Callable[..., str]) -> None:
     """The reservation is static, not conditioned on ``label`` — only the
     no-label branch renders ``aria-hidden`` itself, but the guard must reject
     the collision regardless, since it fires before the template runs."""
-    if component != "icon":
-        pytest.skip("aria-hidden is only reserved for icon")
     with pytest.raises(PrimitiveConfigError):
-        render(attrs={"aria-hidden": "false"})
+        icon_render(attrs={"aria-hidden": "false"})
